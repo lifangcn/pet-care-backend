@@ -33,6 +33,9 @@ spring:
 mybatis-flex:
   configuration:
     map-underscore-to-camel-case: true
+    # 日志输出
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: true
 # SpringDoc OpenAPI 配置
 springdoc:
   api-docs:
@@ -55,3 +58,4 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
   level:
     pvt.mktech.petcare: ${LOG_LEVEL:INFO}
+    com.mybatisflex: ${SQL_LOG_LEVEL:DEBUG}

@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-@Table("pc_users")
+@Table("tb_users")
 public class User {
     
     @Id(keyType = KeyType.Auto)
@@ -42,16 +42,17 @@ public class User {
     
     @Column("status")
     private Integer status = 1; // 0-禁用 1-正常 2-未激活
-    
+
+
     @Column("last_login_at")
     private LocalDateTime lastLoginAt;
     
     @Column("last_login_ip")
     private String lastLoginIp;
     
-    @Column("created_at")
+    @Column(value = "created_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
     
-    @Column("updated_at")
+    @Column(value = "updated_at", onUpdateValue = "CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 }

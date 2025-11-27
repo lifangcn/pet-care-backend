@@ -17,6 +17,8 @@ import pvt.mktech.petcare.util.PasswordUtil;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static pvt.mktech.petcare.entity.table.UsersTableDef.USERS;
+
 
 @Slf4j
 @Service
@@ -29,21 +31,20 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
     @Override
     public UserResponse getUserById(Long userId) {
         User user = userMapper.selectOneById(userId);
-//        if (user == null) {
-//            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-//        }
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
         return convertToResponse(user);
     }
     
     @Override
     public UserResponse getUserByUsername(String username) {
         User user = userMapper.selectOneByQuery(
-            QueryWrapper.create().where("username = ?", username)
-                    .and("status = 1")
+            QueryWrapper.create().where(USERS.USERNAME.eq(username))
         );
-//        if (user == null) {
-//            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-//        }
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
         return convertToResponse(user);
     }
     
@@ -51,9 +52,9 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
     @Override
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
         User user = userMapper.selectOneById(userId);
-//        if (user == null) {
-//            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-//        }
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
 
         // 更新基本信息
         Optional.ofNullable(request.getNickname()).ifPresent(user::setNickname);
@@ -64,22 +65,22 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
         // 检查邮箱是否已被其他用户使用
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             QueryWrapper queryWrapper = QueryWrapper.create()
-                .where("email = ?", request.getEmail())
-                    .and("id != ?", userId);
-//            if (userMapper.selectCountByQuery(queryWrapper) > 0) {
-//                throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
-//            }
+                    .where(USERS.EMAIL.eq(request.getEmail()))
+                    .and(USERS.ID.eq(userId));
+            if (userMapper.selectCountByQuery(queryWrapper) > 0) {
+                throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            }
             user.setEmail(request.getEmail());
         }
 
         // 检查手机号是否已被其他用户使用
         if (request.getPhone() != null && !request.getPhone().equals(user.getPhone())) {
             QueryWrapper queryWrapper = QueryWrapper.create()
-                    .where("phone = ?", request.getPhone())
-                    .and("id != ?", userId);
-//            if (userMapper.selectCountByQuery(queryWrapper) > 0) {
-//                throw new BusinessException(ErrorCode.PHONE_ALREADY_EXISTS);
-//            }
+                    .where(USERS.PHONE.eq(request.getPhone()))
+                    .and(USERS.ID.eq(userId));
+            if (userMapper.selectCountByQuery(queryWrapper) > 0) {
+                throw new BusinessException(ErrorCode.PHONE_ALREADY_EXISTS);
+            }
             user.setPhone(request.getPhone());
         }
 
@@ -110,9 +111,9 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
     @Override
     public void changePassword(Long userId, String oldPassword, String newPassword) {
         User user = userMapper.selectOneById(userId);
-//        if (user == null) {
-//            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-//        }
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
         
         // 验证旧密码
 //        if (!PasswordUtil.matches(oldPassword, user.getPasswordHash())) {
@@ -135,21 +136,21 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
     @Override
     public boolean checkUsernameExists(String username) {
         QueryWrapper queryWrapper = QueryWrapper.create()
-            .where("username = ?", username);
+            .where(USERS.USERNAME.eq(username));
         return userMapper.selectCountByQuery(queryWrapper) > 0;
     }
     
     @Override
     public boolean checkEmailExists(String email) {
         QueryWrapper queryWrapper = QueryWrapper.create()
-                .where("email = ?", email);
+                .where(USERS.EMAIL.eq(email));
         return userMapper.selectCountByQuery(queryWrapper) > 0;
     }
     
     @Override
     public boolean checkPhoneExists(String phone) {
         QueryWrapper queryWrapper = QueryWrapper.create()
-                .where("phone = ?", phone);
+                .where(USERS.PHONE.eq(phone));
         return userMapper.selectCountByQuery(queryWrapper) > 0;
     }
     

@@ -1,5 +1,5 @@
 -- 用户表 (users)
-CREATE TABLE `pc_users` (
+CREATE TABLE `tb_users` (
      `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '用户ID',
      `username` varchar(50) NOT NULL COMMENT '用户名',
      `email` varchar(100) DEFAULT NULL COMMENT '邮箱',
@@ -22,7 +22,7 @@ CREATE TABLE `pc_users` (
      KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
-CREATE TABLE `pc_pets` (
+CREATE TABLE `tb_pets` (
     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '宠物ID',
     `user_id` bigint(20) NOT NULL COMMENT '用户ID',
     `name` varchar(100) NOT NULL COMMENT '宠物名称',
@@ -42,10 +42,10 @@ CREATE TABLE `pc_pets` (
     KEY `idx_user_id` (`user_id`),
     KEY `idx_type` (`type`),
     KEY `idx_created_at` (`created_at`),
-    CONSTRAINT `fk_pc_pet_user` FOREIGN KEY (`user_id`) REFERENCES `pc_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_tb_pet_user` FOREIGN KEY (`user_id`) REFERENCES `tb_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物表';
 
-CREATE TABLE `pc_user_addresses` (
+CREATE TABLE `tb_user_addresses` (
     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '地址ID',
     `user_id` bigint(20) NOT NULL COMMENT '用户ID',
     `recipient_name` varchar(100) NOT NULL COMMENT '收货人姓名',
@@ -61,10 +61,10 @@ CREATE TABLE `pc_user_addresses` (
     PRIMARY KEY (`id`),
     KEY `idx_user_id` (`user_id`),
     KEY `idx_is_default` (`is_default`),
-    CONSTRAINT `fk_pc_address_user` FOREIGN KEY (`user_id`) REFERENCES `pc_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_tb_address_user` FOREIGN KEY (`user_id`) REFERENCES `tb_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户地址表';
 
-CREATE TABLE `pc_pet_vaccinations` (
+CREATE TABLE `tb_pet_vaccinations` (
     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '记录ID',
     `pet_id` bigint(20) NOT NULL COMMENT '宠物ID',
     `vaccine_name` varchar(200) NOT NULL COMMENT '疫苗名称',
@@ -77,10 +77,10 @@ CREATE TABLE `pc_pet_vaccinations` (
     PRIMARY KEY (`id`),
     KEY `idx_pet_id` (`pet_id`),
     KEY `idx_vaccination_date` (`vaccination_date`),
-    CONSTRAINT `fk_pc_vaccination_pet` FOREIGN KEY (`pet_id`) REFERENCES `pc_pets` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_tb_vaccination_pet` FOREIGN KEY (`pet_id`) REFERENCES `tb_pets` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物疫苗记录表';
 
-CREATE TABLE `pc_pet_health_records` (
+CREATE TABLE `tb_pet_health_records` (
     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '记录ID',
     `pet_id` bigint(20) NOT NULL COMMENT '宠物ID',
     `record_type` tinyint(1) NOT NULL COMMENT '记录类型: 1-体重 2-体温 3-症状 4-用药 5-其他',
@@ -93,5 +93,5 @@ CREATE TABLE `pc_pet_health_records` (
     KEY `idx_pet_id` (`pet_id`),
     KEY `idx_record_type` (`record_type`),
     KEY `idx_record_date` (`record_date`),
-    CONSTRAINT `fk_pc_health_pet` FOREIGN KEY (`pet_id`) REFERENCES `pc_pets` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_tb_health_pet` FOREIGN KEY (`pet_id`) REFERENCES `tb_pets` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物健康记录表';

@@ -14,6 +14,8 @@
         <module>modules/mall-service</module>
         <module>modules/community-service</module>
         <module>modules/care-service</module>
+        <module>modules/common/common-core</module>
+        <module>codegen</module>
     </modules>
 
     <properties>
@@ -96,18 +98,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-            <version>${hutool.version}</version>
-        </dependency>
-    </dependencies>
 
     <!--<repositories>
         <repository>
