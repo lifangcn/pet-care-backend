@@ -37,21 +37,21 @@ mybatis-flex:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     cache-enabled: true
 # SpringDoc OpenAPI 配置
-#springdoc:
-#  api-docs:
-#    path: /v3/api-docs
-#    enabled: true
-#  swagger-ui:
-#    path: /swagger-ui.html
-#    enabled: true
-#    operations-sorter: method
-#    tags-sorter: alpha
-#    display-request-duration: true
-#    filter: true
-#  packages-to-scan: pvt.mktech.petcare.controller
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    filter: true
+  packages-to-scan: pvt.mktech.petcare.controller
 #  paths-to-match: /api/**
-#  cache:
-#    disabled: true
+  cache:
+    disabled: true
 
 # 日志配置
 logging:

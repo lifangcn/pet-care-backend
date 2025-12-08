@@ -22,8 +22,7 @@ public class MybatisFlexCodeGenerator {
 
     // 要生成的表名（为空则生成所有表）
     private static final String[] INCLUDED_TABLES = {
-            "tb_pets"
-//            , "pets", "user_addresses", "pet_vaccinations", "pet_health_records"
+            "tb_pet_vaccinations", "tb_pet_health_records"
     };
 
     // 要排除的表名
@@ -57,7 +56,7 @@ public class MybatisFlexCodeGenerator {
 
         // 设置包配置
         PackageConfig packageConfig = globalConfig.getPackageConfig();
-        packageConfig.setBasePackage(BASE_PACKAGE + ".pets");
+        packageConfig.setBasePackage(BASE_PACKAGE);
         packageConfig.setEntityPackage(packageConfig.getBasePackage() + ".entity");
         packageConfig.setMapperPackage(packageConfig.getBasePackage() + ".mapper");
         packageConfig.setServicePackage(packageConfig.getBasePackage() + ".service");

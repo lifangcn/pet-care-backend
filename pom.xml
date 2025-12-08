@@ -38,7 +38,7 @@
         <hutool.version>5.8.40</hutool.version>
         <lombok.version>1.18.26</lombok.version>
         <!-- API文档 -->
-        <springdoc-openapi-ui.version>1.8.0</springdoc-openapi-ui.version>
+        <springdoc-openapi.version>2.1.0</springdoc-openapi.version>
         <!--漏洞依赖-->
         <logback.version>1.5.19</logback.version>
         <commons-lang3.version>3.19.0</commons-lang3.version>
@@ -112,8 +112,8 @@
             <!-- API文档 -->
             <dependency>
                 <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-ui</artifactId>
-                <version>${springdoc-openapi-ui.version}</version>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc-openapi.version}</version>
             </dependency>
 
             <!-- 依赖版本漏洞修复 -->

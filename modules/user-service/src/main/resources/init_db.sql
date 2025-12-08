@@ -45,25 +45,6 @@ CREATE TABLE `tb_pets` (
     CONSTRAINT `fk_tb_pet_user` FOREIGN KEY (`user_id`) REFERENCES `tb_users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物表';
 
-CREATE TABLE `tb_user_addresses` (
-    `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '地址ID',
-    `user_id` bigint(20) NOT NULL COMMENT '用户ID',
-    `recipient_name` varchar(100) NOT NULL COMMENT '收货人姓名',
-    `phone` varchar(20) NOT NULL COMMENT '收货人手机号',
-    `province` varchar(50) NOT NULL COMMENT '省份',
-    `city` varchar(50) NOT NULL COMMENT '城市',
-    `district` varchar(50) NOT NULL COMMENT '区县',
-    `detail_address` varchar(500) NOT NULL COMMENT '详细地址',
-    `postal_code` varchar(10) DEFAULT NULL COMMENT '邮政编码',
-    `is_default` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否默认地址: 0-否 1-是',
-    `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (`id`),
-    KEY `idx_user_id` (`user_id`),
-    KEY `idx_is_default` (`is_default`),
-    CONSTRAINT `fk_tb_address_user` FOREIGN KEY (`user_id`) REFERENCES `tb_users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户地址表';
-
 CREATE TABLE `tb_pet_vaccinations` (
     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '记录ID',
     `pet_id` bigint(20) NOT NULL COMMENT '宠物ID',

@@ -23,12 +23,12 @@ public class MvcConfig implements WebMvcConfigurer {
         // Token刷新拦截器
         registry.addInterceptor(new RefreshTokenInterceptor(stringRedisTemplate)).addPathPatterns("/**").order(0);
 //        // 登录拦截器
-        registry.addInterceptor(new LoginInterceptor()).excludePathPatterns(
-                "/v1/auth/code",
-                "/v1/auth/login",
-                "/voucher/**",
-                "/upload/**",
-                "/blog/hot"
-        ).order(1);
+//        registry.addInterceptor(new LoginInterceptor()).excludePathPatterns(
+//                "/v1/auth/code",
+//                "/v1/auth/login",
+//                "/voucher/**",
+//                "/upload/**",
+//                "/blog/hot"
+//        ).order(1);
     }
 }
