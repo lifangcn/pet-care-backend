@@ -1,17 +1,19 @@
 package pvt.mktech.petcare.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pvt.mktech.petcare.common.exception.BusinessException;
+import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.dto.response.UserResponse;
 import pvt.mktech.petcare.entity.User;
-import pvt.mktech.petcare.exception.BusinessException;
-import pvt.mktech.petcare.exception.ErrorCode;
 import pvt.mktech.petcare.mapper.UserMapper;
+import pvt.mktech.petcare.service.UserService;
 import pvt.mktech.petcare.util.PasswordUtil;
 
 import java.time.LocalDateTime;
@@ -23,14 +25,13 @@ import static pvt.mktech.petcare.entity.table.UsersTableDef.USERS;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
-    
+public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
     private final UserMapper userMapper;
-//    private final UserEventProducer userEventProducer;
-    
+
     @Override
     public UserResponse getUserById(Long userId) {
-        User user = userMapper.selectOneById(userId);
+        User user = getOne(USERS.ID.eq(userId));
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
@@ -39,9 +40,9 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
     
     @Override
     public UserResponse getUserByUsername(String username) {
-        User user = userMapper.selectOneByQuery(
-            QueryWrapper.create().where(USERS.USERNAME.eq(username))
-        );
+        User user = getOne(USERS.USERNAME.eq(username));
+
+
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
@@ -51,7 +52,7 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
     @Transactional
     @Override
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
-        User user = userMapper.selectOneById(userId);
+        User user = getOne(USERS.ID.eq(userId));
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
@@ -64,10 +65,10 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
 
         // 检查邮箱是否已被其他用户使用
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
-            QueryWrapper queryWrapper = QueryWrapper.create()
+            QueryWrapper queryWrapper = query()
                     .where(USERS.EMAIL.eq(request.getEmail()))
                     .and(USERS.ID.eq(userId));
-            if (userMapper.selectCountByQuery(queryWrapper) > 0) {
+            if (exists(queryWrapper)) {
                 throw new BusinessException(ErrorCode.EMAIL_ALREADY_EXISTS);
             }
             user.setEmail(request.getEmail());
@@ -91,7 +92,6 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
 //        userEventProducer.sendUserUpdateEvent(user);
 
         log.info("用户信息已更新: userId={}", userId);
-
         return convertToResponse(user);
     }
     
@@ -135,28 +135,22 @@ public class UserServiceImpl implements pvt.mktech.petcare.service.UserService {
     
     @Override
     public boolean checkUsernameExists(String username) {
-        QueryWrapper queryWrapper = QueryWrapper.create()
-            .where(USERS.USERNAME.eq(username));
-        return userMapper.selectCountByQuery(queryWrapper) > 0;
+        return exists(USERS.USERNAME.eq(username));
     }
     
     @Override
     public boolean checkEmailExists(String email) {
-        QueryWrapper queryWrapper = QueryWrapper.create()
-                .where(USERS.EMAIL.eq(email));
-        return userMapper.selectCountByQuery(queryWrapper) > 0;
+        return exists(USERS.EMAIL.eq(email));
     }
     
     @Override
     public boolean checkPhoneExists(String phone) {
-        QueryWrapper queryWrapper = QueryWrapper.create()
-                .where(USERS.PHONE.eq(phone));
-        return userMapper.selectCountByQuery(queryWrapper) > 0;
+        return exists(USERS.PHONE.eq(phone));
     }
     
     private UserResponse convertToResponse(User user) {
         UserResponse response = new UserResponse();
-        BeanUtils.copyProperties(user, response);
+        BeanUtil.copyProperties(user, response);
         return response;
     }
 }

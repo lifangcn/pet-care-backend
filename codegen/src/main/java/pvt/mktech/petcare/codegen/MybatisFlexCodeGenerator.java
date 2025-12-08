@@ -22,7 +22,7 @@ public class MybatisFlexCodeGenerator {
 
     // 要生成的表名（为空则生成所有表）
     private static final String[] INCLUDED_TABLES = {
-            "tb_users"
+            "tb_pets"
 //            , "pets", "user_addresses", "pet_vaccinations", "pet_health_records"
     };
 
@@ -57,7 +57,7 @@ public class MybatisFlexCodeGenerator {
 
         // 设置包配置
         PackageConfig packageConfig = globalConfig.getPackageConfig();
-        packageConfig.setBasePackage(BASE_PACKAGE + ".user");
+        packageConfig.setBasePackage(BASE_PACKAGE + ".pets");
         packageConfig.setEntityPackage(packageConfig.getBasePackage() + ".entity");
         packageConfig.setMapperPackage(packageConfig.getBasePackage() + ".mapper");
         packageConfig.setServicePackage(packageConfig.getBasePackage() + ".service");
@@ -81,11 +81,11 @@ public class MybatisFlexCodeGenerator {
 //                .setColumnConfig("tb_account", columnConfig);
 
         // 生成选项
-        globalConfig.setEntityGenerateEnable(false);
-        globalConfig.setMapperGenerateEnable(false);
-        globalConfig.setServiceGenerateEnable(false); // 不生成 Service，手动实现
-        globalConfig.setServiceImplGenerateEnable(false); // 不生成 ServiceImpl
-        globalConfig.setControllerGenerateEnable(false); // 不生成 Controller
+        globalConfig.setEntityGenerateEnable(true);
+        globalConfig.setMapperGenerateEnable(true);
+        globalConfig.setServiceGenerateEnable(true); // 不生成 Service，手动实现
+        globalConfig.setServiceImplGenerateEnable(true); // 不生成 ServiceImpl
+        globalConfig.setControllerGenerateEnable(true); // 不生成 Controller
         globalConfig.setTableDefGenerateEnable(true);
         globalConfig.setMapperXmlGenerateEnable(false); // 不生成 XML
 

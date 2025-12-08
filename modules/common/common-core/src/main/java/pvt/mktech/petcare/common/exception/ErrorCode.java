@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.exception;
+package pvt.mktech.petcare.common.exception;
 
 import lombok.Getter;
 

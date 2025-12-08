@@ -16,18 +16,28 @@
         <module>modules/care-service</module>
         <module>modules/common/common-core</module>
         <module>codegen</module>
+        <module>modules/tech-poc</module>
     </modules>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot.version>3.5.6</spring-boot.version>
         <spring-cloud.version>2025.1.0-RC1</spring-cloud.version>
-        <mysql-connector.version>8.0.33</mysql-connector.version>
+
+        <!-- DB -->
+        <mysql-connector.version>9.3.0</mysql-connector.version>
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
+        <!-- 缓存 -->
+        <redisson.version>3.23.4</redisson.version>
+        <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
+        <!-- 搜索组件 -->
+        <spring-data-elasticsearch.version>7.5.0</spring-data-elasticsearch.version>
+        <!-- 工具类 -->
         <hutool.version>5.8.40</hutool.version>
         <lombok.version>1.18.26</lombok.version>
+        <!-- API文档 -->
         <springdoc-openapi-ui.version>1.8.0</springdoc-openapi-ui.version>
         <!--漏洞依赖-->
         <logback.version>1.5.19</logback.version>
@@ -51,24 +61,55 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
+            <!-- Database Connector -->
             <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
+                <groupId>com.mysql</groupId>
+                <artifactId>mysql-connector-j</artifactId>
                 <version>${mysql-connector.version}</version>
             </dependency>
+            <!-- ORM -->
             <dependency>
                 <groupId>com.mybatis-flex</groupId>
                 <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
                 <version>${mybatis-flex.version}</version>
             </dependency>
             <!-- Redis -->
-            <!--<dependency>
+            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-redis</artifactId>
                 <version>${spring-boot.version}</version>
+            </dependency>
+            <!-- Spring Boot Starter Redis -->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
+                <version>${redisson.version}</version>
+            </dependency>
+            <!-- JWT -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jsonwebtoken.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jsonwebtoken.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jsonwebtoken.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <!--<dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-elasticsearch</artifactId>
+                <version>${spring-data-elasticsearch.version}</version>
             </dependency>-->
-            <!-- Swagger -->
+
+            <!-- API文档 -->
             <dependency>
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-ui</artifactId>

@@ -1,5 +1,5 @@
 server:
-  port: 28081
+  port: 18081
 
 spring:
   application:
@@ -27,7 +27,7 @@ spring:
 #        server-addr: localhost:8848
 #      config:
 #        server-addr: localhost:8848
-#        file-extension: yaml
+#        file-extension: yml
 
 # MyBatis-Flex 配置
 mybatis-flex:
@@ -37,25 +37,31 @@ mybatis-flex:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     cache-enabled: true
 # SpringDoc OpenAPI 配置
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-    enabled: true
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    operations-sorter: method
-    tags-sorter: alpha
-    display-request-duration: true
-    filter: true
-  packages-to-scan: pvt.mktech.petcare.user.controller
-  paths-to-match: /api/**
-  cache:
-    disabled: true
+#springdoc:
+#  api-docs:
+#    path: /v3/api-docs
+#    enabled: true
+#  swagger-ui:
+#    path: /swagger-ui.html
+#    enabled: true
+#    operations-sorter: method
+#    tags-sorter: alpha
+#    display-request-duration: true
+#    filter: true
+#  packages-to-scan: pvt.mktech.petcare.controller
+#  paths-to-match: /api/**
+#  cache:
+#    disabled: true
 
+# 日志配置
 logging:
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"
+  config: classpath:logback-spring.xml
   level:
-    pvt.mktech.petcare: ${LOG_LEVEL:INFO}
+    com.petcare.user: ${LOG_LEVEL:INFO}
     com.mybatisflex: ${SQL_LOG_LEVEL:DEBUG}
+#    org.apache.rocketmq: INFO
+    org.springframework: INFO
+  file:
+    name: logs/user-service.log
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"

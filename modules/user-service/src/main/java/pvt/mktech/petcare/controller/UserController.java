@@ -9,16 +9,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import pvt.mktech.petcare.common.dto.response.Result;
+import pvt.mktech.petcare.context.UserHolder;
 import pvt.mktech.petcare.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.dto.response.UserResponse;
-import pvt.mktech.petcare.entity.User;
 import pvt.mktech.petcare.mapper.UserMapper;
 import pvt.mktech.petcare.service.UserService;
 
-import java.time.LocalDateTime;
-
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/v1/users")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "用户管理", description = "用户信息管理相关接口")
@@ -55,18 +54,16 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
     
-    @PutMapping("/me")
+    @PutMapping("/profile")
     @Operation(
         summary = "更新当前用户信息",
         description = "更新当前登录用户的基本信息"
     )
-    public ResponseEntity<UserResponse> updateCurrentUser(
-            @Parameter(hidden = true)
-            @RequestAttribute Long userId,
+    public Result<UserResponse> updateCurrentUser(
             @Parameter(description = "用户更新信息", required = true)
             @Valid @RequestBody UserUpdateRequest request) {
-        UserResponse updatedUser = userService.updateUser(userId, request);
-        return ResponseEntity.ok(updatedUser);
+        UserResponse updatedUser = userService.updateUser(UserHolder.getUser().getId(), request);
+        return Result.ok(updatedUser);
     }
     
     @PostMapping("/change-password")
@@ -84,7 +81,7 @@ public class UserController {
         userService.changePassword(userId, oldPassword, newPassword);
         return ResponseEntity.ok().build();
     }
-    
+
     @GetMapping("/check-username")
     @Operation(
         summary = "检查用户名是否存在",
@@ -96,7 +93,7 @@ public class UserController {
         boolean exists = userService.checkUsernameExists(username);
         return ResponseEntity.ok(exists);
     }
-    
+
     @GetMapping("/check-email")
     @Operation(
         summary = "检查邮箱是否存在",
@@ -108,7 +105,7 @@ public class UserController {
         boolean exists = userService.checkEmailExists(email);
         return ResponseEntity.ok(exists);
     }
-    
+
     @GetMapping("/check-phone")
     @Operation(
         summary = "检查手机号是否存在",
