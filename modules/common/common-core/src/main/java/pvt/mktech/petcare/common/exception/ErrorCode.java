@@ -42,6 +42,10 @@ public enum ErrorCode {
     PET_ALREADY_EXISTS("20003", "宠物已存在"),
     PET_LIMIT_EXCEEDED("20004", "宠物数量已达上限"),
     PET_TYPE_INVALID("20005", "宠物类型无效"),
+    // ========== 宠物健康错误码 ==========
+    HEALTH_RECORD_NOT_FOUND("21001", "健康记录不存在"),
+    INVALID_RECORD_TYPE("21002", "无效的记录类型"),
+    RECORD_VALUE_REQUIRED("21003", "记录数值不能为空"),
     
     // ========== 地址相关错误码 (30000-39999) ==========
     ADDRESS_NOT_FOUND("30001", "地址不存在"),

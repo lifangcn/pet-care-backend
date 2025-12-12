@@ -9,14 +9,11 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>modules/user-service</module>
-        <module>modules/pet-management-service</module>
-        <module>modules/mall-service</module>
-        <module>modules/community-service</module>
-        <module>modules/care-service</module>
+        <module>modules/core-service</module>
+        <module>modules/shop-service</module>
+        <module>modules/service-community-service</module>
         <module>modules/common/common-core</module>
         <module>codegen</module>
-        <module>modules/tech-poc</module>
     </modules>
 
     <properties>
@@ -31,6 +28,7 @@
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
         <!-- 缓存 -->
         <redisson.version>3.23.4</redisson.version>
+        <!--JWT-->
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
         <!-- 搜索组件 -->
         <spring-data-elasticsearch.version>7.5.0</spring-data-elasticsearch.version>
@@ -79,10 +77,10 @@
                 <artifactId>spring-boot-starter-data-redis</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
-            <!-- Spring Boot Starter Redis -->
+            <!-- Redisson -->
             <dependency>
                 <groupId>org.redisson</groupId>
-                <artifactId>redisson-spring-boot-starter</artifactId>
+                <artifactId>redisson</artifactId>
                 <version>${redisson.version}</version>
             </dependency>
             <!-- JWT -->

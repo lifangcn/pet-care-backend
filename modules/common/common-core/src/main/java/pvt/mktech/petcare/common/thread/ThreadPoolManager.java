@@ -1,5 +1,7 @@
 package pvt.mktech.petcare.common.thread;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.concurrent.*;
 
 /**
@@ -8,6 +10,7 @@ import java.util.concurrent.*;
  *
  * @author Michael
  */
+@Slf4j
 public class ThreadPoolManager {
 
     /**
@@ -38,7 +41,7 @@ public class ThreadPoolManager {
         // 自定义线程工程
         ThreadFactory customThreadFactory = new CustomThreadFactory(BusinessPoolName);
         RejectedExecutionHandler handler = new CustomRejectionPolicy();
-
+        log.info("创建线程池：{}，核心线程数：{}，最大线程数：{}", BusinessPoolName, corePoolSize, maxPoolSize);
         // 拒绝策略
         return new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, timeUnit, workQueue, customThreadFactory, handler);
     }
