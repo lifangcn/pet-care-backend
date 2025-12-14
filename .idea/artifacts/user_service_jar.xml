@@ -2,8 +2,8 @@
   <artifact type="jar" name="user-service:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/user_service_jar</output-path>
     <root id="archive" name="user-service.jar">
-      <element id="module-output" name="core-service" />
-      <element id="module-output" name="common-core" />
+      <element id="module-output" name="pet-care-core" />
+      <element id="module-output" name="pet-care-common" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-yaml/2.19.2/jackson-dataformat-yaml-2.19.2.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/springframework/spring-core/6.2.11/spring-core-6.2.11.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/mybatis/mybatis/3.5.19/mybatis-3.5.19.jar" path-in-jar="/" />

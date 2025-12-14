@@ -9,10 +9,12 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>modules/core-service</module>
-        <module>modules/shop-service</module>
-        <module>modules/service-community-service</module>
-        <module>modules/common/common-core</module>
+        <module>modules/pet-care-core</module>
+        <module>modules/pet-care-shop</module>
+        <module>modules/pet-care-community</module>
+        <module>modules/pet-care-gateway</module>
+        <module>modules/pet-care-common</module>
+        <!-- mybatis-flex代码生成 -->
         <module>codegen</module>
     </modules>
 
@@ -20,8 +22,9 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>3.5.6</spring-boot.version>
-        <spring-cloud.version>2025.1.0-RC1</spring-cloud.version>
+        <spring-boot.version>3.2.5</spring-boot.version>
+        <spring-cloud.version>2023.0.0</spring-cloud.version>
+        <spring-cloud-alibaba.version>2023.0.0.0-RC1</spring-cloud-alibaba.version>
 
         <!-- DB -->
         <mysql-connector.version>9.3.0</mysql-connector.version>
@@ -38,7 +41,10 @@
         <!-- API文档 -->
         <springdoc-openapi.version>2.1.0</springdoc-openapi.version>
         <!--漏洞依赖-->
-        <logback.version>1.5.19</logback.version>
+        <logback.version>1.5.6</logback.version>
+        <netty.version>4.1.110.Final</netty.version>
+        <spring.version>6.1.7</spring.version>
+
         <commons-lang3.version>3.19.0</commons-lang3.version>
         <tomcat-embed-core.version>10.1.47</tomcat-embed-core.version>
     </properties>
@@ -56,6 +62,13 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>${spring-cloud-alibaba.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -116,11 +129,6 @@
 
             <!-- 依赖版本漏洞修复 -->
             <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>${tomcat-embed-core.version}</version> <!-- 使用已修复漏洞的安全版本 -->
-            </dependency>
-            <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
                 <version>${logback.version}</version>
@@ -131,10 +139,48 @@
                 <version>${logback.version}</version>
             </dependency>
             <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-common</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-handler</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <!-- 强制使用安全版本 -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-beans</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+
+
+            <!--<dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>${tomcat-embed-core.version}</version> &lt;!&ndash; 使用已修复漏洞的安全版本 &ndash;&gt;
+            </dependency>-->
         </dependencies>
     </dependencyManagement>
 
