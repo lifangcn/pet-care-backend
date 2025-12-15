@@ -1,7 +1,7 @@
 package pvt.mktech.petcare.service;
 
 import com.mybatisflex.core.service.IService;
-import pvt.mktech.petcare.entity.Pets;
+import pvt.mktech.petcare.entity.Pet;
 
 import java.util.List;
 
@@ -11,10 +11,10 @@ import java.util.List;
  * @author PetCare Code Generator
  * @since 2025-12-02
  */
-public interface PetsService extends IService<Pets> {
+public interface PetService extends IService<Pet> {
 
-    Pets save(String token, Pets pets);
+    Pet save(String token, Pet pet);
 
 
-    List<Pets> findByUserId(String token);
+    List<Pet> findByUserId(String token);
 }

@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.entity.Pets;
-import pvt.mktech.petcare.service.PetsService;
+import pvt.mktech.petcare.entity.Pet;
+import pvt.mktech.petcare.service.PetService;
 
 
 import java.util.List;
@@ -21,9 +21,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/v1/pets")
 @RequiredArgsConstructor
-public class PetsController {
+public class PetController {
 
-    private final PetsService petsService;
+    private final PetService petService;
 
 
     @PostMapping("listMyPets")
@@ -31,16 +31,16 @@ public class PetsController {
             summary = "查询当前用户的所有宠物列表",
             description = "用户信息基于前端请求头的Authorization获取用户信息，避免明文传递用户私密信息"
     )
-    public Result<List<Pets>> listMyPets(@Parameter(description = "custom uuid token", required = true)
+    public Result<List<Pet>> listMyPets(@Parameter(description = "custom uuid token", required = true)
                                  @RequestHeader("Authorization") String token) {
         // TODO 对于微服务中使用到token的地方，进行通用处理
-        return Result.success(petsService.findByUserId(token));
+        return Result.success(petService.findByUserId(token));
     }
 
     /**
      * 保存宠物表。
      *
-     * @param pets 宠物表
+     * @param pet 宠物表
      * @return {@code true} 保存成功，{@code false} 保存失败
      */
     @PostMapping("save")
@@ -48,10 +48,10 @@ public class PetsController {
             summary = "查询当前用户的所有宠物列表",
             description = "用户信息基于前端请求头的Authorization获取用户信息，避免明文传递用户私密信息"
     )
-    public Result<Pets> save(@Parameter(description = "custom uuid token", required = true)
+    public Result<Pet> save(@Parameter(description = "custom uuid token", required = true)
                             @RequestHeader("Authorization") String token,
-                       @RequestBody Pets pets) {
-        return Result.success(petsService.save(token, pets));
+                            @RequestBody Pet pet) {
+        return Result.success(petService.save(token, pet));
     }
 
     /**
@@ -62,18 +62,18 @@ public class PetsController {
      */
     @DeleteMapping("remove/{id}")
     public boolean remove(@PathVariable Long id) {
-        return petsService.removeById(id);
+        return petService.removeById(id);
     }
 
     /**
      * 根据主键更新宠物表。
      *
-     * @param pets 宠物表
+     * @param pet 宠物表
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("update")
-    public boolean update(@RequestBody Pets pets) {
-        return petsService.updateById(pets);
+    public boolean update(@RequestBody Pet pet) {
+        return petService.updateById(pet);
     }
 
 
@@ -83,8 +83,8 @@ public class PetsController {
      * @return 所有数据
      */
     @GetMapping("list")
-    public List<Pets> list() {
-        return petsService.list();
+    public List<Pet> list() {
+        return petService.list();
     }
 
     /**
@@ -94,8 +94,8 @@ public class PetsController {
      * @return 宠物表详情
      */
     @GetMapping("getInfo/{id}")
-    public Pets getInfo(@PathVariable Long id) {
-        return petsService.getById(id);
+    public Pet getInfo(@PathVariable Long id) {
+        return petService.getById(id);
     }
 
     /**
@@ -105,8 +105,8 @@ public class PetsController {
      * @return 分页对象
      */
     @GetMapping("page")
-    public Page<Pets> page(Page<Pets> page) {
-        return petsService.page(page);
+    public Page<Pet> page(Page<Pet> page) {
+        return petService.page(page);
     }
 
 }

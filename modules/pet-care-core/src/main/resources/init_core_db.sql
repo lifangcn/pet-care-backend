@@ -1,8 +1,9 @@
--- 创建核心数据库
+-- 创建 主业务 数据库
 CREATE DATABASE IF NOT EXISTS pet_care_core DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
+USE `pet_care_core`;
 -- 用户表 (users)
-CREATE TABLE `tb_users` (
+CREATE TABLE `tb_user`
+(
      `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '用户ID',
      `username` varchar(50) NOT NULL COMMENT '用户名',
      `email` varchar(100) DEFAULT NULL COMMENT '邮箱',
@@ -25,7 +26,8 @@ CREATE TABLE `tb_users` (
      KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
-CREATE TABLE `tb_pets` (
+CREATE TABLE `tb_pet`
+(
     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '宠物ID',
     `user_id` bigint(20) NOT NULL COMMENT '用户ID',
     `name` varchar(100) NOT NULL COMMENT '宠物名称',
@@ -45,7 +47,7 @@ CREATE TABLE `tb_pets` (
     KEY `idx_user_id` (`user_id`),
     KEY `idx_type` (`type`),
     KEY `idx_created_at` (`created_at`),
-    CONSTRAINT `fk_tb_pet_user` FOREIGN KEY (`user_id`) REFERENCES `tb_users` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_tb_pet_user` FOREIGN KEY (`user_id`) REFERENCES `tb_user` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物表';
 
 CREATE TABLE `tb_pet_vaccinations` (
@@ -61,7 +63,7 @@ CREATE TABLE `tb_pet_vaccinations` (
     PRIMARY KEY (`id`),
     KEY `idx_pet_id` (`pet_id`),
     KEY `idx_vaccination_date` (`vaccination_date`),
-    CONSTRAINT `fk_tb_vaccination_pet` FOREIGN KEY (`pet_id`) REFERENCES `tb_pets` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_tb_vaccination_pet` FOREIGN KEY (`pet_id`) REFERENCES `tb_pet` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物疫苗记录表';
 
 CREATE TABLE `tb_pet_health_records` (
@@ -77,5 +79,5 @@ CREATE TABLE `tb_pet_health_records` (
     KEY `idx_pet_id` (`pet_id`),
     KEY `idx_record_type` (`record_type`),
     KEY `idx_record_date` (`record_date`),
-    CONSTRAINT `fk_tb_health_pet` FOREIGN KEY (`pet_id`) REFERENCES `tb_pets` (`id`) ON DELETE CASCADE
+    CONSTRAINT `fk_tb_health_pet` FOREIGN KEY (`pet_id`) REFERENCES `tb_pet` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物健康记录表';

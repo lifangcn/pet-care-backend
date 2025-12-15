@@ -12,7 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
-@Table("tb_users")
+@Table("tb_user")
 public class User implements Serializable {
 
     @Serial

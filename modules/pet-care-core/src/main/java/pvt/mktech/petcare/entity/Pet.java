@@ -20,8 +20,8 @@ import java.time.LocalDateTime;
  * @since 2025-12-02
  */
 @Data
-@Table("tb_pets")
-public class Pets implements Serializable {
+@Table("tb_pet")
+public class Pet implements Serializable {
 
     @Serial
     private static final long serialVersionUID = -8556286714851982180L;

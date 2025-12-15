@@ -6,15 +6,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import pvt.mktech.petcare.entity.Pets;
+import pvt.mktech.petcare.entity.Pet;
 import pvt.mktech.petcare.mapper.PetsMapper;
-import pvt.mktech.petcare.service.PetsService;
+import pvt.mktech.petcare.service.PetService;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static pvt.mktech.petcare.entity.table.PetsTableDef.PETS;
+import static pvt.mktech.petcare.entity.table.PetTableDef.PETS;
 
 /**
  * 宠物表 服务层实现。
@@ -25,25 +25,25 @@ import static pvt.mktech.petcare.entity.table.PetsTableDef.PETS;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class PetsServiceImpl extends ServiceImpl<PetsMapper, Pets> implements PetsService {
+public class PetServiceImpl extends ServiceImpl<PetsMapper, Pet> implements PetService {
     public static final String LOGIN_TOKEN_KEY = "login:token:";
     private final StringRedisTemplate stringRedisTemplate;
     private final PetsMapper petsMapper;
     @Override
-    public Pets save(String token, Pets pets) {
+    public Pet save(String token, Pet pet) {
         Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries(LOGIN_TOKEN_KEY + token);
         if (MapUtil.isEmpty(entries)) {
 
             return null;
         }
         Long userId = MapUtil.getLong(entries, "id");
-        pets.setUserId(userId);
-        saveOrUpdate(pets);
-        return pets;
+        pet.setUserId(userId);
+        saveOrUpdate(pet);
+        return pet;
     }
 
     @Override
-    public List<Pets> findByUserId(String token) {
+    public List<Pet> findByUserId(String token) {
         Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries(LOGIN_TOKEN_KEY + token);
         if (MapUtil.isEmpty(entries)) {
             return Collections.emptyList();

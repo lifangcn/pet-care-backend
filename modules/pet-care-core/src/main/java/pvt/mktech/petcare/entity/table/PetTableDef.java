@@ -12,7 +12,7 @@ import java.io.Serial;
  * @author PetCare Code Generator
  * @since 2025-12-02
  */
-public class PetsTableDef extends TableDef {
+public class PetTableDef extends TableDef {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -20,7 +20,7 @@ public class PetsTableDef extends TableDef {
     /**
      * 宠物表
      */
-    public static final PetsTableDef PETS = new PetsTableDef();
+    public static final PetTableDef PETS = new PetTableDef();
 
     /**
      * 宠物ID
@@ -107,17 +107,17 @@ public class PetsTableDef extends TableDef {
      */
     public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, NAME, TYPE, BREED, GENDER, BIRTHDAY, WEIGHT, AVATAR_URL, IS_STERILIZED, HEALTH_NOTES, ALLERGY_INFO, STATUS, CREATED_AT, UPDATED_AT};
 
-    public PetsTableDef() {
-        super("", "tb_pets");
+    public PetTableDef() {
+        super("", "tb_pet");
     }
 
-    private PetsTableDef(String schema, String name, String alisa) {
+    private PetTableDef(String schema, String name, String alisa) {
         super(schema, name, alisa);
     }
 
-    public PetsTableDef as(String alias) {
+    public PetTableDef as(String alias) {
         String key = getNameWithSchema() + "." + alias;
-        return getCache(key, k -> new PetsTableDef("", "tb_pets", alias));
+        return getCache(key, k -> new PetTableDef("", "tb_pet", alias));
     }
 
 }

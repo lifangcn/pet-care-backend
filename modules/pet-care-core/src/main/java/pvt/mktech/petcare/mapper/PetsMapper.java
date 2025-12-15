@@ -1,7 +1,7 @@
 package pvt.mktech.petcare.mapper;
 
 import com.mybatisflex.core.BaseMapper;
-import pvt.mktech.petcare.entity.Pets;
+import pvt.mktech.petcare.entity.Pet;
 
 /**
  * 宠物表 映射层。
@@ -9,6 +9,6 @@ import pvt.mktech.petcare.entity.Pets;
  * @author PetCare Code Generator
  * @since 2025-12-02
  */
-public interface PetsMapper extends BaseMapper<Pets> {
+public interface PetsMapper extends BaseMapper<Pet> {
 
 }

@@ -100,7 +100,7 @@ public class UsersTableDef extends TableDef {
     public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USERNAME, EMAIL, PHONE, PASSWORD_HASH, NICKNAME, AVATAR_URL, GENDER, BIRTHDAY, STATUS, LAST_LOGIN_AT, LAST_LOGIN_IP, CREATED_AT, UPDATED_AT};
 
     public UsersTableDef() {
-        super("", "tb_users");
+        super("", "tb_user");
     }
 
     private UsersTableDef(String schema, String name, String alisa) {
@@ -109,7 +109,7 @@ public class UsersTableDef extends TableDef {
 
     public UsersTableDef as(String alias) {
         String key = getNameWithSchema() + "." + alias;
-        return getCache(key, k -> new UsersTableDef("", "tb_users", alias));
+        return getCache(key, k -> new UsersTableDef("", "tb_user", alias));
     }
 
 }
