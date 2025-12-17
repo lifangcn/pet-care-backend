@@ -48,11 +48,6 @@ public class PetTableDef extends TableDef {
     public final QueryColumn GENDER = new QueryColumn(this, "gender");
 
     /**
-     * 状态: 0-删除 1-正常
-     */
-    public final QueryColumn STATUS = new QueryColumn(this, "status");
-
-    /**
      * 用户ID
      */
     public final QueryColumn USER_ID = new QueryColumn(this, "user_id");
@@ -70,7 +65,7 @@ public class PetTableDef extends TableDef {
     /**
      * 头像URL
      */
-    public final QueryColumn AVATAR_URL = new QueryColumn(this, "avatar_url");
+    public final QueryColumn AVATAR = new QueryColumn(this, "avatar");
 
     /**
      * 创建时间
@@ -78,24 +73,9 @@ public class PetTableDef extends TableDef {
     public final QueryColumn CREATED_AT = new QueryColumn(this, "created_at");
 
     /**
-     * 更新时间
-     */
-    public final QueryColumn UPDATED_AT = new QueryColumn(this, "updated_at");
-
-    /**
-     * 过敏信息
-     */
-    public final QueryColumn ALLERGY_INFO = new QueryColumn(this, "allergy_info");
-
-    /**
      * 健康备注
      */
     public final QueryColumn HEALTH_NOTES = new QueryColumn(this, "health_notes");
-
-    /**
-     * 是否绝育: 0-否 1-是
-     */
-    public final QueryColumn IS_STERILIZED = new QueryColumn(this, "is_sterilized");
 
     /**
      * 所有字段。
@@ -105,7 +85,7 @@ public class PetTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, NAME, TYPE, BREED, GENDER, BIRTHDAY, WEIGHT, AVATAR_URL, IS_STERILIZED, HEALTH_NOTES, ALLERGY_INFO, STATUS, CREATED_AT, UPDATED_AT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, NAME, TYPE, BREED, GENDER, BIRTHDAY, WEIGHT, AVATAR, HEALTH_NOTES, CREATED_AT};
 
     public PetTableDef() {
         super("", "tb_pet");

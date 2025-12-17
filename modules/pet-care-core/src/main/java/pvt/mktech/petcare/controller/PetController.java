@@ -20,7 +20,7 @@ import java.util.List;
  * @since 2025-12-02
  */
 @RestController
-@RequestMapping("/pets")
+@RequestMapping("/pet")
 @RequiredArgsConstructor
 public class PetController {
 

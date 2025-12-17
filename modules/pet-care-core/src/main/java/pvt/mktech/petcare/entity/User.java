@@ -23,23 +23,15 @@ public class User implements Serializable {
     
     private String username;
 
-    private String email;
-
     private String phone;
 
     private String nickname;
 
-    private String avatarUrl;
-    
-    private Integer gender; // 0-未知 1-男 2-女
-    
-    private LocalDate birthday;
-    
-    private Integer status = 1; // 0-禁用 1-正常 2-未激活
+    private String avatar;
 
-//    private LocalDateTime lastLoginAt;
+    private Integer status = 1;
 
-//    private String lastLoginIp;
+    private String address;
     
     @Column(value = "created_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;

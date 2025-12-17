@@ -3,8 +3,8 @@ package pvt.mktech.petcare.controller;
 import com.mybatisflex.core.paginate.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import pvt.mktech.petcare.entity.PetHealthRecords;
-import pvt.mktech.petcare.service.PetHealthRecordsService;
+import pvt.mktech.petcare.entity.HealthRecord;
+import pvt.mktech.petcare.service.HealthRecordService;
 
 import java.util.List;
 
@@ -16,21 +16,21 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/petHealthRecords")
-public class PetHealthRecordsController {
+@RequestMapping("/health")
+public class HealthRecordController {
 
 
-    private final PetHealthRecordsService petHealthRecordsService;
+    private final HealthRecordService healthRecordService;
 
     /**
      * 保存宠物健康记录表。
      *
-     * @param petHealthRecords 宠物健康记录表
+     * @param healthRecord 宠物健康记录表
      * @return {@code true} 保存成功，{@code false} 保存失败
      */
     @PostMapping("save")
-    public boolean save(@RequestBody PetHealthRecords petHealthRecords) {
-        return petHealthRecordsService.save(petHealthRecords);
+    public boolean save(@RequestBody HealthRecord healthRecord) {
+        return healthRecordService.save(healthRecord);
     }
 
     /**
@@ -41,18 +41,18 @@ public class PetHealthRecordsController {
      */
     @DeleteMapping("remove/{id}")
     public boolean remove(@PathVariable Long id) {
-        return petHealthRecordsService.removeById(id);
+        return healthRecordService.removeById(id);
     }
 
     /**
      * 根据主键更新宠物健康记录表。
      *
-     * @param petHealthRecords 宠物健康记录表
+     * @param healthRecord 宠物健康记录表
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("update")
-    public boolean update(@RequestBody PetHealthRecords petHealthRecords) {
-        return petHealthRecordsService.updateById(petHealthRecords);
+    public boolean update(@RequestBody HealthRecord healthRecord) {
+        return healthRecordService.updateById(healthRecord);
     }
 
     /**
@@ -61,8 +61,8 @@ public class PetHealthRecordsController {
      * @return 所有数据
      */
     @GetMapping("list")
-    public List<PetHealthRecords> list() {
-        return petHealthRecordsService.list();
+    public List<HealthRecord> list() {
+        return healthRecordService.list();
     }
 
     /**
@@ -72,8 +72,8 @@ public class PetHealthRecordsController {
      * @return 宠物健康记录表详情
      */
     @GetMapping("getInfo/{id}")
-    public PetHealthRecords getInfo(@PathVariable Long id) {
-        return petHealthRecordsService.getById(id);
+    public HealthRecord getInfo(@PathVariable Long id) {
+        return healthRecordService.getById(id);
     }
 
     /**
@@ -83,8 +83,8 @@ public class PetHealthRecordsController {
      * @return 分页对象
      */
     @GetMapping("page")
-    public Page<PetHealthRecords> page(Page<PetHealthRecords> page) {
-        return petHealthRecordsService.page(page);
+    public Page<HealthRecord> page(Page<HealthRecord> page) {
+        return healthRecordService.page(page);
     }
 
 }

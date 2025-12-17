@@ -22,7 +22,7 @@ public class MybatisFlexCodeGenerator {
 
     // 要生成的表名（为空则生成所有表）
     private static final String[] INCLUDED_TABLES = {
-            "tb_pet_vaccinations", "tb_pet_health_records"
+            "tb_health_record"
     };
 
     // 要排除的表名

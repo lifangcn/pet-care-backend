@@ -38,30 +38,12 @@ public interface UserService {
     UserResponse updateUser(Long userId, UserUpdateRequest request);
 
     /**
-     * 修改用户密码
-     *
-     * @param userId      用户ID
-     * @param oldPassword 旧密码
-     * @param newPassword 新密码
-     */
-    @Transactional
-    void changePassword(Long userId, String oldPassword, String newPassword);
-
-    /**
      * 检查用户名是否存在
      *
      * @param username 用户名
      * @return 存在返回true，否则返回false
      */
     boolean checkUsernameExists(String username);
-
-    /**
-     * 检查邮箱是否存在
-     *
-     * @param email 邮箱地址
-     * @return 存在返回true，否则返回false
-     */
-    boolean checkEmailExists(String email);
 
     /**
      * 检查手机号是否存在

@@ -10,14 +10,14 @@ import com.mybatisflex.core.table.TableDef;
  * @author PetCare Code Generator
  * @since 2025-12-08
  */
-public class PetHealthRecordsTableDef extends TableDef {
+public class HealthRecordTableDef extends TableDef {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * 宠物健康记录表
      */
-    public static final PetHealthRecordsTableDef PET_HEALTH_RECORDS = new PetHealthRecordsTableDef();
+    public static final HealthRecordTableDef HEALTH_RECORD = new HealthRecordTableDef();
 
     /**
      * 记录ID
@@ -69,17 +69,17 @@ public class PetHealthRecordsTableDef extends TableDef {
      */
     public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, PET_ID, RECORD_TYPE, VALUE, UNIT, NOTES, RECORD_DATE, CREATED_AT};
 
-    public PetHealthRecordsTableDef() {
-        super("", "tb_pet_health_records");
+    public HealthRecordTableDef() {
+        super("", "tb_health_record");
     }
 
-    private PetHealthRecordsTableDef(String schema, String name, String alisa) {
+    private HealthRecordTableDef(String schema, String name, String alisa) {
         super(schema, name, alisa);
     }
 
-    public PetHealthRecordsTableDef as(String alias) {
+    public HealthRecordTableDef as(String alias) {
         String key = getNameWithSchema() + "." + alias;
-        return getCache(key, k -> new PetHealthRecordsTableDef("", "tb_pet_health_records", alias));
+        return getCache(key, k -> new HealthRecordTableDef("", "tb_health_record", alias));
     }
 
 }

@@ -25,29 +25,15 @@ public class UsersTableDef extends TableDef {
     public final QueryColumn ID = new QueryColumn(this, "id");
 
     /**
-     * 邮箱
-     */
-    public final QueryColumn EMAIL = new QueryColumn(this, "email");
-
-    /**
      * 手机号
      */
     public final QueryColumn PHONE = new QueryColumn(this, "phone");
 
-    /**
-     * 性别: 0-未知 1-男 2-女
-     */
-    public final QueryColumn GENDER = new QueryColumn(this, "gender");
 
     /**
      * 状态: 0-禁用 1-正常 2-未激活
      */
     public final QueryColumn STATUS = new QueryColumn(this, "status");
-
-    /**
-     * 生日
-     */
-    public final QueryColumn BIRTHDAY = new QueryColumn(this, "birthday");
 
     /**
      * 昵称
@@ -62,32 +48,16 @@ public class UsersTableDef extends TableDef {
     /**
      * 头像URL
      */
-    public final QueryColumn AVATAR_URL = new QueryColumn(this, "avatar_url");
+    public final QueryColumn AVATAR = new QueryColumn(this, "avatar");
 
+    /**
+     * 生日
+     */
+    public final QueryColumn ADDRESS = new QueryColumn(this, "address");
     /**
      * 创建时间
      */
     public final QueryColumn CREATED_AT = new QueryColumn(this, "created_at");
-
-    /**
-     * 更新时间
-     */
-    public final QueryColumn UPDATED_AT = new QueryColumn(this, "updated_at");
-
-    /**
-     * 最后登录时间
-     */
-//    public final QueryColumn LAST_LOGIN_AT = new QueryColumn(this, "last_login_at");
-
-    /**
-     * 最后登录IP
-     */
-//    public final QueryColumn LAST_LOGIN_IP = new QueryColumn(this, "last_login_ip");
-
-    /**
-     * 加密密码
-     */
-//    public final QueryColumn PASSWORD_HASH = new QueryColumn(this, "password_hash");
 
     /**
      * 所有字段。
@@ -97,7 +67,7 @@ public class UsersTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USERNAME, EMAIL, PHONE, NICKNAME, AVATAR_URL, GENDER, BIRTHDAY, STATUS/*, PASSWORD_HASH, LAST_LOGIN_AT, LAST_LOGIN_IP*/, CREATED_AT, UPDATED_AT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USERNAME, PHONE, NICKNAME, AVATAR, STATUS, ADDRESS, CREATED_AT};
 
     public UsersTableDef() {
         super("", "tb_user");

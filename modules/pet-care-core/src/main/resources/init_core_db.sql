@@ -66,7 +66,8 @@ CREATE TABLE `tb_pet_vaccinations` (
     CONSTRAINT `fk_tb_vaccination_pet` FOREIGN KEY (`pet_id`) REFERENCES `tb_pet` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='宠物疫苗记录表';
 
-CREATE TABLE `tb_pet_health_records` (
+CREATE TABLE `tb_health_record`
+(
     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '记录ID',
     `pet_id` bigint(20) NOT NULL COMMENT '宠物ID',
     `record_type` tinyint(1) NOT NULL COMMENT '记录类型: 1-体重 2-体温 3-症状 4-用药 5-其他',

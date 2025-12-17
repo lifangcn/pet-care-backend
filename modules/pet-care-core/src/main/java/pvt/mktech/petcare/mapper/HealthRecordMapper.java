@@ -1,7 +1,7 @@
 package pvt.mktech.petcare.mapper;
 
 import com.mybatisflex.core.BaseMapper;
-import pvt.mktech.petcare.entity.PetHealthRecords;
+import pvt.mktech.petcare.entity.HealthRecord;
 
 /**
  * 宠物健康记录表 映射层。
@@ -9,6 +9,6 @@ import pvt.mktech.petcare.entity.PetHealthRecords;
  * @author PetCare Code Generator
  * @since 2025-12-08
  */
-public interface PetHealthRecordsMapper extends BaseMapper<PetHealthRecords> {
+public interface HealthRecordMapper extends BaseMapper<HealthRecord> {
 
 }

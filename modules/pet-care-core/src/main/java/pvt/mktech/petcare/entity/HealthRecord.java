@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
  * @since 2025-12-08
  */
 @Data
-@Table("tb_pet_health_records")
-public class PetHealthRecords implements Serializable {
+@Table("tb_health_record")
+public class HealthRecord implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
