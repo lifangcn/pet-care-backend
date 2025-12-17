@@ -16,7 +16,7 @@ spring:
         password: nacos
         namespace: ${spring.cloud.nacos.discovery.namespace}
         group: ${spring.cloud.nacos.discovery.group}
-        file-extension: yaml         # 配置文件格式
+        file-extension: yaml
 
 # 暴露网关的 actuator 端点 (用于刷新配置，可选但推荐)
 management:

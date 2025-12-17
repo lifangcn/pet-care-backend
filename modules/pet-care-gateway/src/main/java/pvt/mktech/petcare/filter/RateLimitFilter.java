@@ -38,9 +38,9 @@ public class RateLimitFilter extends AbstractGatewayFilterFactory<RateLimitFilte
     private static final Map<String, Integer> RATE_LIMIT_CONFIG = new HashMap<>();
 
     static {
-        RATE_LIMIT_CONFIG.put("/api/auth/login", 5);      // 登录接口：5次/秒
-        RATE_LIMIT_CONFIG.put("/api/auth/register", 3);   // 注册接口：3次/秒
-        RATE_LIMIT_CONFIG.put("/api/**", 100);            // 其他API：100次/秒
+        RATE_LIMIT_CONFIG.put("/api/auth/login", 5);    // 登录接口：5次/秒
+        RATE_LIMIT_CONFIG.put("/api/auth/code", 3);     // 注册接口：3次/秒
+        RATE_LIMIT_CONFIG.put("/api/**", 100);          // 其他API：100次/秒
     }
 
     public RateLimitFilter(RateLimiterUtil rateLimiterUtil, ObjectMapper objectMapper) {
