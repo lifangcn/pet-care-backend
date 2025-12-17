@@ -27,8 +27,6 @@ public class User implements Serializable {
 
     private String phone;
 
-    private String passwordHash;
-
     private String nickname;
 
     private String avatarUrl;
@@ -39,9 +37,9 @@ public class User implements Serializable {
     
     private Integer status = 1; // 0-禁用 1-正常 2-未激活
 
-    private LocalDateTime lastLoginAt;
-    
-    private String lastLoginIp;
+//    private LocalDateTime lastLoginAt;
+
+//    private String lastLoginIp;
     
     @Column(value = "created_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;

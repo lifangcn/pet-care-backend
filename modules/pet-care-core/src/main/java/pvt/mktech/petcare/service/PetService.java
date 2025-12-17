@@ -13,8 +13,19 @@ import java.util.List;
  */
 public interface PetService extends IService<Pet> {
 
-    Pet save(String token, Pet pet);
+    /**
+     * 保存宠物
+     *
+     * @param pet 宠物
+     * @return 保存后的宠物
+     */
+    Pet savePet(Pet pet);
 
-
-    List<Pet> findByUserId(String token);
+    /**
+     * 根据用户id查询用户所有宠物
+     *
+     * @param userId 用户id
+     * @return 宠物列表
+     */
+    List<Pet> findByUserId(Long userId);
 }

@@ -38,15 +38,6 @@ public interface UserService {
     UserResponse updateUser(Long userId, UserUpdateRequest request);
 
     /**
-     * 更新用户最后登录时间和IP
-     *
-     * @param userId  用户ID
-     * @param loginIp 登录IP地址
-     */
-    @Transactional
-    void updateLastLogin(Long userId, String loginIp);
-
-    /**
      * 修改用户密码
      *
      * @param userId      用户ID

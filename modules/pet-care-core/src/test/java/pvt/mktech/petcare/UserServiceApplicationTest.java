@@ -3,7 +3,7 @@ package pvt.mktech.petcare;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.context.SpringBootTest;
-import pvt.mktech.petcare.common.redis.IdGenerator;
+import pvt.mktech.petcare.common.util.DistributedIdGenerator;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -13,9 +13,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class UserServiceApplicationTest {
 
     @Resource
-    private IdGenerator idGenerator;
+    private DistributedIdGenerator distributedIdGenerator;
     @Resource
-    private ThreadPoolExecutor userServiceThreadPool;
+    private ThreadPoolExecutor coreThreadPool;
 
     //    @Test
     void testGenerateIdConcurrency() throws InterruptedException {
@@ -24,9 +24,9 @@ public class UserServiceApplicationTest {
         long start = System.currentTimeMillis();
 
         for (int i = 0; i < 100; i++) {
-            userServiceThreadPool.submit(() -> {
+            coreThreadPool.submit(() -> {
                 for (int j = 0; j < 100; j++) {
-                    Long id = idGenerator.generateId("test");
+                    Long id = distributedIdGenerator.generateId("test");
                     ids.put(id, true);
                     System.out.println(Thread.currentThread().getName() + "生成ID：" + id);
                 }

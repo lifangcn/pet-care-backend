@@ -19,13 +19,11 @@
     </modules>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- 框架组件 -->
         <spring-boot.version>3.2.5</spring-boot.version>
-        <spring-cloud.version>2023.0.0</spring-cloud.version>
         <spring-cloud-alibaba.version>2023.0.0.0-RC1</spring-cloud-alibaba.version>
-
+        <spring-cloud.version>2023.0.0</spring-cloud.version>
+        <dubbo.version>3.3.0</dubbo.version>
         <!-- DB -->
         <mysql-connector.version>9.3.0</mysql-connector.version>
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
@@ -47,10 +45,15 @@
 
         <commons-lang3.version>3.19.0</commons-lang3.version>
         <tomcat-embed-core.version>10.1.47</tomcat-embed-core.version>
+        <!-- 基础 -->
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <!-- Spring Boot -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -62,6 +65,13 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
                 <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo-dependencies-bom</artifactId>
+                <version>${dubbo.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -128,7 +138,7 @@
             </dependency>
 
             <!-- 依赖版本漏洞修复 -->
-            <dependency>
+            <!--<dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
                 <version>${logback.version}</version>
@@ -137,7 +147,7 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
-            </dependency>
+            </dependency>-->
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-common</artifactId>

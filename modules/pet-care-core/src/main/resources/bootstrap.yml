@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: pet-care-core
+  cloud:
+    nacos:
+      # Nacos 服务发现配置
+      discovery:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        namespace: public
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        username: nacos
+        password: nacos
+        namespace: ${spring.cloud.nacos.discovery.namespace}
+        group: ${spring.cloud.nacos.discovery.group}
+        file-extension: yaml         # 配置文件格式
+
+# 暴露网关的 actuator 端点 (用于刷新配置，可选但推荐)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

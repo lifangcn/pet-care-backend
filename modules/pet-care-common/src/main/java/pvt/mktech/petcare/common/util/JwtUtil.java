@@ -1,106 +1,104 @@
-
 package pvt.mktech.petcare.common.util;
 
 import cn.hutool.core.date.DateUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
-
-
 /**
- * JWT工具类，用于生成和解析JWT令牌
+ * JWT 工具类
  */
-@Slf4j
+@Data
 @Component
+@ConfigurationProperties(prefix = "jwt")
 public class JwtUtil {
-    public static final Long LOGIN_TOKEN_TTL = 3600L;
-    public static final String JWT_SECRET = "petcare-jwt-secret-key-2025-must-be-at-least-256-bits-long-for-hmac-sha256-algorithm";
-    /**
-     * 使用JWT_SECRET初始化的密钥对象
-     */
-    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8));
-    @Value("${jwt.secret:petcare-secret-key-2024}")
-    private String secret;
 
-    @Value("${jwt.expiration:86400}")
-    private Long expiration; // 默认24小时
+    private String secretKey;
+    private Long expireTime;
+    private Long refreshExpireTime;
 
-    /**
-     * 生成JWT令牌
-     *
-     * @param userId 用户ID
-     * @param username 用户名
-     * @return 生成的JWT令牌字符串
-     */
-    public static String generateToken(Long userId, String username) {
+    // 生成 Token
+    public String generateAccessToken(String username, Long userId) {
         Date now = DateUtil.date();
-        Date expiryDate = new Date(now.getTime() + LOGIN_TOKEN_TTL * 1000);
-
+        Date expiryDate = DateUtil.offsetSecond(now, expireTime.intValue());
         return Jwts.builder()
-                .subject(String.valueOf(userId))           // 设置用户ID为主题
-                .claim("username", username)            // 添加用户名声明
-                .issuedAt(now)                             // 设置签发时间
-                .expiration(expiryDate)                    // 设置过期时间
-                .signWith(SECRET_KEY)                      // 使用密钥签名
-                .compact();                                // 构建并返回紧凑格式的JWT
+                .subject(String.valueOf(userId))
+                .claim("username", username)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSignInKey())
+                .compact();
     }
 
-    /**
-     * 解析JWT令牌
-     *
-     * @param token JWT令牌字符串
-     * @return 解析后的Claims对象
-     */
-    public static Claims parseToken(String token) {
+    // 生成刷新Token
+    public String generateRefreshToken(Long userId) {
+        Date now = DateUtil.date();
+        Date expiryDate = DateUtil.offsetSecond(now, refreshExpireTime.intValue());
+        return Jwts.builder()
+                .subject(String.valueOf(userId))
+                .expiration(expiryDate)
+                .signWith(getSignInKey())
+                .compact();
+    }
+
+    // 解析并验证 Token
+    public Claims getClaimsFromToken(String token) {
         return Jwts.parser()
-                .verifyWith(SECRET_KEY)                    // 验证密钥
-                .build()                                   // 构建解析器
-                .parseSignedClaims(token)                  // 解析已签名的声明
-                .getPayload();                             // 获取载荷部分
+                .verifyWith(getSignInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
-    /**
-     * 从JWT令牌中获取用户ID
-     *
-     * @param token JWT令牌字符串
-     * @return 用户ID
-     */
-    public static Long getUserIdFromToken(String token) {
-        Claims claims = parseToken(token);
-        return Long.parseLong(claims.getSubject());       // 从主题中获取用户ID
+    // 获取用户 ID
+    public Long getUserIdFromToken(String token) {
+        return Long.valueOf(getClaimsFromToken(token).getSubject());
     }
 
-    /**
-     * 从JWT令牌中获取用户名
-     *
-     * @param token JWT令牌字符串
-     * @return 用户名
-     */
-    public static String getUsernameFromToken(String token) {
-        Claims claims = parseToken(token);
-        return claims.get("username", String.class);      // 从声明中获取用户名
+    // 获取用户名
+    public String getUsernameFromToken(String token) {
+        return getClaimsFromToken(token).get("username", String.class);
     }
 
-    /**
-     * 检查JWT令牌是否已过期
-     *
-     * @param token JWT令牌字符串
-     * @return 如果令牌已过期返回true，否则返回false
-     */
-    public static boolean isTokenExpired(String token) {
+    // 解析令牌
+    public Claims parseToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getSignInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    // 校验 Token 是否有效
+    public boolean validateToken(String token) {
+        try {
+            parseToken(token);
+            return true;
+        } catch (Exception e) {
+            // 解析失败（过期、签名错误等）
+            return false;
+        }
+    }
+
+    // 刷新令牌验证（专门验证refresh token）
+    public boolean validateRefreshToken(String token) {
         try {
             Claims claims = parseToken(token);
-            return claims.getExpiration().before(new Date()); // 比较过期时间和当前时间
+            return claims.getExpiration().after(new Date());
         } catch (Exception e) {
-            return true;                                      // 解析异常也认为是过期
+            return false;
         }
+    }
+
+    private SecretKey getSignInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

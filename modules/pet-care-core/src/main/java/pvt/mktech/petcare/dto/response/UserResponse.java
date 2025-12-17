@@ -16,9 +16,6 @@ public class UserResponse {
     @Schema(description = "用户名", example = "john_doe")
     private String username;
 
-    @Schema(description = "邮箱", example = "user@example.com")
-    private String email;
-
     @Schema(description = "手机号", example = "13800138000")
     private String phone;
 
@@ -37,11 +34,11 @@ public class UserResponse {
     @Schema(description = "用户状态: 0-禁用 1-正常 2-未激活", example = "1")
     private Integer status;
 
-    @Schema(description = "最后登录时间", example = "2024-01-01T10:00:00")
-    private LocalDateTime lastLoginAt;
-
-    @Schema(description = "最后登录IP", example = "192.168.1.1")
-    private String lastLoginIp;
+//    @Schema(description = "最后登录时间", example = "2024-01-01T10:00:00")
+//    private LocalDateTime lastLoginAt;
+//
+//    @Schema(description = "最后登录IP", example = "192.168.1.1")
+//    private String lastLoginIp;
 
     @Schema(description = "创建时间", example = "2024-01-01T00:00:00")
     private LocalDateTime createdAt;

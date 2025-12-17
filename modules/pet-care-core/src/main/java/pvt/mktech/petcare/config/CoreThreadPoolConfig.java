@@ -7,10 +7,10 @@ import pvt.mktech.petcare.common.thread.ThreadPoolManager;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
-public class UserServiceThreadPoolConfig {
+public class CoreThreadPoolConfig {
 
-    @Bean(name = "userServiceThreadPool")
-    public ThreadPoolExecutor userServiceThreadPool() {
+    @Bean(name = "coreThreadPool")
+    public ThreadPoolExecutor coreThreadPool() {
         return ThreadPoolManager.createTheadPool("core-service");
     }
 }

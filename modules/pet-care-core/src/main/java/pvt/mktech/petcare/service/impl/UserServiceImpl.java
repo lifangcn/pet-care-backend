@@ -14,7 +14,6 @@ import pvt.mktech.petcare.dto.response.UserResponse;
 import pvt.mktech.petcare.entity.User;
 import pvt.mktech.petcare.mapper.UserMapper;
 import pvt.mktech.petcare.service.UserService;
-import pvt.mktech.petcare.util.PasswordUtil;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -97,18 +96,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Transactional
     @Override
-    public void updateLastLogin(Long userId, String loginIp) {
-        User user = new User();
-        user.setId(userId);
-        user.setLastLoginAt(LocalDateTime.now());
-        user.setLastLoginIp(loginIp);
-        user.setUpdatedAt(LocalDateTime.now());
-        
-        userMapper.update(user);
-    }
-    
-    @Transactional
-    @Override
     public void changePassword(Long userId, String oldPassword, String newPassword) {
         User user = userMapper.selectOneById(userId);
         if (user == null) {
@@ -123,7 +110,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 更新密码
         User updateUser = new User();
         updateUser.setId(userId);
-        updateUser.setPasswordHash(PasswordUtil.encode(newPassword));
         updateUser.setUpdatedAt(LocalDateTime.now());
         userMapper.update(updateUser);
         

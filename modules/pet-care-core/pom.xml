@@ -25,13 +25,20 @@
             <artifactId>pet-care-common</artifactId>
             <version>${pet-care-common.version}</version>
         </dependency>
+        <!-- 2. Nacos 服务发现 (注册到 Nacos) -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
+        <!-- Nacos 配置中心 (拉取远程配置) -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+        <!-- Spring Boot 3 必须引入 bootstrap 支持 (重要)，否则无法读取 bootstrap.yml -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
         </dependency>
         <!-- Spring Boot Web -->
         <dependency>
@@ -79,35 +86,12 @@
     <!-- 打包配置 -->
     <build>
         <plugins>
-            <!-- 编译插件 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>21</source> <!-- 或你的JDK版本 -->
-                    <target>21</target>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-
-            <!-- Spring Boot 打包插件 (关键) -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <!-- 必须指定版本，或者使用 ${spring-boot.version} -->
                 <configuration>
-                    <!-- 指定启动类的全路径 -->
-                    <mainClass>pvt.mktech.petcare.CoreServiceApplication</mainClass>
+                    <mainClass>pvt.mktech.petcare.GatewayApplication</mainClass>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <!-- 必须包含 repackage 目标 -->
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

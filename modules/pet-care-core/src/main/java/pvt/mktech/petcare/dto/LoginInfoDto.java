@@ -28,13 +28,10 @@ public class LoginInfoDto {
     private String avatarUrl;
 
     @Schema(description = "访问Token")
-    private String token;
+    private String accessToken;
 
     @Schema(description = "刷新Token")
     private String refreshToken;
-
-    @Schema(description = "Token类型")
-    private String tokenType;
 
     @Schema(description = "过期时间戳")
     private Long expiresIn;

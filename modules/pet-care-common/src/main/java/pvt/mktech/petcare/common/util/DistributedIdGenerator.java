@@ -1,32 +1,21 @@
-package pvt.mktech.petcare.common.redis;
+package pvt.mktech.petcare.common.util;
 
 import lombok.RequiredArgsConstructor;
-import org.redisson.api.RAtomicLong;
 import org.redisson.api.RedissonClient;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-/**
- * 基于Redisson的ID生成器，支持生成带日期前缀的唯一ID和递增序列ID
- * <p>
- * 特点：
- * 1. generateId系列方法：生成包含日期信息的唯一ID，每天自动过期重置
- * 2. generateSequenceId系列方法：生成全局递增的序列ID，持久化存储
- */
+import static pvt.mktech.petcare.common.constant.CommonConstant.*;
+
+@Component
 @RequiredArgsConstructor
-public class IdGenerator {
+public class DistributedIdGenerator {
 
     private final RedissonClient redissonClient;
-    private static final String ID_PREFIX = "id:generator:";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy:MM:dd");
-
-    /**
-     * 开始时间戳2025-01-01 00:00:00
-     */
-    private static final long BEGIN_TIMESTAMP = 1735689600L;
-    private static final int COUNT_BITS = 32;
 
     /**
      * 设计自增全局唯一ID结构：0(符号位)-00000000 00000000 00000000 0000000(31bit时间戳，以秒为单位，可用69年)-00000000 00000000 00000000 00000000(32位序列号)
@@ -45,4 +34,3 @@ public class IdGenerator {
         return timestamp << COUNT_BITS | count;
     }
 }
-

@@ -24,16 +24,21 @@ public interface AuthService {
     /**
      * 用户登录验证，如果账号不存在，则创建用户
      * @param request 登录请求数据传输对象
-     * @param clientIp 客户端IP地址
      * @return 登录响应数据传输对象
      */
-    Result<LoginInfoDto> login(LoginRequest request, String clientIp);
+    Result<LoginInfoDto> login(LoginRequest request);
+
+    /**
+     * 刷新令牌
+     *
+     * @param dto 登录信息数据传输对象
+     * @return 登录信息数据传输对象
+     */
+    LoginInfoDto refreshToken(LoginInfoDto dto);
 
     /**
      * 退出登录
-     *
-     * @param token
-     * @return
+     * @param refreshToken 用户刷新token
      */
-    Result<Void> logout(String token);
+    void logout(String refreshToken);
 }

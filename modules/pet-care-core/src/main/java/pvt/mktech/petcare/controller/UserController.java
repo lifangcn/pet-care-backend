@@ -9,13 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.context.UserHolder;
 import pvt.mktech.petcare.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.dto.response.UserResponse;
 import pvt.mktech.petcare.service.UserService;
 
 @RestController
-@RequestMapping("/v1/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "用户管理", description = "用户信息管理相关接口")
@@ -47,18 +46,18 @@ public class UserController {
         UserResponse user = userService.getUserById(userId);
         return ResponseEntity.ok(user);
     }
-    
-    @PutMapping("/profile")
-    @Operation(
-        summary = "更新当前用户信息",
-        description = "更新当前登录用户的基本信息"
-    )
-    public Result<UserResponse> updateCurrentUser(
-            @Parameter(description = "用户更新信息", required = true)
-            @Valid @RequestBody UserUpdateRequest request) {
-        UserResponse updatedUser = userService.updateUser(UserHolder.getUser().getId(), request);
-        return Result.success(updatedUser);
-    }
+
+//    @PutMapping("/profile")
+//    @Operation(
+//        summary = "更新当前用户信息",
+//        description = "更新当前登录用户的基本信息"
+//    )
+//    public Result<UserResponse> updateCurrentUser(
+//            @Parameter(description = "用户更新信息", required = true)
+//            @Valid @RequestBody UserUpdateRequest request) {
+//        UserResponse updatedUser = userService.updateUser(UserHolder.getUser().getId(), request);
+//        return Result.success(updatedUser);
+//    }
     
     @PostMapping("/change-password")
     @Operation(

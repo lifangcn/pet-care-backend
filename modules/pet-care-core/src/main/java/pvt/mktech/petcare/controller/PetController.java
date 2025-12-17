@@ -2,9 +2,10 @@ package pvt.mktech.petcare.controller;
 
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import pvt.mktech.petcare.common.context.UserContext;
+import pvt.mktech.petcare.common.dto.UserInfoDto;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.entity.Pet;
 import pvt.mktech.petcare.service.PetService;
@@ -19,7 +20,7 @@ import java.util.List;
  * @since 2025-12-02
  */
 @RestController
-@RequestMapping("/v1/pets")
+@RequestMapping("/pets")
 @RequiredArgsConstructor
 public class PetController {
 
@@ -31,10 +32,9 @@ public class PetController {
             summary = "查询当前用户的所有宠物列表",
             description = "用户信息基于前端请求头的Authorization获取用户信息，避免明文传递用户私密信息"
     )
-    public Result<List<Pet>> listMyPets(@Parameter(description = "custom uuid token", required = true)
-                                 @RequestHeader("Authorization") String token) {
-        // TODO 对于微服务中使用到token的地方，进行通用处理
-        return Result.success(petService.findByUserId(token));
+    public Result<List<Pet>> listMyPets() {
+        UserInfoDto userInfo = UserContext.getUserInfo();
+        return Result.success(petService.findByUserId(userInfo.getUserId()));
     }
 
     /**
@@ -48,10 +48,8 @@ public class PetController {
             summary = "查询当前用户的所有宠物列表",
             description = "用户信息基于前端请求头的Authorization获取用户信息，避免明文传递用户私密信息"
     )
-    public Result<Pet> save(@Parameter(description = "custom uuid token", required = true)
-                            @RequestHeader("Authorization") String token,
-                            @RequestBody Pet pet) {
-        return Result.success(petService.save(token, pet));
+    public Result<Pet> save(@RequestBody Pet pet) {
+        return Result.success(petService.savePet(pet));
     }
 
     /**

@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: pet-care-gateway # 该服务在 Nacos 中的名称
+  # Nacos 配置中心配置
+  cloud:
+    nacos:
+      # Nacos 服务发现配置
+      discovery:
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        namespace: public
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        username: nacos
+        password: nacos
+        namespace: ${spring.cloud.nacos.discovery.namespace}
+        group: ${spring.cloud.nacos.discovery.group}
+        file-extension: yaml         # 配置文件格式
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: "!QAZ2wsx"
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# 暴露网关的 actuator 端点 (用于刷新配置，可选但推荐)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

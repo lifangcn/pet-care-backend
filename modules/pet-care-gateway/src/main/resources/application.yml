@@ -1,37 +1,6 @@
-server:
-  port: 8888
-
-spring:
-  application:
-    name: pet-care-gateway
-  cloud:
-    nacos:
-      discovery:
-        server-addr: localhost:8848
-        username: nacos
-        password: nacos
-    gateway:
-      routes:
-        - id: auth-route
-          uri: lb://pet-care-core
-          predicates:
-            - Path=/v1/auth/**
-        #          filters:
-        #            - StripPrefix=1
-        - id: core-route
-          uri: lb://pet-care-core
-          predicates:
-            - Path=/v1/users/**, /v1/pets/**
-        #          filters:
-        #            - StripPrefix=1
-        - id: shop-route
-          uri: lb://pet-care-shop
-          predicates:
-            - Path=/v1/shop/**
-#          filters:
-#            - StripPrefix=1
-
 # JWT配置
 jwt:
-  secret: petcare-secret-key-change-in-production
-  expiration: 604800000
+  secret-key: "M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="
+  expire-time: 86400
+  refresh-expire-time: 604800
+
