@@ -1,6 +1,5 @@
 package pvt.mktech.petcare.controller;
 
-import cn.hutool.core.util.StrUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -9,15 +8,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.context.UserContext;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.dto.response.ResultCode;
-import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.util.MinioUtil;
-import pvt.mktech.petcare.dto.request.AvatarUploadDTO;
 import pvt.mktech.petcare.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.dto.response.UserResponse;
 import pvt.mktech.petcare.service.UserService;
@@ -81,7 +77,7 @@ public class UserController {
 
     @Operation(summary = "上传用户头像")
     @PostMapping(value = "/avatar", consumes = "multipart/form-data")
-    public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file, AvatarUploadDTO uploadDTO) {
+    public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file) {
         Long userId = UserContext.getUserInfo().getUserId();
         try {
             // 1. 权限验证（只能修改自己的头像）
