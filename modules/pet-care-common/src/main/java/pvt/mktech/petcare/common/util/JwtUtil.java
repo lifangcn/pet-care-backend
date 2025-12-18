@@ -79,6 +79,7 @@ public class JwtUtil {
     // 校验 Token 是否有效
     public boolean validateToken(String token) {
         try {
+
             parseToken(token);
             return true;
         } catch (Exception e) {

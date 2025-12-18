@@ -62,10 +62,4 @@ public class User implements Serializable {
      */
     @Column(value = "created_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    @Column(value = "updated_at", onUpdateValue = "CURRENT_TIMESTAMP")
-    private LocalDateTime updatedAt;
 }

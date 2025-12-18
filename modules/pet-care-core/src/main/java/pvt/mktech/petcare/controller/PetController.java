@@ -27,7 +27,7 @@ public class PetController {
     private final PetService petService;
 
 
-    @PostMapping("listMyPets")
+    @PostMapping("list")
     @Operation(
             summary = "查询当前用户的所有宠物列表",
             description = "用户信息基于前端请求头的Authorization获取用户信息，避免明文传递用户私密信息"

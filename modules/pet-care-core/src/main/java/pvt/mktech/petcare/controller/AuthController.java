@@ -57,8 +57,8 @@ public class AuthController {
             summary = "用户登出",
             description = "用户登出，使Token失效"
     )
-    public Result<Void> logout(@RequestHeader("Authorization") String refreshToken) {
+    public Result<String> logout(@RequestHeader("Authorization") String refreshToken) {
         authService.logout(refreshToken);
-        return Result.success();
+        return Result.success("登出成功");
     }
 }

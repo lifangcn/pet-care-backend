@@ -82,8 +82,10 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
             user.setUsername(USER_DEFAULT_NAME_PREFIX + RandomUtil.randomString(10));
             save(user);
         }
+        LoginInfoDto loginInfoDto = new LoginInfoDto();
+        BeanUtil.copyProperties(user, loginInfoDto);
         // 4.生成双token, 并保存 refreshToken 到 Redis中用于后续认证
-        LoginInfoDto loginInfoDto = generateDoubleToken(user);
+        generateDoubleToken(loginInfoDto);
         // 将验证码移除
         redisCacheUtil.delete(LOGIN_CODE_KEY + phone);
         return Result.success(loginInfoDto);
@@ -95,18 +97,13 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
      * @param user 数据库查询或新增的用户
      * @return 登录信息Dto
      */
-    private LoginInfoDto generateDoubleToken(User user) {
-        String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getId());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getId());
-
-        LoginInfoDto loginInfoDto = new LoginInfoDto();
-        BeanUtil.copyProperties(user, loginInfoDto);
+    private void generateDoubleToken(LoginInfoDto loginInfoDto) {
+        String accessToken = jwtUtil.generateAccessToken(loginInfoDto.getUsername(), loginInfoDto.getId());
+        String refreshToken = jwtUtil.generateRefreshToken(loginInfoDto.getId());
         loginInfoDto.setAccessToken(accessToken);
         loginInfoDto.setRefreshToken(refreshToken);
         loginInfoDto.setExpiresIn(ACCESS_TOKEN_TTL);
-
-        redisCacheUtil.set(REFRESH_TOKEN_KEY + user.getId(), refreshToken, Duration.ofSeconds(REFRESH_TOKEN_TTL));
-        return loginInfoDto;
+        redisCacheUtil.set(REFRESH_TOKEN_KEY + loginInfoDto.getId(), refreshToken, Duration.ofSeconds(REFRESH_TOKEN_TTL));
     }
 
     @Override

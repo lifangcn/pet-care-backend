@@ -1,5 +1,9 @@
-# JWT配置
-jwt:
-  secret-key: "M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="
-  expire-time: 86400
-  refresh-expire-time: 604800
+minio:
+  enable: true
+  business-key: avatar
+  endpoint: http://localhost:9000
+  access-key: minio
+  secret-key: "!QAZ2wsx"
+  bucket-name: avatars
+  file-size-limit: 10485760 # 10MB
+  expire-time: 3600 # 1小时

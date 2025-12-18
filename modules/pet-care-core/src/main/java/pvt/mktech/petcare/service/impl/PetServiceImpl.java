@@ -12,7 +12,6 @@ import pvt.mktech.petcare.service.PetService;
 
 import java.util.List;
 
-import static pvt.mktech.petcare.common.constant.CommonConstant.ACCESS_TOKEN_KEY;
 import static pvt.mktech.petcare.entity.table.PetTableDef.PETS;
 
 /**

@@ -18,6 +18,9 @@ spring:
         namespace: ${spring.cloud.nacos.discovery.namespace}
         group: ${spring.cloud.nacos.discovery.group}
         file-extension: yaml
+        shared-configs:
+          - data-id: shared-redis.yaml
+          - data-id: shared-jwt.yaml
 
 # 暴露网关的 actuator 端点 (用于刷新配置，可选但推荐)
 management:

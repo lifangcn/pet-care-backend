@@ -29,7 +29,7 @@ import java.util.Map;
  */
 @Order(-100)
 @Component
-public class RateLimitFilter extends AbstractGatewayFilterFactory<RateLimitFilter.Config> {
+public class RateLimitGatewayFilterFactory extends AbstractGatewayFilterFactory<RateLimitGatewayFilterFactory.Config> {
     private final RateLimiterUtil rateLimiterUtil;
     private final ObjectMapper objectMapper;
     private final PathMatcher pathMatcher = new AntPathMatcher();
@@ -43,7 +43,7 @@ public class RateLimitFilter extends AbstractGatewayFilterFactory<RateLimitFilte
         RATE_LIMIT_CONFIG.put("/api/**", 100);          // 其他API：100次/秒
     }
 
-    public RateLimitFilter(RateLimiterUtil rateLimiterUtil, ObjectMapper objectMapper) {
+    public RateLimitGatewayFilterFactory(RateLimiterUtil rateLimiterUtil, ObjectMapper objectMapper) {
         super(Config.class);
         this.rateLimiterUtil = rateLimiterUtil;
         this.objectMapper = objectMapper;

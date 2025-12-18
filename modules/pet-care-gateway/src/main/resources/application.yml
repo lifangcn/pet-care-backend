@@ -1,5 +1,0 @@
-# JWT配置
-jwt:
-  secret-key: "M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="
-  expire-time: 86400
-  refresh-expire-time: 604800

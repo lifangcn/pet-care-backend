@@ -31,6 +31,9 @@
         <redisson.version>3.23.4</redisson.version>
         <!--JWT-->
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
+        <!-- MinIO -->
+        <minio.version>8.5.7</minio.version>
+
         <!-- 搜索组件 -->
         <spring-data-elasticsearch.version>7.5.0</spring-data-elasticsearch.version>
         <!-- 工具类 -->
@@ -94,12 +97,6 @@
                 <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
                 <version>${mybatis-flex.version}</version>
             </dependency>
-            <!-- Redis -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-data-redis</artifactId>
-                <version>${spring-boot.version}</version>
-            </dependency>
             <!-- Redisson -->
             <dependency>
                 <groupId>org.redisson</groupId>
@@ -124,6 +121,13 @@
                 <version>${jsonwebtoken.version}</version>
                 <scope>runtime</scope>
             </dependency>
+            <!-- MinIO -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+
             <!--<dependency>
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-elasticsearch</artifactId>

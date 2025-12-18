@@ -31,15 +31,15 @@ import static pvt.mktech.petcare.common.constant.CommonConstant.HEADER_USERNAME;
 
 @Order(-1)
 @Component
-public class JwtAuthFilter extends AbstractGatewayFilterFactory<JwtAuthFilter.Config> {
+public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtAuthGatewayFilterFactory.Config> {
 
     private final JwtUtil jwtUtil;
     private final PathMatcher pathMatcher;
     private final ObjectMapper objectMapper;
 
-    public JwtAuthFilter(JwtUtil jwtUtil,
-                         RedisCacheUtil redisCacheUtil,
-                         ObjectMapper objectMapper) {
+    public JwtAuthGatewayFilterFactory(JwtUtil jwtUtil,
+                                       RedisCacheUtil redisCacheUtil,
+                                       ObjectMapper objectMapper) {
         super(Config.class);
         this.jwtUtil = jwtUtil;
         this.pathMatcher = new AntPathMatcher();

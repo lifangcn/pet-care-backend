@@ -11,9 +11,9 @@ import com.zaxxer.hikari.HikariDataSource;
 public class MybatisFlexCodeGenerator {
 
     // 数据库配置
-    private static final String JDBC_URL = "jdbc:mysql://localhost:3307/pet_care?useSSL=false&serverTimezone=Asia/Shanghai";
+    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai";
     private static final String USERNAME = "root";
-    private static final String PASSWORD = "123456";
+    private static final String PASSWORD = "!QAZ2wsx";
     // 方言
     private static final IDialect DIALECT = IDialect.MYSQL;
 

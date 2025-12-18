@@ -16,7 +16,7 @@ import java.util.List;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/health")
+@RequestMapping("/healthRecord")
 public class HealthRecordController {
 
 
