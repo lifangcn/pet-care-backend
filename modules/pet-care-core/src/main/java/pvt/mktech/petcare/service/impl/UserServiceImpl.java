@@ -102,7 +102,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public List<Long> getActiveUserIds() {
-        QueryWrapper queryWrapper = QueryWrapper.create().select(USERS.ID).from(USERS);
+        QueryWrapper queryWrapper = QueryWrapper.create().select(USERS.ID).where(USERS.STATUS.eq(true)).from(USERS);
         return userMapper.selectObjectListByQueryAs(queryWrapper, Long.class);
     }
 
