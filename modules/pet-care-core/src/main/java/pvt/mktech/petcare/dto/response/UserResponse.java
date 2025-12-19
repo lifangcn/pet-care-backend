@@ -23,7 +23,7 @@ public class UserResponse {
     private String nickname;
 
     @Schema(description = "头像URL", example = "https://example.com/avatar.jpg")
-    private String avatarUrl;
+    private String avatar;
 
     @Schema(description = "性别: 0-未知 1-男 2-女", example = "1")
     private Integer gender;

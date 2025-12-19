@@ -1,8 +1,12 @@
 package pvt.mktech.petcare.service;
 
+import com.mybatisflex.core.service.IService;
 import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.dto.response.UserResponse;
+import pvt.mktech.petcare.entity.User;
+
+import java.util.List;
 
 /**
  * {@code @description} 用户服务接口
@@ -10,7 +14,7 @@ import pvt.mktech.petcare.dto.response.UserResponse;
  *
  * @author Msichael
  */
-public interface UserService {
+public interface UserService extends IService<User> {
     /**
      * 根据用户ID获取用户信息
      *
@@ -52,4 +56,11 @@ public interface UserService {
      * @return 存在返回true，否则返回false
      */
     boolean checkPhoneExists(String phone);
+
+    /**
+     * 获取活跃用户ID列表
+     *
+     * @return 活跃用户ID列表
+     */
+    List<Long> getActiveUserIds();
 }

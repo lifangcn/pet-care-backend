@@ -2,11 +2,16 @@ package pvt.mktech.petcare.controller;
 
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.context.UserContext;
 import pvt.mktech.petcare.common.dto.UserInfoDto;
 import pvt.mktech.petcare.common.dto.response.Result;
+import pvt.mktech.petcare.common.dto.response.ResultCode;
+import pvt.mktech.petcare.common.util.MinioUtil;
 import pvt.mktech.petcare.entity.Pet;
 import pvt.mktech.petcare.service.PetService;
 
@@ -19,13 +24,15 @@ import java.util.List;
  * @author PetCare Code Generator
  * @since 2025-12-02
  */
+@Tag(name = "宠物管理", description = "宠物信息管理相关接口")
 @RestController
 @RequestMapping("/pet")
+@Slf4j
 @RequiredArgsConstructor
 public class PetController {
 
     private final PetService petService;
-
+    private final MinioUtil minioUtil;
 
     @PostMapping("list")
     @Operation(
@@ -74,37 +81,23 @@ public class PetController {
         return petService.updateById(pet);
     }
 
-
-    /**
-     * 查询所有宠物表。
-     *
-     * @return 所有数据
-     */
-    @GetMapping("list")
-    public List<Pet> list() {
-        return petService.list();
+    @Operation(summary = "上传用户头像")
+    @PostMapping(value = "{petId}/avatar", consumes = "multipart/form-data")
+    public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file, @PathVariable("petId") Long petId) {
+        try {
+            Long userId = UserContext.getUserInfo().getUserId();
+            // 1. 权限验证（只能修改自己的头像）
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "无权修改其他用户头像");
+            }
+            // 上传头像到MinIO
+            String avatarUrl = minioUtil.uploadAvatar(file, userId);
+            return Result.success(avatarUrl);
+        } catch (RuntimeException e) {
+            return Result.error(ResultCode.FAILED);
+        } catch (Exception e) {
+            log.error("头像上传失败: ", e);
+            return Result.error(ResultCode.FAILED);
+        }
     }
-
-    /**
-     * 根据主键获取宠物表。
-     *
-     * @param id 宠物表主键
-     * @return 宠物表详情
-     */
-    @GetMapping("getInfo/{id}")
-    public Pet getInfo(@PathVariable Long id) {
-        return petService.getById(id);
-    }
-
-    /**
-     * 分页查询宠物表。
-     *
-     * @param page 分页对象
-     * @return 分页对象
-     */
-    @GetMapping("page")
-    public Page<Pet> page(Page<Pet> page) {
-        return petService.page(page);
-    }
-
 }

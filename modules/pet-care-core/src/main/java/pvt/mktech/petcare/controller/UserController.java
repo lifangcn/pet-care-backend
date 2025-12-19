@@ -18,12 +18,12 @@ import pvt.mktech.petcare.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.dto.response.UserResponse;
 import pvt.mktech.petcare.service.UserService;
 
+@Tag(name = "用户管理", description = "用户信息管理相关接口")
 @RestController
 @RequestMapping("/user")
-@RequiredArgsConstructor
-@Slf4j
-@Tag(name = "用户管理", description = "用户信息管理相关接口")
 @SecurityRequirement(name = "JWT")
+@Slf4j
+@RequiredArgsConstructor
 public class UserController {
     
     private final UserService userService;

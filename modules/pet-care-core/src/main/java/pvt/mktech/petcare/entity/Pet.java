@@ -44,7 +44,7 @@ public class Pet implements Serializable {
     /**
      * 宠物类型
      */
-    private Integer type;
+    private String type;
 
     /**
      * 种类

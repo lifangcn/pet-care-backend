@@ -22,7 +22,7 @@ public class MybatisFlexCodeGenerator {
 
     // 要生成的表名（为空则生成所有表）
     private static final String[] INCLUDED_TABLES = {
-            "tb_health_record"
+            "tb_health_status", "tb_reminder"
     };
 
     // 要排除的表名
@@ -82,8 +82,8 @@ public class MybatisFlexCodeGenerator {
         // 生成选项
         globalConfig.setEntityGenerateEnable(true);
         globalConfig.setMapperGenerateEnable(true);
-        globalConfig.setServiceGenerateEnable(true); // 不生成 Service，手动实现
-        globalConfig.setServiceImplGenerateEnable(true); // 不生成 ServiceImpl
+        globalConfig.setServiceGenerateEnable(true);
+        globalConfig.setServiceImplGenerateEnable(true);
         globalConfig.setControllerGenerateEnable(true); // 不生成 Controller
         globalConfig.setTableDefGenerateEnable(true);
         globalConfig.setMapperXmlGenerateEnable(false); // 不生成 XML

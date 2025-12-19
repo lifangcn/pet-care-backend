@@ -25,7 +25,7 @@ public class LoginInfoDto {
     private String nickname;
 
     @Schema(description = "头像URL")
-    private String avatarUrl;
+    private String avatar;
 
     @Schema(description = "访问Token")
     private String accessToken;

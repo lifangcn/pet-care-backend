@@ -33,7 +33,7 @@ public class PetTableDef extends TableDef {
     public final QueryColumn NAME = new QueryColumn(this, "name");
 
     /**
-     * 宠物类型: 1-狗 2-猫 3-其他
+     * 宠物类型
      */
     public final QueryColumn TYPE = new QueryColumn(this, "type");
 

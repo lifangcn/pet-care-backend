@@ -17,7 +17,7 @@ import pvt.mktech.petcare.entity.User;
 import pvt.mktech.petcare.mapper.UserMapper;
 import pvt.mktech.petcare.service.UserService;
 
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static pvt.mktech.petcare.entity.table.UsersTableDef.USERS;
@@ -99,7 +99,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean checkPhoneExists(String phone) {
         return exists(USERS.PHONE.eq(phone));
     }
-    
+
+    @Override
+    public List<Long> getActiveUserIds() {
+        QueryWrapper queryWrapper = QueryWrapper.create().select(USERS.ID).from(USERS);
+        return userMapper.selectObjectListByQueryAs(queryWrapper, Long.class);
+    }
+
     private UserResponse convertToResponse(User user) {
         UserResponse response = new UserResponse();
         BeanUtil.copyProperties(user, response);

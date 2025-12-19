@@ -4,6 +4,6 @@ minio:
   endpoint: http://localhost:9000
   access-key: minio
   secret-key: "!QAZ2wsx"
-  bucket-name: avatars
+  bucket-name: pet-care-core
   file-size-limit: 10485760 # 10MB
   expire-time: 3600 # 1小时
