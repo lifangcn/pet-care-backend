@@ -60,6 +60,11 @@ public class UsersTableDef extends TableDef {
     public final QueryColumn CREATED_AT = new QueryColumn(this, "created_at");
 
     /**
+     * 更新时间
+     */
+    public final QueryColumn UPDATED_AT = new QueryColumn(this, "updated_at");
+
+    /**
      * 所有字段。
      */
     public final QueryColumn ALL_COLUMNS = new QueryColumn(this, "*");
@@ -67,7 +72,7 @@ public class UsersTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USERNAME, PHONE, NICKNAME, AVATAR, STATUS, ADDRESS, CREATED_AT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USERNAME, PHONE, NICKNAME, AVATAR, STATUS, ADDRESS, CREATED_AT, UPDATED_AT};
 
     public UsersTableDef() {
         super("", "tb_user");

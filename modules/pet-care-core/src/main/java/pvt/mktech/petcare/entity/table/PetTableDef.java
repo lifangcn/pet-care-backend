@@ -73,6 +73,11 @@ public class PetTableDef extends TableDef {
     public final QueryColumn CREATED_AT = new QueryColumn(this, "created_at");
 
     /**
+     * 更新时间
+     */
+    public final QueryColumn UPDATED_AT = new QueryColumn(this, "updated_at");
+
+    /**
      * 健康备注
      */
     public final QueryColumn HEALTH_NOTES = new QueryColumn(this, "health_notes");
@@ -85,7 +90,7 @@ public class PetTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, NAME, TYPE, BREED, GENDER, BIRTHDAY, WEIGHT, AVATAR, HEALTH_NOTES, CREATED_AT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, NAME, TYPE, BREED, GENDER, BIRTHDAY, WEIGHT, AVATAR, HEALTH_NOTES, CREATED_AT, UPDATED_AT};
 
     public PetTableDef() {
         super("", "tb_pet");
