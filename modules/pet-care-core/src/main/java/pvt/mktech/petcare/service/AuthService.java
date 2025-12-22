@@ -38,7 +38,6 @@ public interface AuthService {
 
     /**
      * 退出登录
-     * @param refreshToken 用户刷新token
      */
-    void logout(String refreshToken);
+    void logout(LoginInfoDto dto);
 }

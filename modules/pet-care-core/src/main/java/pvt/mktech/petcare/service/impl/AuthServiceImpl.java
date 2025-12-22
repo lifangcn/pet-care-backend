@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -137,13 +136,14 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     }
 
     @Override
-    public void logout(String refreshToken) {
+    public void logout(LoginInfoDto dto) {
+        String refreshToken = dto.getRefreshToken();
         if (refreshToken != null && refreshToken.startsWith(TOKEN_PREFIX)) {
             // 从 token 中解析用户ID
             Long userId = jwtUtil.getUserIdFromToken(refreshToken.substring(TOKEN_PREFIX.length()));
             // 删除refresh token
             redisCacheUtil.delete(REFRESH_TOKEN_KEY + userId);
-            // 实现token失效逻辑，如加入黑名单或删除缓存
+            // TODO 实现token失效逻辑，如加入黑名单或删除缓存
             // redisCacheUtil.set(CommonConstant.BLACKLIST_TOKEN_KEY + token, "invalid",
             // CommonConstant.ACCESS_TOKEN_TTL, TimeUnit.SECONDS);
         }
