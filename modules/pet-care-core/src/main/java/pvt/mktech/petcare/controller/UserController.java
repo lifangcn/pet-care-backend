@@ -39,12 +39,12 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @PutMapping("/profile")
+    @PutMapping("/update")
     @Operation(
             summary = "更新当前用户信息",
             description = "更新当前登录用户的基本信息"
     )
-    public Result<UserResponse> updateCurrentUser(
+    public Result<UserResponse> update(
             @Parameter(description = "用户更新信息", required = true)
             @Valid @RequestBody UserUpdateRequest request) {
         UserResponse updatedUser = userService.updateUser(UserContext.getUserInfo().getUserId(), request);
