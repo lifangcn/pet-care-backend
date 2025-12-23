@@ -28,13 +28,13 @@ public class ReminderServiceImpl extends ServiceImpl<ReminderMapper, Reminder> i
     }
 
     @Override
-    public boolean deactivateById(Long id) {
-        boolean update = updateChain().set(REMINDER.IS_ACTIVE, 0).where(REMINDER.ID.eq(id)).update();
-        // 从 MQ 中剔除 该提醒
+    public boolean updateActiveById(Long id, Boolean isActive) {
+        boolean update = updateChain().set(REMINDER.IS_ACTIVE, isActive).where(REMINDER.ID.eq(id)).update();
+        // 从 MQ 中添加 该提醒
         if (update) {
-            // TODO: 2025/12/22 删除 MQ 中的消息
+            // TODO 操作成功处理消息：激活提醒则添加到 MQ 中
         }
         return update;
-
     }
+
 }

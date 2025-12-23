@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * {@code @description}:
+ * {@code @description}: 健康记录类型枚举
  * {@code @date}: 2025/12/19 11:05
  *
  * @author Michael

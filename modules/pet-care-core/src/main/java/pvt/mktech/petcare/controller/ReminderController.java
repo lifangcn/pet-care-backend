@@ -61,12 +61,22 @@ public class ReminderController {
      * 根据主键 停用提醒
      *
      * @param id          主键
-     * @param saveRequest 提醒事件对象
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("/{id}/deactivate")
     public boolean deactivate(@PathVariable("id") Long id) {
-        return reminderService.deactivateById(id);
+        return reminderService.updateActiveById(id, Boolean.FALSE);
+    }
+
+    /**
+     * 根据主键 启用提醒
+     *
+     * @param id 主键
+     * @return {@code true} 更新成功，{@code false} 更新失败
+     */
+    @PutMapping("/{id}/activate")
+    public boolean activate(@PathVariable("id") Long id) {
+        return reminderService.updateActiveById(id, Boolean.TRUE);
     }
 
     /**

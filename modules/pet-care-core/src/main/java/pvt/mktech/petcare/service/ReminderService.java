@@ -13,7 +13,19 @@ import pvt.mktech.petcare.entity.Reminder;
  */
 public interface ReminderService extends IService<Reminder> {
 
+    /**
+     * 根据查询条件分页查询提醒事件表。
+     *
+     * @param request 查询条件
+     * @return 分页查询结果
+     */
     Page<Reminder> findPageByQueryRequest(ReminderQueryRequest request);
 
-    boolean deactivateById(Long id);
+    /**
+     * 根据主键，更新提醒事件状态。
+     *
+     * @param id 主键
+     * @return {@code true} 停用成功，{@code false} 停用失败
+     */
+    boolean updateActiveById(Long id, Boolean isActive);
 }
