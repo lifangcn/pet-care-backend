@@ -37,9 +37,7 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
     private final PathMatcher pathMatcher;
     private final ObjectMapper objectMapper;
 
-    public JwtAuthGatewayFilterFactory(JwtUtil jwtUtil,
-                                       RedisCacheUtil redisCacheUtil,
-                                       ObjectMapper objectMapper) {
+    public JwtAuthGatewayFilterFactory(JwtUtil jwtUtil, ObjectMapper objectMapper) {
         super(Config.class);
         this.jwtUtil = jwtUtil;
         this.pathMatcher = new AntPathMatcher();

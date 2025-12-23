@@ -1,9 +1,12 @@
 package pvt.mktech.petcare.controller;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.context.UserContext;
@@ -11,9 +14,14 @@ import pvt.mktech.petcare.common.dto.UserInfoDto;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.dto.response.ResultCode;
 import pvt.mktech.petcare.common.util.MinioUtil;
+import pvt.mktech.petcare.dto.request.HealthRecordQueryRequest;
+import pvt.mktech.petcare.dto.request.HealthRecordSaveRequest;
+import pvt.mktech.petcare.entity.HealthRecord;
 import pvt.mktech.petcare.entity.Pet;
+import pvt.mktech.petcare.service.HealthRecordService;
 import pvt.mktech.petcare.service.PetService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -29,6 +37,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PetController {
 
+    private final HealthRecordService healthRecordService;
     private final PetService petService;
     private final MinioUtil minioUtil;
 
@@ -106,5 +115,72 @@ public class PetController {
             log.error("头像上传失败: ", e);
             return Result.error(ResultCode.FAILED, e.getMessage());
         }
+    }
+
+    /* 健康记录 */
+
+    /**
+     * 创建健康记录表。
+     *
+     * @param saveRequest 健康记录保存请求
+     * @return {@code true} 保存成功，{@code false} 保存失败
+     */
+    @PostMapping("/{petId}/health-record")
+    public boolean saveHealthRecord(@RequestBody HealthRecordSaveRequest saveRequest) {
+        HealthRecord healthRecord = new HealthRecord();
+        BeanUtil.copyProperties(saveRequest, healthRecord);
+        healthRecord.setUserId(UserContext.getUserInfo().getUserId());
+        // TODO 扩展点，根据已经填写的健康记录分类，发送到消息队列，消息队列将任务推送给AI，调用对应的诊断Tool。返回一些有意义的提醒通知
+        return healthRecordService.save(healthRecord);
+    }
+
+    /**
+     * 根据主键删除健康记录表。
+     *
+     * @param id 主键
+     * @return {@code true} 删除成功，{@code false} 删除失败
+     */
+    @DeleteMapping("/{petId}/health-record/{id}")
+    public boolean deleteHealthRecord(@PathVariable("petId") Long petId,
+                                      @PathVariable("id") Long id) {
+        return healthRecordService.removeById(id);
+    }
+
+    /**
+     * 根据主键更新健康记录表。
+     *
+     * @param saveRequest 健康记录保存请求
+     * @return {@code true} 更新成功，{@code false} 更新失败
+     */
+    @PutMapping("/{petId}/health-record/{id}")
+    public boolean updateHealthRecord(@PathVariable("petId") Long petId,
+                                      @PathVariable("id") Long id,
+                                      @RequestBody HealthRecordSaveRequest saveRequest) {
+        HealthRecord healthRecord = new HealthRecord();
+        BeanUtil.copyProperties(saveRequest, healthRecord);
+        healthRecord.setId(id);
+        return healthRecordService.updateById(healthRecord);
+    }
+
+    /**
+     * 分页查询健康记录表。
+     *
+     * @param petId      宠物ID
+     * @param recordType 记录类型
+     * @param startDate  开始时间
+     * @param endDate    结束时间
+     * @param pageNumber 页码
+     * @param pageSize   页大小
+     * @return 分页查询结果
+     */
+    @GetMapping("/{petId}/health-record/page")
+    public Page<HealthRecord> pageHealthRecord(@PathVariable("petId") Long petId,
+                                               @RequestParam(value = "recordType", required = false) String recordType,
+                                               @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDate,
+                                               @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDate,
+                                               @RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
+                                               @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize) {
+        HealthRecordQueryRequest request = new HealthRecordQueryRequest(petId, recordType, startDate, endDate, pageNumber, pageSize);
+        return healthRecordService.findPageByQueryRequest(request);
     }
 }

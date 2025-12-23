@@ -54,7 +54,7 @@ public class Pet implements Serializable {
     /**
      * 性别
      */
-    private Boolean gender;
+    private Integer gender;
 
     /**
      * 出生日期

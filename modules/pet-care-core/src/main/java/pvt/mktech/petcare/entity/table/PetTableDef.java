@@ -14,7 +14,6 @@ import java.io.Serial;
  */
 public class PetTableDef extends TableDef {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

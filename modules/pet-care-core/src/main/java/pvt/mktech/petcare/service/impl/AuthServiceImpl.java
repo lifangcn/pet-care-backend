@@ -137,10 +137,9 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
 
     @Override
     public void logout(LoginInfoDto dto) {
-        String refreshToken = dto.getRefreshToken();
-        if (refreshToken != null && refreshToken.startsWith(TOKEN_PREFIX)) {
+        if (StrUtil.isNotBlank(dto.getRefreshToken())) {
             // 从 token 中解析用户ID
-            Long userId = jwtUtil.getUserIdFromToken(refreshToken.substring(TOKEN_PREFIX.length()));
+            Long userId = jwtUtil.getUserIdFromToken(dto.getRefreshToken());
             // 删除refresh token
             redisCacheUtil.delete(REFRESH_TOKEN_KEY + userId);
             // TODO 实现token失效逻辑，如加入黑名单或删除缓存
