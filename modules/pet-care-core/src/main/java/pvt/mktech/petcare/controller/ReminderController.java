@@ -4,19 +4,15 @@ import cn.hutool.core.bean.BeanUtil;
 import com.mybatisflex.core.paginate.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.common.context.UserContext;
-import pvt.mktech.petcare.dto.request.HealthRecordQueryRequest;
 import pvt.mktech.petcare.dto.request.ReminderQueryRequest;
 import pvt.mktech.petcare.dto.request.ReminderSaveRequest;
-import pvt.mktech.petcare.entity.HealthRecord;
 import pvt.mktech.petcare.entity.Reminder;
 import pvt.mktech.petcare.service.ReminderService;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * 提醒事件表 控制层。

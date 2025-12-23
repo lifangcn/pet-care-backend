@@ -25,8 +25,6 @@ import static pvt.mktech.petcare.entity.table.HealthRecordTableDef.HEALTH_RECORD
 @RequiredArgsConstructor
 public class HealthRecordServiceImpl extends ServiceImpl<HealthRecordMapper, HealthRecord> implements HealthRecordService {
 
-    private final HealthRecordMapper healthRecordMapper;
-
     @Override
     public Page<HealthRecord> findPageByQueryRequest(HealthRecordQueryRequest request) {
         QueryWrapper queryWrapper = queryChain()

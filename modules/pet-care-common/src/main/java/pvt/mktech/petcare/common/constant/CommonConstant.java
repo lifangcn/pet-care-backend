@@ -13,7 +13,6 @@ public class CommonConstant {
     public static final String HEADER_USERNAME = "X-Username";
 
     // Redis Key前缀
-    public static final String ACCESS_TOKEN_KEY = "login:access:token:";
     public static final Long ACCESS_TOKEN_TTL = 86400L;
     public static final String REFRESH_TOKEN_KEY = "login:refresh:token:";
     public static final Long REFRESH_TOKEN_TTL = 604800L;

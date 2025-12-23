@@ -24,8 +24,7 @@ import static pvt.mktech.petcare.entity.table.PetTableDef.PETS;
 @Slf4j
 @RequiredArgsConstructor
 public class PetServiceImpl extends ServiceImpl<PetsMapper, Pet> implements PetService {
-    private final RedisCacheUtil redisCacheUtil;
-    private final PetsMapper petsMapper;
+
     @Override
     public Pet savePet(Pet pet) {
         Long userId = UserContext.getUserInfo().getUserId();

@@ -1,7 +1,6 @@
 package pvt.mktech.petcare.common.interceptor;
 
 import cn.hutool.core.util.StrUtil;
-import io.jsonwebtoken.Header;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.servlet.HandlerInterceptor;

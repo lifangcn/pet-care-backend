@@ -1,10 +1,6 @@
 package pvt.mktech.petcare.common.dto.response;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 /**
  * {@code @description}: 统一API响应结果封装类

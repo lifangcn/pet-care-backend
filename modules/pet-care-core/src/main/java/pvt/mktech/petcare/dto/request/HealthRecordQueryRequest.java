@@ -1,12 +1,9 @@
 package pvt.mktech.petcare.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import pvt.mktech.petcare.entity.HealthRecord;
 
 import java.time.LocalDateTime;
 

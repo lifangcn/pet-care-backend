@@ -108,43 +108,48 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     @Override
     public LoginInfoDto refreshToken(LoginInfoDto dto) {
         String refreshToken = dto.getRefreshToken();
-
-        // 1. 验证refresh token格式
-        if (!jwtUtil.validateRefreshToken(refreshToken)) {
-//            throw new BusinessException(401, "Invalid refresh token");
+        if (StrUtil.isBlank(refreshToken)) {
             throw new BusinessException(ErrorCode.TOKEN_INVALID);
         }
-
+        // 1. 验证refresh token格式
+        if (!jwtUtil.validateRefreshToken(refreshToken)) {
+            throw new BusinessException(ErrorCode.TOKEN_INVALID);
+        }
         // 2. 解析token获取用户ID
-        Long userId = jwtUtil.getUserIdFromToken(refreshToken);
-
+        Long userId;
+        try {
+            userId = jwtUtil.getUserIdFromToken(refreshToken);
+        } catch (Exception e) {
+            log.error("解析refresh token失败", e);
+            throw new BusinessException(ErrorCode.TOKEN_INVALID);
+        }
         // 3. 验证Redis中的refresh token是否匹配
         String storedToken = redisCacheUtil.get(REFRESH_TOKEN_KEY + userId);
         if (!refreshToken.equals(storedToken)) {
-//            throw new BusinessException(401, "Refresh token mismatch");
             throw new BusinessException(ErrorCode.TOKEN_INVALID);
         }
-
-        // 4. 查询用户信息
+        // 4. 查询用户信息，生成新的access token
         User user = getById(userId);
-        // 5. 生成新的access token
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
         String newAccessToken = jwtUtil.generateAccessToken(user.getUsername(), userId);
-
         dto.setAccessToken(newAccessToken);
-        dto.setExpiresIn(86400L);
+        dto.setExpiresIn(ACCESS_TOKEN_TTL);
         return dto;
     }
 
     @Override
     public void logout(LoginInfoDto dto) {
-        if (StrUtil.isNotBlank(dto.getRefreshToken())) {
-            // 从 token 中解析用户ID
-            Long userId = jwtUtil.getUserIdFromToken(dto.getRefreshToken());
+        if (StrUtil.isBlank(dto.getRefreshToken())) {
+            return;
+        }
+        try {
             // 删除refresh token
+            Long userId = jwtUtil.getUserIdFromToken(dto.getRefreshToken());
             redisCacheUtil.delete(REFRESH_TOKEN_KEY + userId);
-            // TODO 实现token失效逻辑，如加入黑名单或删除缓存
-            // redisCacheUtil.set(CommonConstant.BLACKLIST_TOKEN_KEY + token, "invalid",
-            // CommonConstant.ACCESS_TOKEN_TTL, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            log.warn("登出时解析refresh token失败", e);
         }
     }
 }

@@ -3,9 +3,6 @@ package pvt.mktech.petcare.entity.table;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.table.TableDef;
 
-import java.io.Serial;
-
-
 /**
  * 宠物表 表定义层。
  *

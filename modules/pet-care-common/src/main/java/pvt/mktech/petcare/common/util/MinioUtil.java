@@ -3,7 +3,6 @@ package pvt.mktech.petcare.common.util;
 import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.util.StrUtil;
 import io.minio.*;
-import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -17,7 +16,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * {@code @description}:
@@ -186,18 +184,18 @@ public class MinioUtil {
         String url = String.format("http://petcare.com/%s/%s",
                 minioConfig.getBucketName(), objectName);
         // 测试用：返回带签名的临时URL（有效期7天）
-        try {
-            String tempUrl = minioClient.getPresignedObjectUrl(
-                    GetPresignedObjectUrlArgs.builder()
-                            .method(Method.GET)
-                            .bucket(minioConfig.getBucketName())
-                            .object(objectName)
-                            .expiry(7, TimeUnit.DAYS)
-                            .build());
-        } catch (Exception e) {
-            log.error("获取文件URL失败: {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
+        // try {
+        //     String tempUrl = minioClient.getPresignedObjectUrl(
+        //             GetPresignedObjectUrlArgs.builder()
+        //                     .method(Method.GET)
+        //                     .bucket(minioConfig.getBucketName())
+        //                     .object(objectName)
+        //                     .expiry(7, TimeUnit.DAYS)
+        //                     .build());
+        // } catch (Exception e) {
+        //     log.error("获取文件URL失败: {}", e.getMessage());
+        //     throw new RuntimeException(e);
+        // }
         return url;
     }
 
