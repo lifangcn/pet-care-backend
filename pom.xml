@@ -28,7 +28,7 @@
         <mysql-connector.version>9.3.0</mysql-connector.version>
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
         <!-- 缓存 -->
-        <redisson.version>3.23.4</redisson.version>
+        <redisson.version>3.27.0</redisson.version>
         <!--JWT-->
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
         <!-- MinIO -->
@@ -100,7 +100,7 @@
             <!-- Redisson -->
             <dependency>
                 <groupId>org.redisson</groupId>
-                <artifactId>redisson</artifactId>
+                <artifactId>redisson-spring-boot-starter</artifactId>
                 <version>${redisson.version}</version>
             </dependency>
             <!-- JWT -->

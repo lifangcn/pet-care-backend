@@ -91,7 +91,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>pvt.mktech.petcare.GatewayApplication</mainClass>
+                    <mainClass>pvt.mktech.petcare.gateway.GatewayApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>

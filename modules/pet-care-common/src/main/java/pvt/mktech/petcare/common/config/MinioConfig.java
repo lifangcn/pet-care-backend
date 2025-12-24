@@ -2,6 +2,7 @@ package pvt.mktech.petcare.common.config;
 
 import io.minio.MinioClient;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author Michael
  */
+@Slf4j
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "minio")
@@ -29,9 +31,11 @@ public class MinioConfig {
 
     @Bean
     public MinioClient minioClient() {
-        return MinioClient.builder()
+        MinioClient minioClient = MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(accessKey, secretKey)
                 .build();
+        log.info("MinioClient初始化成功");
+        return minioClient;
     }
 }
