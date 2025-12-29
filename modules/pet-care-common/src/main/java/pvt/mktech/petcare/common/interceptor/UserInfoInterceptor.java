@@ -3,6 +3,7 @@ package pvt.mktech.petcare.common.interceptor;
 import cn.hutool.core.util.StrUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import pvt.mktech.petcare.common.constant.CommonConstant;
 import pvt.mktech.petcare.common.context.UserContext;

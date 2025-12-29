@@ -7,10 +7,13 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+
+import static pvt.mktech.petcare.common.constant.CommonConstant.HEADER_USERNAME;
 
 /**
  * JWT 工具类
@@ -18,6 +21,7 @@ import java.util.Date;
 @Data
 @Component
 @ConfigurationProperties(prefix = "jwt")
+@Lazy
 public class JwtUtil {
 
     private String secretKey;
@@ -27,10 +31,10 @@ public class JwtUtil {
     // 生成 Token
     public String generateAccessToken(String username, Long userId) {
         Date now = DateUtil.date();
-        Date expiryDate = DateUtil.offsetSecond(now, expireTime.intValue());
+        Date expiryDate = new Date(now.getTime() + (expireTime * 1000));
         return Jwts.builder()
                 .subject(String.valueOf(userId))
-                .claim("username", username)
+                .claim(HEADER_USERNAME, username)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSignInKey())
@@ -64,7 +68,7 @@ public class JwtUtil {
 
     // 获取用户名
     public String getUsernameFromToken(String token) {
-        return getClaimsFromToken(token).get("username", String.class);
+        return getClaimsFromToken(token).get(HEADER_USERNAME, String.class);
     }
 
     // 解析令牌

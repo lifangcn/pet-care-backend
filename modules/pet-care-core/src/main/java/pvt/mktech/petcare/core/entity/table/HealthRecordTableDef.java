@@ -11,9 +11,6 @@ import com.mybatisflex.core.table.TableDef;
  * @since 2025-12-22
  */
 public class HealthRecordTableDef extends TableDef {
-
-    private static final long serialVersionUID = 1L;
-
     /**
      * 健康记录表
      */

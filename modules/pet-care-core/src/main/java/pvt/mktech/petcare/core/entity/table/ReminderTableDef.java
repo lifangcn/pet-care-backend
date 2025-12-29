@@ -3,6 +3,8 @@ package pvt.mktech.petcare.core.entity.table;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.table.TableDef;
 
+import java.io.Serial;
+
 
 /**
  * 提醒事件表 表定义层。
@@ -12,8 +14,8 @@ import com.mybatisflex.core.table.TableDef;
  */
 public class ReminderTableDef extends TableDef {
 
-    private static final long serialVersionUID = 1L;
-
+    @Serial
+    private static final long serialVersionUID = -4921673189126182802L;
     /**
      * 提醒事件表
      */
@@ -90,24 +92,19 @@ public class ReminderTableDef extends TableDef {
     public final QueryColumn SCHEDULE_TIME = new QueryColumn(this, "schedule_time");
 
     /**
-     * 完成时间
+     * 计划时间(用于提醒)
      */
-    public final QueryColumn COMPLETED_TIME = new QueryColumn(this, "completed_time");
-
-    /**
-     * 已完成次数
-     */
-    public final QueryColumn COMPLETED_COUNT = new QueryColumn(this, "completed_count");
-
-    /**
-     * 总执行次数
-     */
-    public final QueryColumn TOTAL_OCCURRENCES = new QueryColumn(this, "total_occurrences");
+    public final QueryColumn NEXT_TRIGGER_TIME = new QueryColumn(this, "next_trigger_time");
 
     /**
      * 提前提醒时间(分钟)
      */
     public final QueryColumn REMIND_BEFORE_MINUTES = new QueryColumn(this, "remind_before_minutes");
+
+    /**
+     * 提醒执行记录ID，当前提醒和执行记录关联，标识最新的执行情况
+     */
+    public final QueryColumn REMINDER_EXECUTION_ID = new QueryColumn(this, "reminder_execution_id");
 
     /**
      * 所有字段。
@@ -117,7 +114,7 @@ public class ReminderTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, PET_ID, USER_ID, SOURCE_TYPE, SOURCE_ID, TITLE, DESCRIPTION, RECORD_TIME, SCHEDULE_TIME, REMIND_BEFORE_MINUTES, REPEAT_TYPE, REPEAT_CONFIG, IS_ACTIVE, TOTAL_OCCURRENCES, COMPLETED_COUNT, COMPLETED_TIME, CREATED_AT, UPDATED_AT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, PET_ID, USER_ID, SOURCE_TYPE, SOURCE_ID, TITLE, DESCRIPTION, RECORD_TIME, NEXT_TRIGGER_TIME, SCHEDULE_TIME, REMIND_BEFORE_MINUTES, REPEAT_TYPE, REPEAT_CONFIG, IS_ACTIVE, REMINDER_EXECUTION_ID, CREATED_AT, UPDATED_AT};
 
     public ReminderTableDef() {
         super("", "tb_reminder");

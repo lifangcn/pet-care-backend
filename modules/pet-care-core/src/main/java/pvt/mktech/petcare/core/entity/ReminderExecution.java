@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -19,8 +20,8 @@ import java.time.LocalDateTime;
 @Data
 public class ReminderExecution implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
+    @Serial
+    private static final long serialVersionUID = 7142870712957892246L;
     /**
      * 主键ID
      */
@@ -45,7 +46,7 @@ public class ReminderExecution implements Serializable {
     /**
      * 计划执行时间
      */
-    private LocalDateTime scheduledTime;
+    private LocalDateTime scheduleTime;
 
     /**
      * 实际执行时间

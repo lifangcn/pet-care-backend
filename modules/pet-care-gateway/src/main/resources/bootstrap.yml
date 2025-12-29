@@ -1,4 +1,6 @@
 spring:
+  main:
+    banner-mode: off
   application:
     name: pet-care-gateway # 该服务在 Nacos 中的名称
   # Nacos 配置中心配置
@@ -12,6 +14,7 @@ spring:
         namespace: public
         group: DEFAULT_GROUP
       config:
+        # 每个项目的主配置文件 Data Id 建议定义为 ${spring.application.name} 否则 Nacos 会提示警告
         server-addr: ${spring.cloud.nacos.discovery.server-addr}
         username: nacos
         password: nacos
@@ -21,6 +24,7 @@ spring:
         shared-configs:
           - data-id: shared-redis.yaml
           - data-id: shared-jwt.yaml
+        refresh-enabled: false
 
 # 暴露网关的 actuator 端点 (用于刷新配置，可选但推荐)
 management:

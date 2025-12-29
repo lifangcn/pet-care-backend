@@ -1,10 +1,9 @@
-package pvt.mktech.petcare;
+package pvt.mktech.petcare.core;
 
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.boot.test.context.SpringBootTest;
 import pvt.mktech.petcare.common.util.DistributedIdGenerator;
-import pvt.mktech.petcare.core.CoreServiceApplication;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -42,3 +41,4 @@ public class UserServiceApplicationTest {
         Assertions.assertEquals(10000, ids.size());
     }
 }
+

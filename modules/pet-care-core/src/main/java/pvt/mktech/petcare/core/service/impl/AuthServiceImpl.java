@@ -23,7 +23,7 @@ import pvt.mktech.petcare.core.util.ValidatorUtil;
 
 import java.time.Duration;
 
-import static pvt.mktech.petcare.core.constant.UserConstant.*;
+import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 import static pvt.mktech.petcare.core.entity.table.UsersTableDef.USERS;
 
 /**

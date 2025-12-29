@@ -12,13 +12,17 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum RecordTypeOfHealthRecord {
+public enum StatusOfReminderExecution {
 
-    WEIGHT("WEIGHT", "体重"),
-    TEMPERATURE("TEMPERATURE", "体温"),
-    MEDICAL("MEDICAL", "用药");
+    PENDING("PENDING", "待处理"),
+    COMPLETED("COMPLETED", "已完成"),
+    OVERDUE("OVERDUE", "已过期");
 
-    @EnumValue
     private final String code;
     private final String description;
+
+    @EnumValue
+    public String getCode() {
+        return code;
+    }
 }

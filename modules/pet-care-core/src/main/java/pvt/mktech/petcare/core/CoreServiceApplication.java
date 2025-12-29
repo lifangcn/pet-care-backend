@@ -3,9 +3,14 @@ package pvt.mktech.petcare.core;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Import;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import pvt.mktech.petcare.common.config.CommonComponentConfig;
 
 @SpringBootApplication
 @MapperScan("pvt.mktech.petcare.core.mapper")
+@Import(CommonComponentConfig.class)
 public class CoreServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(CoreServiceApplication.class, args);

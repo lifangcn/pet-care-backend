@@ -12,8 +12,6 @@ import com.mybatisflex.core.table.TableDef;
  */
 public class UsersTableDef extends TableDef {
 
-    private static final long serialVersionUID = 1L;
-
     /**
      * 用户表
      */

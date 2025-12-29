@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
  * @author PetCare Code Generator
  * @since 2025-12-02
  */
-@Data
 @Table("tb_pet")
+@Data
 public class Pet implements Serializable {
 
     @Serial

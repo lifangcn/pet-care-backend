@@ -12,8 +12,6 @@ import com.mybatisflex.core.table.TableDef;
  */
 public class ReminderExecutionTableDef extends TableDef {
 
-    private static final long serialVersionUID = 1L;
-
     /**
      * 提醒执行记录表
      */
@@ -77,7 +75,7 @@ public class ReminderExecutionTableDef extends TableDef {
     /**
      * 计划执行时间
      */
-    public final QueryColumn SCHEDULED_TIME = new QueryColumn(this, "scheduled_time");
+    public final QueryColumn SCHEDULE_TIME = new QueryColumn(this, "schedule_time");
 
     /**
      * 完成说明
@@ -97,7 +95,7 @@ public class ReminderExecutionTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, REMINDER_ID, PET_ID, USER_ID, SCHEDULED_TIME, ACTUAL_TIME, STATUS, COMPLETION_NOTES, NOTIFICATION_TIME, IS_READ, IS_SENT, SENT_AT, READ_AT, CREATED_AT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, REMINDER_ID, PET_ID, USER_ID, SCHEDULE_TIME, ACTUAL_TIME, STATUS, COMPLETION_NOTES, NOTIFICATION_TIME, IS_READ, IS_SENT, SENT_AT, READ_AT, CREATED_AT};
 
     public ReminderExecutionTableDef() {
         super("", "tb_reminder_execution");

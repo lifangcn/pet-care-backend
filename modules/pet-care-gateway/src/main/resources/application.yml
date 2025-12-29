@@ -1,0 +1,7 @@
+# 日志配置
+logging:
+  level:
+    pvt.mktech.petcare.gateway: INFO
+    org.springframework.cloud.gateway: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{50} - %msg%n"

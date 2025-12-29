@@ -75,7 +75,7 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
 
                 // 4. 解析用户信息并透传给下游服务
                 Long userId = Long.parseLong(claims.getSubject());
-                String username = claims.get("username", String.class);
+                String username = claims.get(HEADER_USERNAME, String.class);
 
                 ServerWebExchange serverWebExchange = exchange.mutate()
                         .request(builder -> builder

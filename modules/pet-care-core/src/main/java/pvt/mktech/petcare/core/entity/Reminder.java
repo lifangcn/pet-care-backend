@@ -5,8 +5,10 @@ import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
 
 
 /**
@@ -19,8 +21,8 @@ import java.time.LocalDateTime;
 @Data
 public class Reminder implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
+    @Serial
+    private static final long serialVersionUID = 3562793547239601084L;
     /**
      * 主键ID
      */
@@ -61,8 +63,6 @@ public class Reminder implements Serializable {
     1.绝对时间：repeatType=none and scheduleTime
     2.相对时间：根据设置时间，前端计算出具体时间
     3.周期性: repeatType=daily and scheduleTime，之后根据scheduleTime计算出具体时间
-    *
-    *
     * */
 
     /**
@@ -74,6 +74,11 @@ public class Reminder implements Serializable {
      * 计划时间
      */
     private LocalDateTime scheduleTime;
+
+    /**
+     * 计划时间
+     */
+    private LocalDateTime nextTriggerTime;
 
     /**
      * 提前提醒时间(分钟)
@@ -96,19 +101,9 @@ public class Reminder implements Serializable {
     private Boolean isActive;
 
     /**
-     * 总执行次数
+     * 提醒执行记录ID，当前提醒和执行记录关联，标识最新的执行情况
      */
-    private Integer totalOccurrences;
-
-    /**
-     * 已完成次数
-     */
-    private Integer completedCount;
-
-    /**
-     * 完成时间
-     */
-    private LocalDateTime completedTime;
+    private Long reminderExecutionId;
 
     /**
      * 创建时间

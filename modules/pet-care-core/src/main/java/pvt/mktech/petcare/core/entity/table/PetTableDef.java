@@ -11,8 +11,6 @@ import com.mybatisflex.core.table.TableDef;
  */
 public class PetTableDef extends TableDef {
 
-    private static final long serialVersionUID = 1L;
-
     /**
      * 宠物表
      */

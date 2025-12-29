@@ -10,6 +10,7 @@ import pvt.mktech.petcare.common.context.UserContext;
 import pvt.mktech.petcare.core.dto.request.ReminderQueryRequest;
 import pvt.mktech.petcare.core.dto.request.ReminderSaveRequest;
 import pvt.mktech.petcare.core.entity.Reminder;
+import pvt.mktech.petcare.core.service.ReminderExecutionService;
 import pvt.mktech.petcare.core.service.ReminderService;
 
 import java.time.LocalDateTime;
@@ -39,6 +40,8 @@ public class ReminderController {
         Reminder reminder = new Reminder();
         BeanUtil.copyProperties(saveRequest, reminder);
         reminder.setUserId(UserContext.getUserInfo().getUserId());
+        // 设置下次提醒时间
+        reminder.setNextTriggerTime(reminder.getScheduleTime());
         return reminderService.save(reminder);
     }
 

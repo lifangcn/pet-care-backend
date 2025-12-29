@@ -29,11 +29,13 @@
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
         <!-- 缓存 -->
         <redisson.version>3.27.0</redisson.version>
+        <caffeine.version>3.1.8</caffeine.version>
         <!--JWT-->
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
         <!-- MinIO -->
         <minio.version>8.5.7</minio.version>
-
+        <!-- RocketMQ -->
+        <rocketmq.version>5.1.4</rocketmq.version>
         <!-- 搜索组件 -->
         <spring-data-elasticsearch.version>7.5.0</spring-data-elasticsearch.version>
         <!-- 工具类 -->
@@ -41,13 +43,12 @@
         <lombok.version>1.18.26</lombok.version>
         <!-- API文档 -->
         <springdoc-openapi.version>2.1.0</springdoc-openapi.version>
+        <!-- 日志收集：logstash -->
+        <logstash.version>7.4</logstash.version>
+        <!-- 任务调度：XXL-JOB 核心依赖 -->
+        <xxl-job.version>3.2.0</xxl-job.version>
         <!--漏洞依赖-->
-        <logback.version>1.5.6</logback.version>
-        <netty.version>4.1.110.Final</netty.version>
         <spring.version>6.1.7</spring.version>
-
-        <commons-lang3.version>3.19.0</commons-lang3.version>
-        <tomcat-embed-core.version>10.1.47</tomcat-embed-core.version>
         <!-- 基础 -->
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
@@ -97,11 +98,17 @@
                 <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
                 <version>${mybatis-flex.version}</version>
             </dependency>
-            <!-- Redisson -->
+            <!-- 缓存：Redisson -->
             <dependency>
                 <groupId>org.redisson</groupId>
                 <artifactId>redisson-spring-boot-starter</artifactId>
                 <version>${redisson.version}</version>
+            </dependency>
+            <!-- 缓存：Caffeine -->
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
             </dependency>
             <!-- JWT -->
             <dependency>
@@ -127,7 +134,22 @@
                 <artifactId>minio</artifactId>
                 <version>${minio.version}</version>
             </dependency>
-
+            <!-- 消息队列：RocketMQ -->
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-acl</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <!--<dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-spring-boot-starter</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>-->
             <!--<dependency>
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-elasticsearch</artifactId>
@@ -140,34 +162,20 @@
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>${springdoc-openapi.version}</version>
             </dependency>
+            <!-- 日志收集: logstash -->
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash.version}</version>
+            </dependency>
+            <!-- 任务调度：XXL-JOB 核心依赖 -->
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job.version}</version>
+            </dependency>
 
-            <!-- 依赖版本漏洞修复 -->
-            <!--<dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-            </dependency>-->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-common</artifactId>
-                <version>${netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-codec</artifactId>
-                <version>${netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-handler</artifactId>
-                <version>${netty.version}</version>
-            </dependency>
-            <!-- 强制使用安全版本 -->
+            <!-- 漏洞依赖 -->
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
@@ -183,18 +191,6 @@
                 <artifactId>spring-beans</artifactId>
                 <version>${spring.version}</version>
             </dependency>
-
-
-            <!--<dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>${commons-lang3.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>${tomcat-embed-core.version}</version> &lt;!&ndash; 使用已修复漏洞的安全版本 &ndash;&gt;
-            </dependency>-->
         </dependencies>
     </dependencyManagement>
 

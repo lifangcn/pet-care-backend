@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.core.dto.LoginInfoDto;
+import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.core.dto.request.LoginRequest;
+import pvt.mktech.petcare.core.handler.ReminderWebSocketHandler;
 import pvt.mktech.petcare.core.service.AuthService;
 
 @RestController
@@ -18,8 +20,9 @@ import pvt.mktech.petcare.core.service.AuthService;
 @RequiredArgsConstructor
 @Tag(name = "认证管理", description = "用户登录、注册、登出等相关接口")
 public class AuthController {
-    
+
     private final AuthService authService;
+    private final ReminderWebSocketHandler reminderWebSocketHandler;
 
     @PostMapping("/code")
     @Operation(
@@ -30,11 +33,11 @@ public class AuthController {
             @Valid @RequestParam("phone") String phone, HttpSession session) {
         return authService.sendCode(phone, session);
     }
-    
+
     @PostMapping("/login")
     @Operation(
-        summary = "用户登录，确认后发送验证码，填写所有信息完毕后，如果未注册自动注册",
-        description = "支持用户名、邮箱、手机号登录"
+            summary = "用户登录，确认后发送验证码，填写所有信息完毕后，如果未注册自动注册",
+            description = "支持用户名、邮箱、手机号登录"
     )
     public Result<LoginInfoDto> login(
             @Parameter(description = "登录请求参数", required = true)
@@ -61,5 +64,18 @@ public class AuthController {
         // TODO 退出登录报错
         authService.logout(dto);
         return Result.success("登出成功");
+    }
+
+    @PostMapping("/wstest")
+    public Result<Void> wstest() {
+        ReminderExecutionMessageDto messageDto = new ReminderExecutionMessageDto();
+        messageDto.setTitle("测试");
+        messageDto.setDescription("测试");
+        try {
+            reminderWebSocketHandler.sendReminderToUser(1L, messageDto);
+        } catch (Exception e) {
+            System.out.println(e.getLocalizedMessage());
+        }
+        return Result.success();
     }
 }

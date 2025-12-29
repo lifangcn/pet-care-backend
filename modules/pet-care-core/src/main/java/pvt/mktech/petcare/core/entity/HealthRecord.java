@@ -8,6 +8,7 @@ import com.mybatisflex.annotation.Table;
 import lombok.Data;
 import pvt.mktech.petcare.core.entity.codelist.RecordTypeOfHealthRecord;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,8 +24,8 @@ import java.time.LocalDateTime;
 @Data
 public class HealthRecord implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-
+    @Serial
+    private static final long serialVersionUID = 4221157116160362663L;
     /**
      * 主键ID
      */

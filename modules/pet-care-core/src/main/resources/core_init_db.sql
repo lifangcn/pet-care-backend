@@ -60,23 +60,20 @@ CREATE TABLE `tb_reminder`
     `id`                    BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
     `pet_id`                BIGINT      NOT NULL COMMENT '宠物ID',
     `user_id`               BIGINT      NOT NULL COMMENT '用户ID',
-
     `source_type`           VARCHAR(20) NOT NULL COMMENT '记录来源：manual, health_record, system',
     `source_id`             BIGINT      NOT NULL COMMENT '来源ID（如健康记录ID）',
     `title`                 VARCHAR(200) COMMENT '标题',
     `description`           TEXT COMMENT '描述',
-
     `record_time`           DATETIME    NOT NULL COMMENT '记录时间',
+    `next_trigger_time` DATETIME COMMENT '下一次触发时间（内部调度使用，用户不可见）',
     `schedule_time`         DATETIME COMMENT '计划时间(用于提醒)',
     `remind_before_minutes` INT         DEFAULT 0 COMMENT '提前提醒时间(分钟)',
     `repeat_type`           VARCHAR(20) DEFAULT 'none' COMMENT '重复类型: none(不重复), daily(每天), weekly(每周), monthly(每月), custom(自定义)',
     `repeat_config`         JSON COMMENT '重复配置(自定义重复规则)',
-
     `is_active`             BOOLEAN     DEFAULT TRUE COMMENT '是否激活',
     `total_occurrences`     INT         DEFAULT 0 COMMENT '总执行次数',
     `completed_count`       INT         DEFAULT 0 COMMENT '已完成次数',
     `completed_time`        DATETIME COMMENT '完成时间',
-
     `created_at`            DATETIME    DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`            DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 ) ENGINE = InnoDB
@@ -89,13 +86,10 @@ CREATE TABLE `tb_reminder_execution`
     `reminder_id`       BIGINT   NOT NULL COMMENT '提醒ID',
     `pet_id`            BIGINT   NOT NULL COMMENT '宠物ID',
     `user_id`           BIGINT   NOT NULL COMMENT '用户ID',
-    -- 执行信息
-    `scheduled_time`    DATETIME NOT NULL COMMENT '计划执行时间',
+    `schedule_time` DATETIME NOT NULL COMMENT '计划执行时间',
     `actual_time`       DATETIME COMMENT '实际执行时间',
-    -- 状态
     `status`            ENUM ('pending', 'completed', 'overdue') DEFAULT 'pending' COMMENT '执行状态',
     `completion_notes`  TEXT COMMENT '完成说明',
-
     `notification_time` DATETIME NOT NULL COMMENT '通知时间',
     `is_read`           TINYINT(1)                               DEFAULT 0 COMMENT '是否已读',
     `is_sent`           TINYINT(1)                               DEFAULT 0 COMMENT '是否已发送',

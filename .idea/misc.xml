@@ -5,6 +5,7 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/modules/xxl-job-admin/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
@@ -12,6 +13,7 @@
         <option value="$PROJECT_DIR$/modules/community-service/pom.xml" />
         <option value="$PROJECT_DIR$/modules/pet-management-service/pom.xml" />
         <option value="$PROJECT_DIR$/modules/tech-poc/pom.xml" />
+        <option value="$PROJECT_DIR$/modules/xxl-job-admin/pom.xml" />
       </set>
     </option>
   </component>
