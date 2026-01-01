@@ -1,5 +1,8 @@
 package pvt.mktech.petcare.common.util;
 
+import pvt.mktech.petcare.common.exception.ErrorCode;
+import pvt.mktech.petcare.common.exception.SystemException;
+
 /**
  * Twitter的Snowflake算法实现，用于生成全局唯一ID。
  * 简化代码，自定义实现 详见
@@ -40,7 +43,7 @@ public class SnowflakeIdGenerator {
     public synchronized long nextId() {
         long currStamp = getNewStamp();
         if (currStamp < lastStamp) {
-            throw new RuntimeException("Clock moved backwards. Refusing to generate id");
+            throw new SystemException(ErrorCode.ID_GENERATOR_ERROR, "时钟回拨，拒绝生成ID");
         }
 
         if (currStamp == lastStamp) {

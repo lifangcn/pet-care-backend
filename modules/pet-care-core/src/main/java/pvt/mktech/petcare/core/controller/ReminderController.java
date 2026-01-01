@@ -2,18 +2,19 @@ package pvt.mktech.petcare.core.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.mybatisflex.core.paginate.Page;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.common.context.UserContext;
+import pvt.mktech.petcare.common.dto.response.Result;
+import pvt.mktech.petcare.core.dto.request.CompleteReminderRequest;
 import pvt.mktech.petcare.core.dto.request.ReminderQueryRequest;
 import pvt.mktech.petcare.core.dto.request.ReminderSaveRequest;
 import pvt.mktech.petcare.core.entity.Reminder;
+import pvt.mktech.petcare.core.entity.ReminderExecution;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
 import pvt.mktech.petcare.core.service.ReminderService;
-
-import java.time.LocalDateTime;
 
 /**
  * 提醒事件表 控制层。
@@ -28,6 +29,7 @@ import java.time.LocalDateTime;
 public class ReminderController {
 
     private final ReminderService reminderService;
+    private final ReminderExecutionService reminderExecutionService;
 
     /**
      * 新增提醒事件表。
@@ -36,13 +38,13 @@ public class ReminderController {
      * @return {@code true} 添加成功，{@code false} 添加失败
      */
     @PostMapping
-    public boolean save(@RequestBody ReminderSaveRequest saveRequest) {
+    public Result<Boolean> save(@RequestBody ReminderSaveRequest saveRequest) {
         Reminder reminder = new Reminder();
         BeanUtil.copyProperties(saveRequest, reminder);
         reminder.setUserId(UserContext.getUserInfo().getUserId());
         // 设置下次提醒时间
         reminder.setNextTriggerTime(reminder.getScheduleTime());
-        return reminderService.save(reminder);
+        return Result.success(reminderService.save(reminder));
     }
 
     /**
@@ -52,8 +54,8 @@ public class ReminderController {
      * @return {@code true} 删除成功，{@code false} 删除失败
      */
     @DeleteMapping("/{id}")
-    public boolean deleteReminder(@PathVariable("id") Long id) {
-        return reminderService.removeById(id);
+    public Result<Boolean> deleteReminder(@PathVariable("id") Long id) {
+        return Result.success(reminderService.removeById(id));
     }
 
     /**
@@ -63,8 +65,8 @@ public class ReminderController {
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("/{id}/deactivate")
-    public boolean deactivate(@PathVariable("id") Long id) {
-        return reminderService.updateActiveById(id, Boolean.FALSE);
+    public Result<Boolean> deactivate(@PathVariable("id") Long id) {
+        return Result.success(reminderService.updateActiveById(id, Boolean.FALSE));
     }
 
     /**
@@ -74,8 +76,8 @@ public class ReminderController {
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("/{id}/activate")
-    public boolean activate(@PathVariable("id") Long id) {
-        return reminderService.updateActiveById(id, Boolean.TRUE);
+    public Result<Boolean> activate(@PathVariable("id") Long id) {
+        return Result.success(reminderService.updateActiveById(id, Boolean.TRUE));
     }
 
     /**
@@ -86,33 +88,37 @@ public class ReminderController {
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("/{id}")
-    public boolean update(@PathVariable("id") Long id,
+    public Result<Boolean> update(@PathVariable("id") Long id,
                           @RequestBody ReminderSaveRequest saveRequest) {
         Reminder reminder = new Reminder();
         BeanUtil.copyProperties(saveRequest, reminder);
         reminder.setId(id);
-        return reminderService.updateById(reminder);
+        return Result.success(reminderService.updateById(reminder));
     }
 
-    /**
-     * 分页查询提醒事件表。
-     *
-     * @param petId      宠物ID
-     * @param sourceType 提醒来源类型
-     * @param startDate  开始时间
-     * @param endDate    结束时间
-     * @param pageNumber 页码
-     * @param pageSize   页大小
-     * @return 分页对象
-     */
     @GetMapping("/page")
-    public Page<Reminder> pageReminder(@RequestParam(value = "petId", required = false) Long petId,
-                                       @RequestParam(value = "sourceType", required = false) String sourceType,
-                                       @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDate,
-                                       @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDate,
-                                       @RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
-                                       @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize) {
-        ReminderQueryRequest request = new ReminderQueryRequest(petId, sourceType, startDate, endDate, pageNumber, pageSize);
-        return reminderService.findPageByQueryRequest(request);
+    public Result<Page<Reminder>> pageReminder(@ModelAttribute ReminderQueryRequest request) {
+        request.setUserId(UserContext.getUserInfo().getUserId());
+        return Result.success(reminderService.findPageByQueryRequest(request));
+    }
+
+    /* 执行记录处理 */
+    @Operation(summary = "完成 提醒执行记录", description = "将提醒执行记录标记为已完成，并填写完成记录")
+    @PutMapping("/execution/{id}/complete")
+    public Result<Boolean> complete(@PathVariable("id") Long id, @RequestBody(required = false) CompleteReminderRequest completeReminderRequest) {
+        return Result.success(reminderExecutionService.updateCompleteStatusById(id, completeReminderRequest));
+    }
+
+    @Operation(summary = "读取 提醒执行记录", description = "将提醒执行记录标记为已读，并填写完成记录")
+    @PutMapping("/execution/{id}/read")
+    public Result<Boolean> read(@PathVariable("id") Long id) {
+        return Result.success(reminderExecutionService.updateReadStatusById(id));
+    }
+
+    @Operation(summary = "查询 所有提醒执行记录", description = "根据宠物ID，查询所有提醒执行记录")
+    @GetMapping("/execution/page")
+    public Result<Page<ReminderExecution>> pageReminderExecution(@ModelAttribute ReminderQueryRequest request) {
+        request.setUserId(UserContext.getUserInfo().getUserId());
+        return Result.success(reminderExecutionService.pageReminderExecution(request));
     }
 }

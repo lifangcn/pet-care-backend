@@ -12,7 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.context.UserContext;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.dto.response.ResultCode;
+import pvt.mktech.petcare.common.exception.BusinessException;
+import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.util.MinioUtil;
 import pvt.mktech.petcare.core.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.core.dto.response.UserResponse;
@@ -79,20 +80,8 @@ public class UserController {
     @PostMapping(value = "/avatar", consumes = "multipart/form-data")
     public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file) {
         Long userId = UserContext.getUserInfo().getUserId();
-        try {
-            // 1. 权限验证（只能修改自己的头像）
-            if (userId == null) {
-                return Result.error(ResultCode.UNAUTHORIZED, "无权修改其他用户头像");
-            }
-            // 上传头像到MinIO
-            String avatarUrl = minioUtil.uploadAvatar(file, userId);
-            return Result.success(avatarUrl);
-
-        } catch (RuntimeException e) {
-            return Result.error(ResultCode.FAILED);
-        } catch (Exception e) {
-            log.error("头像上传失败: userId={}", userId, e);
-            return Result.error(ResultCode.FAILED);
-        }
+        // 上传头像到MinIO
+        String avatarUrl = minioUtil.uploadAvatar(file, userId);
+        return Result.success(avatarUrl);
     }
 }

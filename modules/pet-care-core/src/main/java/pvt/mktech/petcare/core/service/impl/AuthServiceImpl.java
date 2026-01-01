@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.dto.response.ResultCode;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.util.JwtUtil;
@@ -24,7 +23,7 @@ import pvt.mktech.petcare.core.util.ValidatorUtil;
 import java.time.Duration;
 
 import static pvt.mktech.petcare.core.constant.CoreConstant.*;
-import static pvt.mktech.petcare.core.entity.table.UsersTableDef.USERS;
+import static pvt.mktech.petcare.core.entity.table.UserTableDef.USER;
 
 /**
  * {@code @description}:
@@ -44,8 +43,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     public Result<String> sendCode(String phone, HttpSession httpSession) {
         // 1.校验手机号
         if (ValidatorUtil.isPhoneInvalid(phone)) {
-            // 2.如果不符合，返回错误信息
-            return Result.error(ResultCode.FAILED, "手机号格式错误！");
+            throw new BusinessException(ErrorCode.PHONE_FORMAT_ERROR);
         }
         // 3.生成验证码
         String code = RandomUtil.randomNumbers(6);
@@ -62,17 +60,16 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         String code = request.getCode();
         // 1. 校验手机号和验证码是否正确
         if (ValidatorUtil.isPhoneInvalid(phone)) {
-            // 如果不符合，返回错误信息
-            return Result.error(ResultCode.FAILED, "手机号格式错误！");
+            throw new BusinessException(ErrorCode.PHONE_FORMAT_ERROR);
         }
         String cacheCode = redisCacheUtil.get(LOGIN_CODE_KEY + phone);
         // TODO cacheCode为空，可能验证码过期；request.code为空，可能请求错误。这里简单判断
         if (!StrUtil.equals(code, cacheCode)) {
-            return Result.error(ResultCode.FAILED, "验证码不正确！");
+            throw new BusinessException(ErrorCode.VERIFICATION_CODE_ERROR);
         }
 
         // 2.手机号用户是否存在
-        User user = getOne(USERS.PHONE.eq(phone));
+        User user = getOne(USER.PHONE.eq(phone));
         // 3.不存在，创建用户
         if (user == null) {
             user = new User();

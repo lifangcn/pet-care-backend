@@ -15,6 +15,8 @@ import pvt.mktech.petcare.common.util.RedissonLockUtil;
 import pvt.mktech.petcare.core.dto.message.ReminderMessageDto;
 import pvt.mktech.petcare.core.entity.Reminder;
 import pvt.mktech.petcare.core.service.ReminderService;
+import pvt.mktech.petcare.common.exception.ErrorCode;
+import pvt.mktech.petcare.common.exception.SystemException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -113,7 +115,7 @@ public class ReminderScanScheduler {
                     messageDto);
         } catch (Exception e) {
             log.error("发送 提醒项 到延迟消费队列，reminder.id: {}", reminder.getId(), e);
-            throw new RuntimeException("消息发送失败", e);
+            throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);
         }
     }
 

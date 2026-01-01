@@ -9,6 +9,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.config.MinioConfig;
+import pvt.mktech.petcare.common.exception.BusinessException;
+import pvt.mktech.petcare.common.exception.ErrorCode;
+import pvt.mktech.petcare.common.exception.SystemException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,35 +83,35 @@ public class MinioUtil {
         return getFileUrl(objectName);
     }
 
-
     private void validateFile(MultipartFile file) {
         // 非空判断
         if (file == null || file.isEmpty()) {
-            throw new RuntimeException("文件不能为空！");
+            throw new BusinessException(ErrorCode.FILE_NULL);
         }
 
         // 大小判断
         if (file.getSize() > minioConfig.getFileSizeLimit()) {
-            throw new RuntimeException("文件大小超出限制！");
+            throw new BusinessException(ErrorCode.FILE_TOO_LARGE);
         }
 
         // 类型判断，避免恶意上传exe
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            throw new RuntimeException("文件名不能为空！");
+            throw new BusinessException(ErrorCode.FILE_NAME_NULL);
         }
 
         String extension = getFileExtension(originalFilename).toLowerCase();
         if (!ALLOWED_IMAGE_TYPES.containsKey(extension)) {
-            throw new RuntimeException("文件类型不允许！仅支持：" + ALLOWED_IMAGE_TYPES.keySet());
+            throw new BusinessException(ErrorCode.FILE_TYPE_NOT_SUPPORTED,
+                    ErrorCode.FILE_TYPE_NOT_SUPPORTED.getMessage().replace("{0}", ALLOWED_IMAGE_TYPES.keySet().toString()));
         }
         try (InputStream inputStream = file.getInputStream()) {
             String fileType = FileTypeUtil.getType(inputStream);
             if (!ALLOWED_IMAGE_TYPES.containsValue("image/" + fileType)) {
-                throw new RuntimeException("文件内容与类型不匹配");
+                throw new BusinessException(ErrorCode.FILE_TYPE_MISMATCH);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
         }
 
     }
@@ -152,7 +155,7 @@ public class MinioUtil {
                     .build());
         } catch (Exception e) {
             log.error("创建存储桶失败: {}", e.getMessage());
-            throw new RuntimeException(e);
+            throw new SystemException(ErrorCode.BUCKET_CREATE_FAILED, e);
         }
         log.info("创建存储桶: {}", bucketName);
 
@@ -171,7 +174,7 @@ public class MinioUtil {
             log.info("文件上传成功: {}", objectName);
         } catch (Exception e) {
             log.error("上传文件失败: {}", e.getMessage());
-            throw new RuntimeException("上传文件失败");
+            throw new SystemException(ErrorCode.FILE_UPLOAD_FAILED, e);
         }
 
     }

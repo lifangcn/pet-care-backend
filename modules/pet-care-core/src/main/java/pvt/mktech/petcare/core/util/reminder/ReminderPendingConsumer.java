@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.core.dto.message.ReminderMessageDto;
 import pvt.mktech.petcare.core.entity.Reminder;
+import pvt.mktech.petcare.common.exception.ErrorCode;
+import pvt.mktech.petcare.common.exception.SystemException;
 import pvt.mktech.petcare.core.entity.ReminderExecution;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
 import pvt.mktech.petcare.core.service.ReminderService;
@@ -126,7 +128,7 @@ public class ReminderPendingConsumer {
             log.info("发送 提醒执行 到立即消费队列，topic: {}, body: {}", CORE_REMINDER_DELAY_TOPIC_SEND, messageDto);
         } catch (Exception e) {
             log.error("发送消息到发送队列失败", e);
-            throw new RuntimeException("消息发送失败", e);
+            throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);
         }
     }
 

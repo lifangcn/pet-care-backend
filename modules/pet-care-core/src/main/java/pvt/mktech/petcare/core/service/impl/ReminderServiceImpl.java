@@ -1,5 +1,6 @@
 package pvt.mktech.petcare.core.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -25,15 +26,31 @@ public class ReminderServiceImpl extends ServiceImpl<ReminderMapper, Reminder> i
 
     @Override
     public Page<Reminder> findPageByQueryRequest(ReminderQueryRequest request) {
-        QueryChain<Reminder> queryChain = queryChain().select(REMINDER.ALL_COLUMNS).where(REMINDER.PET_ID.eq(request.getPetId()));
-        Page<Reminder> page = new Page<>(request.getPageNumber(), request.getPageSize());
-        return page(page, queryChain);
+        QueryChain<Reminder> queryChain = queryChain().select(REMINDER.ALL_COLUMNS);
+
+        if (request.getUserId() != null) {
+            queryChain.where(REMINDER.USER_ID.eq(request.getUserId()));
+        }
+        if (request.getPetId() != null) {
+            queryChain.and(REMINDER.PET_ID.eq(request.getPetId()));
+        }
+        if (StrUtil.isNotEmpty(request.getSourceType())) {
+            queryChain.and(REMINDER.SOURCE_TYPE.eq(request.getSourceType()));
+        }
+        if (request.getStartTime() != null) {
+            queryChain.and(REMINDER.SCHEDULE_TIME.ge(request.getStartTime()));
+        }
+        if (request.getEndTime() != null) {
+            queryChain.and(REMINDER.SCHEDULE_TIME.le(request.getEndTime()));
+        }
+
+        queryChain.orderBy(REMINDER.SCHEDULE_TIME.desc());
+        return page(new Page<>(request.getPageNumber(), request.getPageSize()), queryChain);
     }
 
     @Override
     public boolean updateActiveById(Long id, Boolean isActive) {
-        boolean update = updateChain().set(REMINDER.IS_ACTIVE, isActive).where(REMINDER.ID.eq(id)).update();
-        return update;
+        return updateChain().set(REMINDER.IS_ACTIVE, isActive).where(REMINDER.ID.eq(id)).update();
     }
 
     @Override
@@ -56,5 +73,4 @@ public class ReminderServiceImpl extends ServiceImpl<ReminderMapper, Reminder> i
     public boolean updateReminderExecutionId(Long executionId, Long id) {
         return updateChain().set(REMINDER.REMINDER_EXECUTION_ID, executionId).where(REMINDER.ID.eq(id)).update();
     }
-
 }

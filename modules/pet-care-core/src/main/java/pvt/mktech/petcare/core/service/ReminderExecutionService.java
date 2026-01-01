@@ -1,6 +1,9 @@
 package pvt.mktech.petcare.core.service;
 
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
+import pvt.mktech.petcare.core.dto.request.CompleteReminderRequest;
+import pvt.mktech.petcare.core.dto.request.ReminderQueryRequest;
 import pvt.mktech.petcare.core.entity.Reminder;
 import pvt.mktech.petcare.core.entity.ReminderExecution;
 
@@ -12,6 +15,11 @@ import pvt.mktech.petcare.core.entity.ReminderExecution;
  */
 public interface ReminderExecutionService extends IService<ReminderExecution> {
 
-    boolean updateSendStatusById(Long reminderExecutionId);
-    // 读取消息队列的信息，
+    boolean updateSendStatusById(Long id);
+
+    Boolean updateReadStatusById(Long id);
+
+    Boolean updateCompleteStatusById(Long id, CompleteReminderRequest request);
+
+    Page<ReminderExecution> pageReminderExecution(ReminderQueryRequest request);
 }

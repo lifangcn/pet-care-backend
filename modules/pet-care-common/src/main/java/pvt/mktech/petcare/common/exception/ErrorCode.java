@@ -8,17 +8,25 @@ import lombok.Getter;
  */
 @Getter
 public enum ErrorCode {
-    
-    // ========== 通用错误码 ==========
+
+    // ========== 通用错误码 (00000-00999) ==========
     SUCCESS("00000", "操作成功"),
     SYSTEM_ERROR("00001", "系统异常，请稍后重试"),
-    PARAM_ERROR("00002", "参数错误"),
-    DATA_NOT_FOUND("00003", "数据不存在"),
-    DATA_ALREADY_EXISTS("00004", "数据已存在"),
-    OPERATION_FAILED("00005", "操作失败"),
-    UNAUTHORIZED("00006", "未授权访问"),
-    FORBIDDEN("00007", "禁止访问"),
-    INVALID_REQUEST("00008", "无效请求"),
+    DATABASE_ERROR("00002", "数据库操作异常"),
+    NETWORK_ERROR("00003", "网络异常"),
+    LOCK_ACQUIRE_FAILED("00004", "获取分布式锁失败"),
+    LOCK_INTERRUPTED("00005", "获取分布式锁被中断"),
+    MESSAGE_SEND_FAILED("00006", "消息发送失败"),
+    ID_GENERATOR_ERROR("00007", "ID生成器异常"),
+
+    // ========== 参数校验错误码 (01000-01999) ==========
+    PARAM_ERROR("01001", "参数错误"),
+    PARAM_NULL("01002", "参数不能为空"),
+    PARAM_INVALID("01003", "参数无效"),
+    DATA_NOT_FOUND("01004", "数据不存在"),
+    DATA_ALREADY_EXISTS("01005", "数据已存在"),
+    OPERATION_FAILED("01006", "操作失败"),
+    INVALID_REQUEST("01007", "无效请求"),
     
     // ========== 用户相关错误码 (10000-19999) ==========
     USER_NOT_FOUND("10001", "用户不存在"),
@@ -27,14 +35,17 @@ public enum ErrorCode {
     USERNAME_ALREADY_EXISTS("10004", "用户名已存在"),
     EMAIL_ALREADY_EXISTS("10005", "邮箱已存在"),
     PHONE_ALREADY_EXISTS("10006", "手机号已存在"),
-    PASSWORD_ERROR("10007", "密码错误"),
-    OLD_PASSWORD_ERROR("10008", "旧密码错误"),
-    PASSWORD_TOO_SIMPLE("10009", "密码过于简单"),
-    LOGIN_FAILED("10010", "登录失败"),
-    TOKEN_EXPIRED("10011", "Token已过期"),
-    TOKEN_INVALID("10012", "Token无效"),
-    VERIFICATION_CODE_ERROR("10013", "验证码错误"),
-    VERIFICATION_CODE_EXPIRED("10014", "验证码已过期"),
+    PHONE_FORMAT_ERROR("10007", "手机号格式错误"),
+    PASSWORD_ERROR("10008", "密码错误"),
+    OLD_PASSWORD_ERROR("10009", "旧密码错误"),
+    PASSWORD_TOO_SIMPLE("10010", "密码过于简单"),
+    LOGIN_FAILED("10011", "登录失败"),
+    TOKEN_EXPIRED("10012", "Token已过期"),
+    TOKEN_INVALID("10013", "Token无效"),
+    VERIFICATION_CODE_ERROR("10014", "验证码错误"),
+    VERIFICATION_CODE_EXPIRED("10015", "验证码已过期"),
+    UNAUTHORIZED("10016", "未授权访问"),
+    FORBIDDEN("10017", "禁止访问"),
     
     // ========== 宠物相关错误码 (20000-29999) ==========
     PET_NOT_FOUND("20001", "宠物不存在"),
@@ -47,16 +58,15 @@ public enum ErrorCode {
     INVALID_RECORD_TYPE("21002", "无效的记录类型"),
     RECORD_VALUE_REQUIRED("21003", "记录数值不能为空"),
     
-    // ========== 地址相关错误码 (30000-39999) ==========
-    ADDRESS_NOT_FOUND("30001", "地址不存在"),
-    ADDRESS_LIMIT_EXCEEDED("30002", "地址数量已达上限"),
-    DEFAULT_ADDRESS_CANNOT_DELETE("30003", "默认地址不能删除"),
-    
     // ========== 文件相关错误码 (40000-49999) ==========
-    FILE_UPLOAD_FAILED("40001", "文件上传失败"),
-    FILE_TOO_LARGE("40002", "文件过大"),
-    FILE_TYPE_NOT_SUPPORTED("40003", "文件类型不支持"),
-    FILE_NOT_FOUND("40004", "文件不存在"),
+    FILE_NULL("40001", "文件不能为空"),
+    FILE_TOO_LARGE("40002", "文件大小超出限制"),
+    FILE_NAME_NULL("40003", "文件名不能为空"),
+    FILE_TYPE_NOT_SUPPORTED("40004", "文件类型不支持，仅支持：{0}"),
+    FILE_TYPE_MISMATCH("40005", "文件内容与类型不匹配"),
+    FILE_UPLOAD_FAILED("40006", "文件上传失败"),
+    FILE_NOT_FOUND("40007", "文件不存在"),
+    BUCKET_CREATE_FAILED("40008", "存储桶创建失败"),
     
     // ========== 业务相关错误码 (50000-59999) ==========
     INSUFFICIENT_BALANCE("50001", "余额不足"),

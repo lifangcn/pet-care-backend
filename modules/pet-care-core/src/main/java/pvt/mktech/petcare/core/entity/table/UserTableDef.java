@@ -10,12 +10,12 @@ import com.mybatisflex.core.table.TableDef;
  * @author PetCare Code Generator
  * @since 2025-11-27
  */
-public class UsersTableDef extends TableDef {
+public class UserTableDef extends TableDef {
 
     /**
      * 用户表
      */
-    public static final UsersTableDef USERS = new UsersTableDef();
+    public static final UserTableDef USER = new UserTableDef();
 
     /**
      * 用户ID
@@ -72,17 +72,17 @@ public class UsersTableDef extends TableDef {
      */
     public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USERNAME, PHONE, NICKNAME, AVATAR, STATUS, ADDRESS, CREATED_AT, UPDATED_AT};
 
-    public UsersTableDef() {
+    public UserTableDef() {
         super("", "tb_user");
     }
 
-    private UsersTableDef(String schema, String name, String alisa) {
+    private UserTableDef(String schema, String name, String alisa) {
         super(schema, name, alisa);
     }
 
-    public UsersTableDef as(String alias) {
+    public UserTableDef as(String alias) {
         String key = getNameWithSchema() + "." + alias;
-        return getCache(key, k -> new UsersTableDef("", "tb_user", alias));
+        return getCache(key, k -> new UserTableDef("", "tb_user", alias));
     }
 
 }

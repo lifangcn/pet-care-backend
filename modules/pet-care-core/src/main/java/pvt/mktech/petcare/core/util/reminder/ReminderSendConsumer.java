@@ -33,6 +33,7 @@ import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 public class ReminderSendConsumer {
     @Value("${rocketmq.name-server:127.0.0.1:9876}")
     private String nameServer;
+
     private DefaultMQPushConsumer consumer;
 
     private final ReminderExecutionService reminderExecutionService;

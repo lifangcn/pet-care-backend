@@ -9,46 +9,50 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>modules/pet-care-core</module>
-        <module>modules/pet-care-shop</module>
-        <module>modules/pet-care-community</module>
         <module>modules/pet-care-gateway</module>
         <module>modules/pet-care-common</module>
+        <module>modules/pet-care-core</module>
+        <module>modules/pet-care-ai</module>
+        <module>modules/pet-care-shop</module>
+        <module>modules/pet-care-community</module>
         <!-- mybatis-flex代码生成 -->
         <module>codegen</module>
     </modules>
 
+
     <properties>
         <!-- 框架组件 -->
-        <spring-boot.version>3.2.5</spring-boot.version>
-        <spring-cloud-alibaba.version>2023.0.0.0-RC1</spring-cloud-alibaba.version>
-        <spring-cloud.version>2023.0.0</spring-cloud.version>
+        <spring-boot.version>3.3.5</spring-boot.version>
+        <spring-cloud-alibaba.version>2023.0.1.2</spring-cloud-alibaba.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
         <dubbo.version>3.3.0</dubbo.version>
         <!-- DB -->
-        <mysql-connector.version>9.3.0</mysql-connector.version>
+        <mysql-connector.version>9.1.0</mysql-connector.version>
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
         <!-- 缓存 -->
         <redisson.version>3.27.0</redisson.version>
         <caffeine.version>3.1.8</caffeine.version>
         <!--JWT-->
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
-        <!-- MinIO -->
-        <minio.version>8.5.7</minio.version>
-        <!-- RocketMQ -->
+        <!-- 消息队列：RocketMQ -->
         <rocketmq.version>5.1.4</rocketmq.version>
-        <!-- 搜索组件 -->
-        <spring-data-elasticsearch.version>7.5.0</spring-data-elasticsearch.version>
+        <!-- 文件存储：MinIO -->
+        <minio.version>8.5.7</minio.version>
+        <!-- 搜索组件 (关键更新) -->
+        <spring-data-elasticsearch.version>4.4.15</spring-data-elasticsearch.version>
+        <!-- AI -->
+        <spring-ai.version>1.0.1</spring-ai.version>
+        <spring-ai-alibaba.version>1.0.0.4</spring-ai-alibaba.version>
+
         <!-- 工具类 -->
-        <hutool.version>5.8.40</hutool.version>
-        <lombok.version>1.18.26</lombok.version>
+        <hutool.version>5.8.41</hutool.version>
+        <lombok.version>1.18.34</lombok.version>
         <!-- API文档 -->
         <springdoc-openapi.version>2.1.0</springdoc-openapi.version>
         <!-- 日志收集：logstash -->
         <logstash.version>7.4</logstash.version>
         <!-- 任务调度：XXL-JOB 核心依赖 -->
         <xxl-job.version>3.2.0</xxl-job.version>
-        <!--漏洞依赖-->
-        <spring.version>6.1.7</spring.version>
         <!-- 基础 -->
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
@@ -65,6 +69,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Spring Cloud -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -72,6 +77,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Dubbo -->
             <dependency>
                 <groupId>org.apache.dubbo</groupId>
                 <artifactId>dubbo-dependencies-bom</artifactId>
@@ -79,10 +85,27 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Spring Cloud Alibaba -->
             <dependency>
                 <groupId>com.alibaba.cloud</groupId>
                 <artifactId>spring-cloud-alibaba-dependencies</artifactId>
                 <version>${spring-cloud-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Spring AI -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- Spring AI Alibaba -->
+            <dependency>
+                <groupId>com.alibaba.cloud.ai</groupId>
+                <artifactId>spring-ai-alibaba-bom</artifactId>
+                <version>${spring-ai-alibaba.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -97,6 +120,12 @@
                 <groupId>com.mybatis-flex</groupId>
                 <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
                 <version>${mybatis-flex.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.mybatis-flex</groupId>
+                        <artifactId>mybatis-flex-processor</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <!-- 缓存：Redisson -->
             <dependency>
@@ -128,12 +157,6 @@
                 <version>${jsonwebtoken.version}</version>
                 <scope>runtime</scope>
             </dependency>
-            <!-- MinIO -->
-            <dependency>
-                <groupId>io.minio</groupId>
-                <artifactId>minio</artifactId>
-                <version>${minio.version}</version>
-            </dependency>
             <!-- 消息队列：RocketMQ -->
             <dependency>
                 <groupId>org.apache.rocketmq</groupId>
@@ -145,17 +168,18 @@
                 <artifactId>rocketmq-acl</artifactId>
                 <version>${rocketmq.version}</version>
             </dependency>
-            <!--<dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-spring-boot-starter</artifactId>
-                <version>${rocketmq.version}</version>
-            </dependency>-->
-            <!--<dependency>
+            <!-- MinIO -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+            <!-- 搜索引擎：Elasticsearch -->
+            <dependency>
                 <groupId>org.springframework.data</groupId>
                 <artifactId>spring-data-elasticsearch</artifactId>
                 <version>${spring-data-elasticsearch.version}</version>
-            </dependency>-->
-
+            </dependency>
             <!-- API文档 -->
             <dependency>
                 <groupId>org.springdoc</groupId>
@@ -174,39 +198,19 @@
                 <artifactId>xxl-job-core</artifactId>
                 <version>${xxl-job.version}</version>
             </dependency>
-
-            <!-- 漏洞依赖 -->
+            <!-- Nacos Client (排除日志适配器以避免与 Spring Boot Logback 冲突) -->
             <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-core</artifactId>
-                <version>${spring.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-context</artifactId>
-                <version>${spring.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-beans</artifactId>
-                <version>${spring.version}</version>
+                <groupId>com.alibaba.nacos</groupId>
+                <artifactId>nacos-client</artifactId>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.alibaba.nacos</groupId>
+                        <artifactId>nacos-logging-adapter</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <!--<repositories>
-        <repository>
-            <id>public</id>
-            <name>aliyun nexus</name>
-            <url>https://maven.aliyun.com/repository/public</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>-->
 
     <build>
         <plugins>
@@ -225,4 +229,18 @@
             </plugin>
         </plugins>
     </build>
+
+    <!--<repositories>
+        <repository>
+            <id>public</id>
+            <name>aliyun nexus</name>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>-->
 </project>

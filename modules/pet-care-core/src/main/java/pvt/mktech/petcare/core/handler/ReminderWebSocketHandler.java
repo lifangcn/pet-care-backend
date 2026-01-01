@@ -1,93 +1,161 @@
 package pvt.mktech.petcare.core.handler;
 
 import cn.hutool.json.JSONUtil;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.websocketx.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
-import pvt.mktech.petcare.common.context.UserContext;
+import pvt.mktech.petcare.common.util.JwtUtil;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static pvt.mktech.petcare.common.constant.CommonConstant.*;
+
 /**
  * 提醒 WebSocket 处理器
- * 管理 WebSocket 连接和消息发送
+ * 基于 Netty 实现，管理 WebSocket 连接和消息发送
  */
+@Slf4j
 @Component
-public class ReminderWebSocketHandler extends TextWebSocketHandler {
+@ChannelHandler.Sharable
+public class ReminderWebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
-    // 存储用户ID和WebSocket会话的映射
-    private final Map<Long, WebSocketSession> userSessions = new ConcurrentHashMap<>();
+    private final Map<Long, Channel> userChannels = new ConcurrentHashMap<>();
+    private final Map<Channel, Long> channelUsers = new ConcurrentHashMap<>();
 
-    /**
-     * 连接建立后调用
-     */
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        // 从 session 的 attributes 中获取用户ID
+    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (msg instanceof FullHttpRequest) {
+            handleHttpRequest(ctx, (FullHttpRequest) msg);
+        } else if (msg instanceof WebSocketFrame) {
+            handleWebSocketFrame(ctx, (WebSocketFrame) msg);
+        }
+    }
 
-        Long userId = (Long) session.getAttributes().get("userId");
+    private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
+        if (!req.decoderResult().isSuccess()) {
+            ctx.close();
+            return;
+        }
 
-        if (userId != null) {
-            // 如果用户已有连接，关闭旧连接
-            WebSocketSession oldSession = userSessions.get(userId);
-            if (oldSession != null && oldSession.isOpen()) {
-                oldSession.close();
-            }
+        Long userId = authenticateRequest(req);
+        if (userId == null) {
+            log.warn("WebSocket 连接认证失败");
+            ctx.close();
+            return;
+        }
 
-            // 存储新连接
-            userSessions.put(userId, session);
-            System.out.println("用户 " + userId + " WebSocket 连接已建立，当前在线用户数: " + userSessions.size());
+        WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
+                getWebSocketLocation(req), null, false);
+        WebSocketServerHandshaker handshaker = wsFactory.newHandshaker(req);
+        if (handshaker == null) {
+            WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
         } else {
-            System.out.println("警告: WebSocket 连接建立但 userId 为空，attributes: " + session.getAttributes());
+            handshaker.handshake(ctx.channel(), req);
+            ctx.channel().attr(io.netty.util.AttributeKey.valueOf("handshaker")).set(handshaker);
+            onConnectionEstablished(ctx.channel(), userId);
         }
     }
 
-    /**
-     * 收到客户端消息时调用
-     * 前端可能发送心跳消息保持连接
-     */
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        // 可以处理客户端发送的消息，如心跳检测
-        String payload = message.getPayload();
-        System.out.println("收到消息: " + payload);
+    private Long authenticateRequest(FullHttpRequest req) {
+        // 1. 优先从 Header 获取用户ID（Gateway 已验证并添加）
+        String userIdHeader = req.headers().get(HEADER_USER_ID);
+        if (userIdHeader != null && !userIdHeader.isEmpty()) {
+            try {
+                Long userId = Long.parseLong(userIdHeader);
+                log.info("从 Gateway Header 获取用户ID: {}", userId);
+                return userId;
+            } catch (NumberFormatException e) {
+                log.warn("Header 中的用户ID格式错误: {}", userIdHeader);
+            }
+        }
+        return null;
+    }
 
-        // 如果是心跳消息，可以回复
-        if ("ping".equals(payload)) {
-            session.sendMessage(new TextMessage("pong"));
+    private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
+        if (frame instanceof CloseWebSocketFrame) {
+            WebSocketServerHandshaker handshaker = ctx.channel()
+                    .attr(io.netty.util.AttributeKey.<WebSocketServerHandshaker>valueOf("handshaker")).get();
+            if (handshaker != null) {
+                handshaker.close(ctx.channel(), (CloseWebSocketFrame) frame.retain());
+            }
+            onConnectionClosed(ctx.channel());
+            return;
+        }
+
+        if (frame instanceof PingWebSocketFrame) {
+            ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
+            return;
+        }
+
+        if (frame instanceof TextWebSocketFrame) {
+            String text = ((TextWebSocketFrame) frame).text();
+            log.debug("收到消息: {}", text);
+
+            if ("ping".equals(text)) {
+                ctx.channel().writeAndFlush(new TextWebSocketFrame("pong"));
+            }
         }
     }
 
-    /**
-     * 连接关闭后调用
-     */
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        Long userId = (Long) session.getAttributes().get("userId");
+    private void onConnectionEstablished(Channel channel, Long userId) {
+        Channel oldChannel = userChannels.get(userId);
+        if (oldChannel != null && oldChannel.isActive()) {
+            oldChannel.close();
+        }
 
+        userChannels.put(userId, channel);
+        channelUsers.put(channel, userId);
+        log.info("用户 {} WebSocket 连接已建立，当前在线用户数: {}", userId, userChannels.size());
+    }
+
+    private void onConnectionClosed(Channel channel) {
+        Long userId = channelUsers.remove(channel);
         if (userId != null) {
-            userSessions.remove(userId);
-            System.out.println("用户 " + userId + " WebSocket 连接已关闭");
+            userChannels.remove(userId);
+            log.info("用户 {} WebSocket 连接已关闭", userId);
         }
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        onConnectionClosed(ctx.channel());
+        super.channelInactive(ctx);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        log.error("WebSocket 异常", cause);
+        ctx.close();
+    }
+
+
+    private String getWebSocketLocation(FullHttpRequest req) {
+        String location = req.headers().get(HttpHeaderNames.HOST) + "/ws/reminders";
+        return "ws://" + location;
     }
 
     /**
      * 向指定用户发送提醒消息
      */
     public void sendReminderToUser(Long userId, ReminderExecutionMessageDto message) throws IOException {
-        WebSocketSession session = userSessions.get(userId);
+        Channel channel = userChannels.get(userId);
 
-        if (session != null && session.isOpen()) {
+        if (channel != null && channel.isActive()) {
             String jsonMessage = JSONUtil.toJsonStr(message);
-            session.sendMessage(new TextMessage(jsonMessage));
-            System.out.println("成功向用户 " + userId + " 发送提醒消息");
+            channel.writeAndFlush(new TextWebSocketFrame(jsonMessage));
+            log.info("成功向用户 {} 发送提醒消息", userId);
         } else {
-            System.out.println("用户 " + userId + " 的 WebSocket 连接不存在或已关闭，当前在线用户: " + userSessions.keySet());
+            log.warn("用户 {} 的 WebSocket 连接不存在或已关闭，当前在线用户: {}", userId, userChannels.keySet());
         }
     }
 
@@ -95,6 +163,7 @@ public class ReminderWebSocketHandler extends TextWebSocketHandler {
      * 获取所有在线用户ID
      */
     public java.util.Set<Long> getOnlineUsers() {
-        return userSessions.keySet();
+        return userChannels.keySet();
     }
 }
+

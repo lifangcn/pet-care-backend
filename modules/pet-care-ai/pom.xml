@@ -10,89 +10,80 @@
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>pet-care-core</artifactId>
+    <artifactId>pet-care-ai</artifactId>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <pet-care-common.version>1.0-SNAPSHOT</pet-care-common.version>
     </properties>
 
     <dependencies>
+        <!-- Common -->
         <dependency>
             <groupId>pvt.mktech.petcare</groupId>
             <artifactId>pet-care-common</artifactId>
-            <version>${pet-care-common.version}</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <!-- Nacos 服务发现 (注册到 Nacos) -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
-        <!-- Nacos 配置中心 (拉取远程配置) -->
+        <!-- Nacos 配置中心 (拉取远程配置) ，必须引入 bootstrap 支持 (重要)，否则无法读取 bootstrap.yml-->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
-        <!-- Spring Boot 3 必须引入 bootstrap 支持 (重要)，否则无法读取 bootstrap.yml -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
         </dependency>
-        <!-- Spring Boot dependencies -->
+        <!-- spring boot starter webflux -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <!-- Spring Boot Web (提供 RestClient.Builder 给 DashScope Image/Video 使用) -->
+        <!-- 注意：虽然同时依赖 web 和 webflux，但 Spring Boot 会优先使用 WebFlux（响应式） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-        <dependency>
+
+        <!-- Spring AI -->
+        <!-- Spring Security OAuth2 Client (Spring AI ToolCallingAutoConfiguration 需要) -->
+        <!--<dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>-->
+
+        <!--百炼：必要的两个依赖：starter-web starter-oauth2-client 否则启动自动装配 ImageModel VideoModel Tools报错-->
+        <dependency>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
+        </dependency>
+        <!-- Ollama  -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
+        </dependency>
+
+        <!-- 会话记忆 -->
+        <dependency>
+            <groupId>com.alibaba.cloud.ai</groupId>
+            <artifactId>spring-ai-alibaba-starter-memory-redis</artifactId>
+        </dependency>
+        <!-- 文本处理-->
+        <!--<dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-redis-store-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc</artifactId>
-        </dependency>
-        <!-- Netty -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-        </dependency>
-        <!-- 消息队列：RocketMQ -->
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-acl</artifactId>
-        </dependency>
-        <!-- 数据库连接 -->
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-        </dependency>
-        <!-- ORM -->
-        <dependency>
-            <groupId>com.mybatis-flex</groupId>
-            <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
-        </dependency>
-        <!-- Swagger -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-        </dependency>
-        <!-- 日志收集: logstash -->
-        <dependency>
-            <groupId>net.logstash.logback</groupId>
-            <artifactId>logstash-logback-encoder</artifactId>
-        </dependency>
-        <!-- 任务调度：XXL-JOB 核心依赖 -->
-        <dependency>
-            <groupId>com.xuxueli</groupId>
-            <artifactId>xxl-job-core</artifactId>
-        </dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-pdf-document-reader</artifactId>
+        </dependency>-->
+
         <!-- Util -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -106,16 +97,4 @@
         </dependency>
     </dependencies>
 
-    <!-- 打包配置 -->
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <configuration>
-                    <mainClass>pvt.mktech.petcare.core.CoreServiceApplication</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>

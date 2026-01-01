@@ -1,5 +1,6 @@
 package pvt.mktech.petcare.gateway.filter;
 
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -18,6 +19,7 @@ import org.springframework.web.server.ServerWebExchange;
 import pvt.mktech.petcare.common.util.JwtUtil;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,14 +63,22 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
                 return chain.filter(exchange);
             }
 
-            // 2. 获取 Token
+            // 2. 获取 Token（优先从 Header，其次从 URL 查询参数，用于 WebSocket）
             String token = request.getHeaders().getFirst(TOKEN_HEADER);
-            if (token == null || !token.startsWith(TOKEN_PREFIX)) {
-                // 设置响应状态和 body
+            if (token != null && token.startsWith(TOKEN_PREFIX)) {
+                token = token.substring(TOKEN_PREFIX.length());
+            } else if (request.getURI().getPath().startsWith("/ws")) {
+                // 从 URL 查询参数获取 token（WebSocket 不支持自定义 Header）
+                String query = request.getURI().getQuery();
+                if (query != null) {
+                    token = StrUtil.subAfter(query, "token=", false);
+                }
+            }
+
+            if (token == null || token.isEmpty()) {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
-            token = token.substring(TOKEN_PREFIX.length()); // 去掉 Bearer 前缀
             try {
                 // 3. 验证 Token
                 Claims claims = jwtUtil.parseToken(token);

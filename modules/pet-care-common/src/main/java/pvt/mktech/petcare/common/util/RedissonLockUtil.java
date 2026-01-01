@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
+import pvt.mktech.petcare.common.exception.ErrorCode;
+import pvt.mktech.petcare.common.exception.SystemException;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -110,11 +112,13 @@ public class RedissonLockUtil {
             if (locked) {
                 return supplier.get();
             } else {
-                throw new RuntimeException("获取分布式锁失败: " + lockKey);
+                throw new SystemException(ErrorCode.LOCK_ACQUIRE_FAILED,
+                        ErrorCode.LOCK_ACQUIRE_FAILED.getMessage() + ": " + lockKey);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("获取分布式锁被中断: " + lockKey, e);
+            throw new SystemException(ErrorCode.LOCK_INTERRUPTED,
+                    ErrorCode.LOCK_INTERRUPTED.getMessage() + ": " + lockKey, e);
         } finally {
             if (locked) {
                 unlock(lock);

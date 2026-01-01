@@ -1,3 +1,4 @@
+# 文件存储 配置：MinIO
 minio:
   enable: true
   business-key: avatar
@@ -8,10 +9,32 @@ minio:
   file-size-limit: 10485760 # 10MB
   expire-time: 3600 # 1小时
 
+# 消息队列 配置：RocketMQ
+rocketmq:
+  name-server: 127.0.0.1:9876
 
+# WebSocket 配置：Netty
+netty:
+  websocket:
+    port: 8081
+
+# 分布式定时任务 配置：XXL-JOB 配置 (调度中心在Docker中，执行器在宿主机运行)
+xxl:
+  job:
+    admin:
+      addresses: http://localhost:9999/xxl-job-admin
+      accessToken: default_token  # 与调度中心的通信令牌（配置文件在xxl-job.application.yml有）
+      # 注意：如果调度中心未配置 token，这里必须注释掉或留空，否则会导致注册失败
+    executor:
+      appname: reminder-executor  # 执行器名称，需要在调度中心手动创建同名执行器
+      ip: host.docker.internal  # 执行器IP，Docker容器需要能访问此IP
+      port: 9998 # 执行器端口号，确保宿主机防火墙允许此端口访问
+      logpath: ./logs/xxl-job/  # 日志路径
+      logretentiondays: 30  # 日志保留天数
+
+# 日志配置
 logging:
   level:
-    #    root: INFO
     pvt.mktech.petcare.core: INFO
     com.mybatisflex: WARN
     com.alibaba.nacos: WARN
@@ -29,28 +52,3 @@ logging:
       max-file-size: 100MB
       max-history: 7
       total-size-cap: 1GB
-
-rocketmq:
-  name-server: 127.0.0.1:9876
-  producer:
-    group: petcare-reminder-producer
-  consumer:
-    group: petcare-reminder-consumer
-    topic:
-      reminder:
-        send: petcare-reminder-send
-
-# XXL-JOB 配置 (调度中心在Docker中，执行器在宿主机运行)
-xxl:
-  job:
-    admin:
-      addresses: http://localhost:9999/xxl-job-admin
-      accessToken: default_token  # 与调度中心的通信令牌（配置文件在xxl-job.application.yml有）
-      # 注意：如果调度中心未配置 token，这里必须注释掉或留空，否则会导致注册失败
-    executor:
-      appname: reminder-executor  # 执行器名称，需要在调度中心手动创建同名执行器
-      ip: host.docker.internal  # 执行器IP，Docker容器需要能访问此IP
-      port: 9998 # 执行器端口号，确保宿主机防火墙允许此端口访问
-      logpath: ./logs/xxl-job/  # 日志路径
-      logretentiondays: 30  # 日志保留天数
-

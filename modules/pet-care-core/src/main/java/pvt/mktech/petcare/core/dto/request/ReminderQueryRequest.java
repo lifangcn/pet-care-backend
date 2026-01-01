@@ -21,27 +21,41 @@ public class ReminderQueryRequest {
     private Long userId;
     @Schema(description = "来源类型")
     private String sourceType;
+    @Schema(description = "执行记录状态")
+    private String status;
     @Schema(description = "标题")
     private String title;
     @Schema(description = "描述")
     private String description;
-    @Schema(description = "记录时间开始")
+    @Schema(description = "查询开始时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime recordTimeStart;
-    @Schema(description = "记录时间结束")
+    private LocalDateTime startTime;
+    @Schema(description = "查询结束时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime recordTimeEnd;
+    private LocalDateTime endTime;
     @Schema(description = "页码")
     private Long pageNumber = 1L;
     @Schema(description = "每页数量")
     private Long pageSize;
 
-    public ReminderQueryRequest(Long petId, String sourceType, LocalDateTime recordTimeStart, LocalDateTime recordTimeEnd, Long pageNumber, Long pageSize) {
+
+    public ReminderQueryRequest(Long petId, LocalDateTime startTime, LocalDateTime endTime,
+                                Long pageNumber, Long pageSize) {
         this.petId = petId;
-        this.sourceType = sourceType;
-        this.recordTimeStart = recordTimeStart;
-        this.recordTimeEnd = recordTimeEnd;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.pageNumber = pageNumber;
         this.pageSize = pageSize;
     }
+
+    public ReminderQueryRequest(Long petId, String sourceType, LocalDateTime startTime,
+                                LocalDateTime endTime, Long pageNumber, Long pageSize) {
+        this.petId = petId;
+        this.sourceType = sourceType;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.pageNumber = pageNumber;
+        this.pageSize = pageSize;
+    }
+
 }

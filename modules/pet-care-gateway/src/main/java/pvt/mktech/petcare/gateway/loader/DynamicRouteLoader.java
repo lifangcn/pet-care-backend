@@ -7,6 +7,8 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.route.RouteDefinitionWriter;
+import pvt.mktech.petcare.common.exception.ErrorCode;
+import pvt.mktech.petcare.common.exception.SystemException;
 
 import java.util.concurrent.Executor;
 
@@ -47,7 +49,7 @@ public class DynamicRouteLoader {
             });
         } catch (NacosException e) {
             log.error("Nacos异常：{}", e.getMessage());
-            throw new RuntimeException(e);
+            throw new SystemException(ErrorCode.SYSTEM_ERROR, e);
         }
     }
 }

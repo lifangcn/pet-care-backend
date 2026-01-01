@@ -20,7 +20,7 @@ import pvt.mktech.petcare.core.service.UserService;
 import java.util.List;
 import java.util.Optional;
 
-import static pvt.mktech.petcare.core.entity.table.UsersTableDef.USERS;
+import static pvt.mktech.petcare.core.entity.table.UserTableDef.USER;
 
 
 @Slf4j
@@ -33,7 +33,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public UserResponse getUserById(Long userId) {
-        User user = getOne(USERS.ID.eq(userId));
+        User user = getOne(USER.ID.eq(userId));
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
@@ -42,7 +42,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Override
     public UserResponse getUserByUsername(String username) {
-        User user = getOne(USERS.USERNAME.eq(username));
+        User user = getOne(USER.USERNAME.eq(username));
 
 
         if (user == null) {
@@ -54,7 +54,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Transactional
     @Override
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
-        User user = getOne(USERS.ID.eq(userId));
+        User user = getOne(USER.ID.eq(userId));
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
@@ -62,8 +62,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 检查手机号是否已被其他用户使用
         if (request.getPhone() != null && !request.getPhone().equals(user.getPhone())) {
             QueryWrapper queryWrapper = QueryWrapper.create()
-                    .where(USERS.PHONE.eq(request.getPhone()))
-                    .and(USERS.ID.eq(userId));
+                    .where(USER.PHONE.eq(request.getPhone()))
+                    .and(USER.ID.eq(userId));
             if (userMapper.selectCountByQuery(queryWrapper) > 0) {
                 throw new BusinessException(ErrorCode.PHONE_ALREADY_EXISTS);
             }
@@ -92,17 +92,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Override
     public boolean checkUsernameExists(String username) {
-        return exists(USERS.USERNAME.eq(username));
+        return exists(USER.USERNAME.eq(username));
     }
     
     @Override
     public boolean checkPhoneExists(String phone) {
-        return exists(USERS.PHONE.eq(phone));
+        return exists(USER.PHONE.eq(phone));
     }
 
     @Override
     public List<Long> getActiveUserIds() {
-        QueryWrapper queryWrapper = QueryWrapper.create().select(USERS.ID).where(USERS.STATUS.eq(true)).from(USERS);
+        QueryWrapper queryWrapper = QueryWrapper.create().select(USER.ID).where(USER.STATUS.eq(true)).from(USER);
         return userMapper.selectObjectListByQueryAs(queryWrapper, Long.class);
     }
 
