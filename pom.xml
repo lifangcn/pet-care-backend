@@ -11,10 +11,10 @@
     <modules>
         <module>modules/pet-care-gateway</module>
         <module>modules/pet-care-common</module>
+        <module>modules/pet-care-api</module>
         <module>modules/pet-care-core</module>
         <module>modules/pet-care-ai</module>
-        <module>modules/pet-care-shop</module>
-        <module>modules/pet-care-community</module>
+        <module>modules/pet-care-mcp</module>
         <!-- mybatis-flex代码生成 -->
         <module>codegen</module>
     </modules>
@@ -25,7 +25,7 @@
         <spring-boot.version>3.3.5</spring-boot.version>
         <spring-cloud-alibaba.version>2023.0.1.2</spring-cloud-alibaba.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
-        <dubbo.version>3.3.0</dubbo.version>
+        <dubbo.version>3.3.1</dubbo.version>
         <!-- DB -->
         <mysql-connector.version>9.1.0</mysql-connector.version>
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
@@ -34,8 +34,6 @@
         <caffeine.version>3.1.8</caffeine.version>
         <!--JWT-->
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
-        <!-- 消息队列：RocketMQ -->
-        <rocketmq.version>5.1.4</rocketmq.version>
         <!-- 文件存储：MinIO -->
         <minio.version>8.5.7</minio.version>
         <!-- 搜索组件 (关键更新) -->
@@ -80,7 +78,7 @@
             <!-- Dubbo -->
             <dependency>
                 <groupId>org.apache.dubbo</groupId>
-                <artifactId>dubbo-dependencies-bom</artifactId>
+                <artifactId>dubbo-bom</artifactId>
                 <version>${dubbo.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -156,17 +154,6 @@
                 <artifactId>jjwt-jackson</artifactId>
                 <version>${jsonwebtoken.version}</version>
                 <scope>runtime</scope>
-            </dependency>
-            <!-- 消息队列：RocketMQ -->
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-client</artifactId>
-                <version>${rocketmq.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.rocketmq</groupId>
-                <artifactId>rocketmq-acl</artifactId>
-                <version>${rocketmq.version}</version>
             </dependency>
             <!-- MinIO -->
             <dependency>

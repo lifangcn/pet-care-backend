@@ -1,8 +1,9 @@
 # 日志配置
 logging:
   level:
-    pvt.mktech.petcare.gateway: info
-    org.springframework.cloud.gateway: info
+    pvt.mktech.petcare.gateway: INFO
+    org.springframework.cloud.gateway: INFO
+    reactor.netty.http.client: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"

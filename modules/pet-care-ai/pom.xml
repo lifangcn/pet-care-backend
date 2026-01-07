@@ -16,6 +16,8 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <pet-care-common.version>1.0-SNAPSHOT</pet-care-common.version>
+        <pet-care-api.version>1.0-SNAPSHOT</pet-care-api.version>
     </properties>
 
     <dependencies>
@@ -23,7 +25,22 @@
         <dependency>
             <groupId>pvt.mktech.petcare</groupId>
             <artifactId>pet-care-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>${pet-care-common.version}</version>
+        </dependency>
+        <!-- API -->
+        <dependency>
+            <groupId>pvt.mktech.petcare</groupId>
+            <artifactId>pet-care-api</artifactId>
+            <version>${pet-care-api.version}</version>
+        </dependency>
+        <!-- Dubbo -->
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-registry-nacos</artifactId>
         </dependency>
         <!-- Nacos 服务发现 (注册到 Nacos) -->
         <dependency>
@@ -50,39 +67,61 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
 
         <!-- Spring AI -->
-        <!-- Spring Security OAuth2 Client (Spring AI ToolCallingAutoConfiguration 需要) -->
-        <!--<dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-client</artifactId>
-        </dependency>-->
-
         <!--百炼：必要的两个依赖：starter-web starter-oauth2-client 否则启动自动装配 ImageModel VideoModel Tools报错-->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
         </dependency>
         <!-- Ollama  -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-ollama</artifactId>
-        </dependency>
+        </dependency>-->
 
         <!-- 会话记忆 -->
         <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-memory-redis</artifactId>
         </dependency>
-        <!-- 文本处理-->
-        <!--<dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-redis-store-spring-boot-starter</artifactId>
-        </dependency>
+
+        <!-- 向量数据库 -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-pdf-document-reader</artifactId>
-        </dependency>-->
+            <artifactId>spring-ai-starter-vector-store-milvus</artifactId>
+        </dependency>
+        <!-- 向量数据库检索 -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-advisors-vector-store</artifactId>
+        </dependency>
+        <!-- 文本处理-->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-tika-document-reader</artifactId>
+        </dependency>
+
+        <!-- MCP Client -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client</artifactId>
+        </dependency>
+
+        <!-- ORM -->
+        <dependency>
+            <groupId>com.mybatis-flex</groupId>
+            <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
+        </dependency>
+        <!-- 数据库连接 -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+        </dependency>
 
         <!-- Util -->
         <dependency>
@@ -96,5 +135,18 @@
             <version>${hutool.version}</version>
         </dependency>
     </dependencies>
+
+    <!-- 打包配置 -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>pvt.mktech.petcare.ai.AiServiceApplication</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

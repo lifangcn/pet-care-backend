@@ -1,5 +1,6 @@
 package pvt.mktech.petcare.core.service.impl;
 
+import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,7 @@ import pvt.mktech.petcare.core.service.PetService;
 
 import java.util.List;
 
-import static pvt.mktech.petcare.core.entity.table.PetTableDef.PETS;
+import static pvt.mktech.petcare.core.entity.table.PetTableDef.PET;
 
 /**
  * 宠物表 服务层实现。
@@ -34,6 +35,13 @@ public class PetServiceImpl extends ServiceImpl<PetsMapper, Pet> implements PetS
 
     @Override
     public List<Pet> findByUserId(Long userId) {
-        return list(PETS.USER_ID.eq(userId));
+        return list(PET.USER_ID.eq(userId));
+    }
+
+    @Override
+    public Pet findByUserIdAndPetName(Long userId, String petName) {
+        return getOne(QueryWrapper.create()
+                .where(PET.USER_ID.eq(userId))
+                .and(PET.NAME.eq(petName)));
     }
 }

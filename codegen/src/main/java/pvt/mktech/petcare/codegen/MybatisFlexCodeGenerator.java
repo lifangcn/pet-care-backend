@@ -11,7 +11,7 @@ import com.zaxxer.hikari.HikariDataSource;
 public class MybatisFlexCodeGenerator {
 
     // 数据库配置
-    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai";
+    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "!QAZ2wsx";
     // 方言
@@ -22,7 +22,7 @@ public class MybatisFlexCodeGenerator {
 
     // 要生成的表名（为空则生成所有表）
     private static final String[] INCLUDED_TABLES = {
-            "tb_health_record", "tb_reminder", "tb_reminder_execution"
+            "tb_knowledge_document"
     };
 
     // 要排除的表名

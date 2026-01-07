@@ -1,0 +1,72 @@
+spring:
+  ai:
+    # 向量存储
+    vectorstore:
+      milvus:
+        database-name: default
+        collection-name: pet_care_ai
+        client:
+          host: localhost
+          port: 19530
+          username: milvus
+          password: "!QAZ2wsx"
+        initialize-schema: true
+        embedding-dimension: 1024
+    #    ollama:
+    #      chat:
+    #        model: deepseek-r1:latest
+    #        base-url: http://localhost:11434
+    # 百炼
+    dashscope:
+      api-key: ${API_KEY}
+      embedding:
+        options:
+          model: text-embedding-v3
+    # 会话记忆 Redis 配置
+    chat:
+      memory:
+        redis:
+          host: localhost
+          port: 6379
+          password: "!QAZ2wsx"
+          timeout: 5000
+          max-messages: 10
+
+#    mcp:
+#      client:
+#        type: async
+#        request-timeout: 60s
+#        sse:
+#          connections:
+#            mcp-server1:
+#              url: http://localhost:8083
+
+# 文件存储 配置：MinIO
+minio:
+  enable: true
+  business-key: ai
+  endpoint: http://localhost:9000
+  access-key: minio
+  secret-key: "!QAZ2wsx"
+  bucket-name: pet-care-ai
+  file-size-limit: 10485760 # 10MB
+  expire-time: 3600 # 1小时
+
+# 日志配置
+logging:
+  level:
+    pvt.mktech.petcare.ai: INFO
+    com.alibaba.nacos: WARN
+    org.springframework.ai: INFO
+    org.apache.dubbo: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: ./logs/pet-care-ai.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 7
+      total-size-cap: 1GB
+

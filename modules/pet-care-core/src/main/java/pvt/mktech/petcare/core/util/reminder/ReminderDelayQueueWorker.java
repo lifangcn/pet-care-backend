@@ -6,12 +6,14 @@ import cn.hutool.json.JSONUtil;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.common.message.Message;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
+import pvt.mktech.petcare.common.exception.ErrorCode;
+import pvt.mktech.petcare.common.exception.SystemException;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.core.entity.ReminderExecution;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
@@ -20,6 +22,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 
@@ -33,7 +36,7 @@ public class ReminderDelayQueueWorker {
 
     private final StringRedisTemplate stringRedisTemplate;
     private final ReminderExecutionService reminderExecutionService;
-    private final DefaultMQProducer reminderProducer;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     /**
      * 扫描延迟队列并处理到期消息，
@@ -43,7 +46,7 @@ public class ReminderDelayQueueWorker {
     @XxlJob("delayQueueScanJob")
     public void delayQueueScanJob() {
         Set<ZSetOperations.TypedTuple<String>> expiredMessages = stringRedisTemplate.opsForZSet()
-                .rangeByScoreWithScores(CORE_REMINDER_QUEUE_KEY, 0, System.currentTimeMillis());
+                .rangeByScoreWithScores(CORE_REMINDER_SEND_QUEUE_KEY, 0, System.currentTimeMillis());
 
         if (CollUtil.isEmpty(expiredMessages)) {
             return;
@@ -60,22 +63,11 @@ public class ReminderDelayQueueWorker {
             }
             try {
                 log.info("处理到期消息: executionId={}, 计划发送时间={}",
-                        executionId,
-                        LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduleTime.longValue()),
+                        executionId, LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduleTime.longValue()),
                                 ZoneId.of("Asia/Shanghai")));
 
-                // 3. 核心：取出消息后，将其转发到真正的发送队列（RocketMQ主题）
-                // 这是连接Redis延迟队列和RocketMQ发送队列的关键步骤
-                boolean success = this.forwardToSendQueue(Long.parseLong(executionId));
-
-                if (success) {
-                    // 4. 处理成功后，从Sorted Set中移除该消息，防止重复消费
-                    stringRedisTemplate.opsForZSet().remove(CORE_REMINDER_QUEUE_KEY, executionId);
-                    log.info("成功处理并移除延时消息: executionId={}", executionId);
-                } else {
-                    log.error("转发消息到发送队列失败，executionId={} 仍保留在延迟队列中", executionId);
-                    // 可选：记录失败次数，达到阈值后移至死信集合
-                }
+                // 3. 核心：取出消息后，将其转发到真正的发送队列（Kafka主题）
+                this.forwardToSendQueue(Long.parseLong(executionId));
             } catch (Exception e) {
                 log.error("处理延时消息异常，executionId: {}", executionId, e);
                 // 异常处理：可加入重试机制或告警
@@ -88,29 +80,31 @@ public class ReminderDelayQueueWorker {
      *
      * @param reminderExecutionId 执行记录ID
      */
-    private boolean forwardToSendQueue(Long reminderExecutionId) {
-        try {
-            // 1. 可以根据ID从数据库再查询一次最新状态（二次校验的又一机会）
-            ReminderExecution execution = reminderExecutionService.getById(reminderExecutionId);
-            if (execution == null || !"pending".equals(execution.getStatus())) {
-                log.warn("执行记录 {} 状态不符，取消转发", execution);
-                return true; // 返回true，让上游从Redis删除，因为业务上已无效
-            }
-            // 2. 发送到RocketMQ，由下游的 NotificationService 消费并实际推送
-            ReminderExecutionMessageDto messageDto = new ReminderExecutionMessageDto();
-            BeanUtil.copyProperties(execution, messageDto);
-            // 组装消息体逻辑：Topic: core-reminder-send, Tag: send, Key: executionId, Body: ExecutionDto
-            Message message = new Message(
-                    CORE_REMINDER_DELAY_TOPIC_SEND,
-                    execution.getId().toString(),
-                    JSONUtil.toJsonStr(messageDto).getBytes()
-            );
-            reminderProducer.send(message);
-            log.info("发送 提醒执行 到立即消费队列，topic: {}, message: {}", CORE_REMINDER_DELAY_TOPIC_SEND, messageDto);
-            return true;
-        } catch (Exception e) {
-            log.error("发送 提醒执行 到立即消费队列失败，executionId: {}", reminderExecutionId, e);
-            return false;
+    private void forwardToSendQueue(Long reminderExecutionId) {
+        // 1. 可以根据ID从数据库再查询一次最新状态（二次校验的又一机会）
+        ReminderExecution execution = reminderExecutionService.getById(reminderExecutionId);
+        if (execution == null || !"pending".equals(execution.getStatus())) {
+            log.warn("执行记录 {} 状态不符，取消转发", execution);
+            return; // 返回true，让上游从Redis删除，因为业务上已无效
         }
+        // 2. 发送到Kafka，由下游的 NotificationService 消费并实际推送
+        ReminderExecutionMessageDto messageDto = new ReminderExecutionMessageDto();
+        BeanUtil.copyProperties(execution, messageDto);
+        String key = execution.getId().toString();
+        String value = JSONUtil.toJsonStr(messageDto);
+        ProducerRecord<String, String> message = new ProducerRecord<>(CORE_REMINDER_DELAY_TOPIC_SEND, null, System.currentTimeMillis(), key, value);
+        CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(message);
+        future.thenAccept(result -> {
+                    log.info("成功发送 提醒执行 消息，topic: {}, key: {}, offset: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, result.getRecordMetadata().offset());
+                    // 4. 处理成功后，从Sorted Set中移除该消息，防止重复消费
+                    stringRedisTemplate.opsForZSet().remove(CORE_REMINDER_SEND_QUEUE_KEY, key);
+                    log.info("成功处理并移除延时消息: executionId={}", key);
+                })
+                .exceptionally(throwable -> {
+                    log.error("发送 提醒执行 到立即消费队列失败，topic: {}, key: {}, 异常: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, throwable.getMessage());
+                    log.error("转发消息到发送队列失败，executionId={} 仍保留在延迟队列中", key);
+                    throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, throwable);
+                    // 可以实现重试逻辑或记录到失败队列
+                });
     }
 }

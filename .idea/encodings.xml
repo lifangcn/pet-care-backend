@@ -7,6 +7,8 @@
     <file url="file://$PROJECT_DIR$/modules/community-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-ai/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-ai/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/modules/pet-care-api/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/modules/pet-care-api/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-common/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-community/src/main/java" charset="UTF-8" />
@@ -15,6 +17,8 @@
     <file url="file://$PROJECT_DIR$/modules/pet-care-core/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-gateway/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-gateway/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/modules/pet-care-mcp/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/modules/pet-care-mcp/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-shop/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-care-shop/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/modules/pet-management-service/src/main/java" charset="UTF-8" />
@@ -25,6 +29,8 @@
     <file url="file://$PROJECT_DIR$/modules/xxl-job-admin/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
+    <file url="file://$USER_HOME$/src/main/java" charset="UTF-8" />
+    <file url="file://$USER_HOME$/src/main/resources" charset="UTF-8" />
     <file url="file:///src/main/java" charset="UTF-8" />
     <file url="file:///src/main/resources" charset="UTF-8" />
   </component>

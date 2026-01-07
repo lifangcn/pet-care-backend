@@ -28,4 +28,13 @@ public interface PetService extends IService<Pet> {
      * @return 宠物列表
      */
     List<Pet> findByUserId(Long userId);
+
+    /**
+     * 根据用户id查询用户所有宠物
+     *
+     * @param userId  用户id
+     * @param petName 宠物名称
+     * @return 宠物列表
+     */
+    Pet findByUserIdAndPetName(Long userId, String petName);
 }

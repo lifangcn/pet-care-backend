@@ -3,23 +3,16 @@ package pvt.mktech.petcare.core.util.reminder;
 import cn.hutool.json.JSONUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
-import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
-import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
-import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
-import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.common.message.MessageExt;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.core.handler.ReminderWebSocketHandler;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-
-import java.util.List;
 
 import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 
@@ -31,44 +24,19 @@ import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 @RequiredArgsConstructor
 @Slf4j
 public class ReminderSendConsumer {
-    @Value("${rocketmq.name-server:127.0.0.1:9876}")
-    private String nameServer;
-
-    private DefaultMQPushConsumer consumer;
 
     private final ReminderExecutionService reminderExecutionService;
     private final ReminderWebSocketHandler reminderWebSocketHandler;
 
-    @PostConstruct
-    public void init() throws MQClientException {
-        consumer = new DefaultMQPushConsumer(CORE_REMINDER_SEND_CONSUMER);
-        consumer.setNamesrvAddr(nameServer);
-        consumer.subscribe(CORE_REMINDER_DELAY_TOPIC_SEND, "*");
-        consumer.registerMessageListener(new MessageListenerConcurrently() {
-            @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> messages, ConsumeConcurrentlyContext context) {
-                for (MessageExt msg : messages) {
-                    try {
-                        String body = new String(msg.getBody());
-                        ReminderExecutionMessageDto messageDto = JSONUtil.toBean(body, ReminderExecutionMessageDto.class);
-                        processMessage(messageDto);
-                    } catch (Exception e) {
-                        log.error("消费消息失败，messageId: {}", msg.getMsgId(), e);
-                        return ConsumeConcurrentlyStatus.RECONSUME_LATER;
-                    }
-                }
-                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-            }
-        });
-        consumer.start();
-        log.info("RocketMQ Consumer started: {}", CORE_REMINDER_SEND_CONSUMER);
-    }
-
-    @PreDestroy
-    public void destroy() {
-        if (consumer != null) {
-            consumer.shutdown();
-            log.info("RocketMQ Consumer shutdown: {}", CORE_REMINDER_SEND_CONSUMER);
+    @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_SEND, groupId = CORE_REMINDER_SEND_CONSUMER)
+    public void consume(@Payload String message, @Header(KafkaHeaders.RECEIVED_KEY) String key, Acknowledgment acknowledgment) {
+        try {
+            ReminderExecutionMessageDto messageDto = JSONUtil.toBean(message, ReminderExecutionMessageDto.class);
+            processMessage(messageDto);
+            acknowledgment.acknowledge();
+        } catch (Exception e) {
+            log.error("消费消息失败，key: {}", key, e);
+            // Kafka 会自动重试，或手动处理
         }
     }
 

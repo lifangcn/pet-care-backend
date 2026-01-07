@@ -62,11 +62,12 @@ public enum ErrorCode {
     FILE_NULL("40001", "文件不能为空"),
     FILE_TOO_LARGE("40002", "文件大小超出限制"),
     FILE_NAME_NULL("40003", "文件名不能为空"),
-    FILE_TYPE_NOT_SUPPORTED("40004", "文件类型不支持，仅支持：{0}"),
-    FILE_TYPE_MISMATCH("40005", "文件内容与类型不匹配"),
-    FILE_UPLOAD_FAILED("40006", "文件上传失败"),
-    FILE_NOT_FOUND("40007", "文件不存在"),
-    BUCKET_CREATE_FAILED("40008", "存储桶创建失败"),
+    FILE_URL_NULL("40004", "文件路径不能为空"),
+    FILE_TYPE_NOT_SUPPORTED("40005", "文件类型不支持，仅支持：{0}"),
+    FILE_TYPE_MISMATCH("40006", "文件内容与类型不匹配"),
+    FILE_UPLOAD_FAILED("40007", "文件上传失败"),
+    FILE_NOT_FOUND("40008", "文件不存在"),
+    BUCKET_CREATE_FAILED("40009", "存储桶创建失败"),
     
     // ========== 业务相关错误码 (50000-59999) ==========
     INSUFFICIENT_BALANCE("50001", "余额不足"),

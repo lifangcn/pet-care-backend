@@ -11,6 +11,8 @@
     <option name="ignoredFiles">
       <set>
         <option value="$PROJECT_DIR$/modules/community-service/pom.xml" />
+        <option value="$PROJECT_DIR$/modules/pet-care-community/pom.xml" />
+        <option value="$PROJECT_DIR$/modules/pet-care-shop/pom.xml" />
         <option value="$PROJECT_DIR$/modules/pet-management-service/pom.xml" />
         <option value="$PROJECT_DIR$/modules/tech-poc/pom.xml" />
         <option value="$PROJECT_DIR$/modules/xxl-job-admin/pom.xml" />

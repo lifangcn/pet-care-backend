@@ -2,7 +2,10 @@ package pvt.mktech.petcare.core.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 /**
@@ -13,6 +16,8 @@ import java.time.LocalDateTime;
  */
 @Data
 @Schema(description = "提醒查询请求")
+@NoArgsConstructor
+@AllArgsConstructor
 public class ReminderQueryRequest {
 
     @Schema(description = "宠物ID")
@@ -36,7 +41,7 @@ public class ReminderQueryRequest {
     @Schema(description = "页码")
     private Long pageNumber = 1L;
     @Schema(description = "每页数量")
-    private Long pageSize;
+    private Long pageSize = 20L;
 
 
     public ReminderQueryRequest(Long petId, LocalDateTime startTime, LocalDateTime endTime,

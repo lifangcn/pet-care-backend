@@ -4,15 +4,12 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
-import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
-import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
-import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
-import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.common.message.Message;
-import org.apache.rocketmq.common.message.MessageExt;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
@@ -24,12 +21,8 @@ import pvt.mktech.petcare.core.entity.ReminderExecution;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
 import pvt.mktech.petcare.core.service.ReminderService;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 
@@ -46,44 +39,20 @@ public class ReminderPendingConsumer {
 
     private final ReminderService reminderService;
     private final StringRedisTemplate stringRedisTemplate;
-    private final DefaultMQProducer reminderProducer;
+    private final KafkaTemplate<String, String> kafkaTemplate;
     private final ReminderExecutionService reminderExecutionService;
 
-    @Value("${rocketmq.name-server:127.0.0.1:9876}")
-    private String nameServer;
-
-    private DefaultMQPushConsumer consumer;
-
-    @PostConstruct
-    public void init() throws MQClientException {
-        consumer = new DefaultMQPushConsumer(CORE_REMINDER_PENDING_CONSUMER);
-        consumer.setNamesrvAddr(nameServer);
-        consumer.subscribe(CORE_REMINDER_DELAY_TOPIC_PENDING, "*");
-        consumer.registerMessageListener(new MessageListenerConcurrently() {
-            @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> messages, ConsumeConcurrentlyContext context) {
-                for (MessageExt msg : messages) {
-                    try {
-                        String body = new String(msg.getBody());
-                        ReminderMessageDto messageDto = JSONUtil.toBean(body, ReminderMessageDto.class);
-                        processMessage(messageDto);
-                    } catch (Exception e) {
-                        log.error("消费消息失败，messageId: {}", msg.getMsgId(), e);
-                        return ConsumeConcurrentlyStatus.RECONSUME_LATER;
-                    }
-                }
-                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-            }
-        });
-        consumer.start();
-        log.info("RocketMQ Consumer started: {}", CORE_REMINDER_PENDING_CONSUMER);
-    }
-
-    @PreDestroy
-    public void destroy() {
-        if (consumer != null) {
-            consumer.shutdown();
-            log.info("RocketMQ Consumer shutdown: {}", CORE_REMINDER_PENDING_CONSUMER);
+    @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_PENDING, groupId = CORE_REMINDER_PENDING_CONSUMER)
+    public void consume(@Payload String message,
+                        @Header(KafkaHeaders.RECEIVED_KEY) String key,
+                        Acknowledgment acknowledgment) {
+        try {
+            ReminderMessageDto messageDto = JSONUtil.toBean(message, ReminderMessageDto.class);
+            processMessage(messageDto);
+            acknowledgment.acknowledge();
+        } catch (Exception e) {
+            log.error("消费消息失败，key: {}", key, e);
+            // Kafka 会自动重试，或手动处理
         }
     }
 
@@ -113,23 +82,20 @@ public class ReminderPendingConsumer {
         long timestamp = System.currentTimeMillis() + delayMillis;
         // 4.2.如果距离提醒时间还有一段时间，存入 Redis 队列，后续每秒扫描，到期后再处理。
         Boolean flag = stringRedisTemplate.opsForZSet()
-                .add(CORE_REMINDER_QUEUE_KEY, execution.getId().toString(), timestamp);
+                .add(CORE_REMINDER_SEND_QUEUE_KEY, execution.getId().toString(), timestamp);
         log.info("存入 Redis 队列，是否成功：{}, execution.id: {}， 消费时间戳：{}", flag, execution.getId(), timestamp);
     }
 
     private void sendToSendQueue(ReminderExecutionMessageDto messageDto) {
-        try {
-            Message message = new Message(
-                    CORE_REMINDER_DELAY_TOPIC_SEND,
-                    messageDto.getId().toString(),
-                    JSONUtil.toJsonStr(messageDto).getBytes()
-            );
-            reminderProducer.send(message);
-            log.info("发送 提醒执行 到立即消费队列，topic: {}, body: {}", CORE_REMINDER_DELAY_TOPIC_SEND, messageDto);
-        } catch (Exception e) {
-            log.error("发送消息到发送队列失败", e);
-            throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);
-        }
+        String key = messageDto.getId().toString();
+        String value = JSONUtil.toJsonStr(messageDto);
+        kafkaTemplate.send(CORE_REMINDER_DELAY_TOPIC_SEND, key, value).thenAccept(result -> {
+            log.info("发送 提醒执行 到立即消费队列，topic: {}, key: {}, body: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, messageDto);
+        }).exceptionally(throwable -> {
+            log.error("发送消息到发送队列失败", throwable);
+            // 死信队列+告警
+            return null;
+        });
     }
 
     /**

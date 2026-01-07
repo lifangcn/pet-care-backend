@@ -1,8 +1,13 @@
+server:
+  port: 8080
+  shutdown: graceful
+
 spring:
-  main:
-    banner-mode: off
   application:
     name: pet-care-core
+  main:
+    banner-mode: off
+
   cloud:
     nacos:
       # Nacos 服务发现配置
@@ -11,23 +16,53 @@ spring:
         username: nacos
         password: nacos
         namespace: public
-        group: DEFAULT_GROUP
+        # 关键：注册元数据，区分服务能力
+        metadata:
+          protocol: http
       config:
-        # 每个项目的主配置文件 Data Id 建议定义为 ${spring.application.name} 否则 Nacos 会提示警告
-        server-addr: ${spring.cloud.nacos.discovery.server-addr}
-        username: ${spring.cloud.nacos.discovery.username}
-        password: ${spring.cloud.nacos.discovery.password}
-        namespace: ${spring.cloud.nacos.discovery.namespace}
-        group: ${spring.cloud.nacos.discovery.group}
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        namespace: public
         file-extension: yaml
         shared-configs:
           - data-id: shared-redis.yaml
           - data-id: shared-jwt.yaml
-        refresh-enabled: false
 
-# 暴露网关的 actuator 端点 (用于刷新配置，可选但推荐)
+# Dubbo 配置
+dubbo:
+  application:
+    name: ${spring.application.name}
+    qos-enable: true
+    qos-port: 22221
+    qos-accept-foreign-ip: false
+  registry:
+    address: nacos://${spring.cloud.nacos.discovery.server-addr}
+    username: ${spring.cloud.nacos.discovery.username}
+    password: ${spring.cloud.nacos.discovery.password}
+    register-mode: interface
+  protocol:
+    name: dubbo
+    port: 20881
+    # 不将 Dubbo 端口注册到服务发现
+    register: false
+  provider:
+    register: true
+  scan:
+    base-packages: pvt.mktech.petcare.core.service.dubbo
+
+# 暴露网关的 actuator 端点
 management:
+  server:
+    port: ${server.port}  # 与主应用同端口或独立端口
   endpoints:
     web:
       exposure:
-        include: '*'
+        include: health,info,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true

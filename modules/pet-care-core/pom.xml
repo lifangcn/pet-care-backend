@@ -17,6 +17,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <pet-care-common.version>1.0-SNAPSHOT</pet-care-common.version>
+        <pet-care-api.version>1.0-SNAPSHOT</pet-care-api.version>
     </properties>
 
     <dependencies>
@@ -25,7 +26,21 @@
             <artifactId>pet-care-common</artifactId>
             <version>${pet-care-common.version}</version>
         </dependency>
-        <!-- Nacos 服务发现 (注册到 Nacos) -->
+        <dependency>
+            <groupId>pvt.mktech.petcare</groupId>
+            <artifactId>pet-care-api</artifactId>
+            <version>${pet-care-api.version}</version>
+        </dependency>
+        <!-- Dubbo -->
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo-registry-nacos</artifactId>
+        </dependency>
+        <!-- Nacos 注册中心 -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
@@ -59,14 +74,10 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
         </dependency>
-        <!-- 消息队列：RocketMQ -->
+        <!-- 消息队列：Kafka -->
         <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-acl</artifactId>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
         </dependency>
         <!-- 数据库连接 -->
         <dependency>

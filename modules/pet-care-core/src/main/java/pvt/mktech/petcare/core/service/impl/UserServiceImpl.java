@@ -73,7 +73,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 删除旧头像（如果存在）
         if (StrUtil.isNotBlank(user.getAvatar())) {
             try {
-                minioUtil.deleteAvatar(user.getAvatar());
+                minioUtil.deleteFile(user.getAvatar());
             } catch (Exception e) {
                 log.warn("删除旧头像失败: {}", user.getAvatar(), e);
                 // 不阻断主流程

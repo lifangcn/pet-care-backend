@@ -14,7 +14,7 @@ public class PetTableDef extends TableDef {
     /**
      * 宠物表
      */
-    public static final PetTableDef PETS = new PetTableDef();
+    public static final PetTableDef PET = new PetTableDef();
 
     /**
      * 宠物ID

@@ -3,13 +3,11 @@ package pvt.mktech.petcare.core.util.reminder;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.xxl.job.core.context.XxlJobContext;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.common.message.Message;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.util.RedissonLockUtil;
 import pvt.mktech.petcare.core.dto.message.ReminderMessageDto;
@@ -36,7 +34,7 @@ import static pvt.mktech.petcare.core.constant.CoreConstant.CORE_REMINDER_DELAY_
 public class ReminderScanScheduler {
     private final ReminderService reminderService;
     private final RedissonLockUtil redissonLockUtil;
-    private final DefaultMQProducer reminderProducer;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     /**
      * 完整提醒逻辑：<br>
@@ -102,17 +100,12 @@ public class ReminderScanScheduler {
     private void forwardToPendingQueue(Reminder reminder) {
         ReminderMessageDto messageDto = new ReminderMessageDto();
         BeanUtil.copyProperties(reminder, messageDto);
-        // 组装消息体逻辑：Topic: core-reminder-pending, Tag: pending, Key: reminder.id, Body: ReminderMessageDto
         try {
-            Message message = new Message(
-                    CORE_REMINDER_DELAY_TOPIC_PENDING,
-                    reminder.getId().toString(),
-                    JSONUtil.toJsonStr(messageDto).getBytes()
-            );
-            reminderProducer.send(message);
-            log.info("发送 提醒项 到延迟消费队列，topic: {}, body: {}",
-                    CORE_REMINDER_DELAY_TOPIC_PENDING,
-                    messageDto);
+            String key = reminder.getId().toString();
+            String value = JSONUtil.toJsonStr(messageDto);
+            kafkaTemplate.send(CORE_REMINDER_DELAY_TOPIC_PENDING, key, value).get();
+            log.info("发送 提醒项 到延迟消费队列，topic: {}, key: {}, body: {}",
+                    CORE_REMINDER_DELAY_TOPIC_PENDING, key, messageDto);
         } catch (Exception e) {
             log.error("发送 提醒项 到延迟消费队列，reminder.id: {}", reminder.getId(), e);
             throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);
