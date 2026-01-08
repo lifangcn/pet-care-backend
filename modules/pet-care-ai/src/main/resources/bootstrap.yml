@@ -1,6 +1,9 @@
 server:
   port: 8082 # 业务服务端口
   shutdown: graceful
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 spring:
   application:
@@ -54,11 +57,21 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,metrics,prometheus
   endpoint:
     prometheus:
       enabled: true
+    health:
+      show-details: always
   prometheus:
     metrics:
       export:
         enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    enable:
+      tomcat: true
+      jvm: true
+      hikaricp: true
+      executor: true

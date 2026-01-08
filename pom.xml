@@ -49,6 +49,8 @@
         <springdoc-openapi.version>2.1.0</springdoc-openapi.version>
         <!-- 日志收集：logstash -->
         <logstash.version>7.4</logstash.version>
+        <!-- 监控：Prometheus -->
+        <prometheus.version>1.13.14</prometheus.version>
         <!-- 任务调度：XXL-JOB 核心依赖 -->
         <xxl-job.version>3.2.0</xxl-job.version>
         <!-- 基础 -->
@@ -178,6 +180,12 @@
                 <groupId>net.logstash.logback</groupId>
                 <artifactId>logstash-logback-encoder</artifactId>
                 <version>${logstash.version}</version>
+            </dependency>
+            <!-- Prometheus -->
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-registry-prometheus</artifactId>
+                <version>${prometheus.version}</version>
             </dependency>
             <!-- 任务调度：XXL-JOB 核心依赖 -->
             <dependency>

@@ -21,7 +21,7 @@ public class MvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // 登录拦截器
-        registry.addInterceptor(new UserInfoInterceptor()).order(0);
+        registry.addInterceptor(new UserInfoInterceptor()).excludePathPatterns("/actuator/**").order(0);
         log.info("添加登录拦截器成功");
     }
 }
