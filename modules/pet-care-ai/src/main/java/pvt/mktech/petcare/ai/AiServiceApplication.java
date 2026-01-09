@@ -4,8 +4,6 @@ import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Import;
-import pvt.mktech.petcare.common.config.CommonComponentConfig;
 
 /**
  * {@code @description}: 智能助手服务启动类
@@ -14,7 +12,6 @@ import pvt.mktech.petcare.common.config.CommonComponentConfig;
  * @author Michael
  */
 @SpringBootApplication
-@Import(CommonComponentConfig.class)
 @MapperScan("pvt.mktech.petcare.ai.mapper")
 @EnableDubbo
 public class AiServiceApplication {

@@ -1,18 +1,15 @@
-package pvt.mktech.petcare.common.util;
+package pvt.mktech.petcare.common.minio;
 
 import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.util.StrUtil;
 import io.minio.*;
 import io.minio.http.Method;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import pvt.mktech.petcare.common.config.MinioConfig;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
+import pvt.mktech.petcare.common.snowflake.SnowflakeIdGenerator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,16 +20,26 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * {@code @description}:
- * {@code @date}: 2025/12/17 16:22
+ * {@code @description}: MinIO 工具类
+ * {@code @date}: 2026/1/8 19:06
  *
  * @author Michael
  */
 @Slf4j
-@Component
-@RequiredArgsConstructor
-@ConditionalOnBean(MinioClient.class)
-public class MinioUtil {
+public class MinioTemplate {
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy:MM:dd");
+    private final MinioProperties minioProperties;
+    private final MinioClient minioClient;
+    private final SnowflakeIdGenerator snowflakeIdGenerator;
+
+    public MinioTemplate(MinioClient minioClient,
+                         MinioProperties minioProperties,
+                         SnowflakeIdGenerator snowflakeIdGenerator) {
+        this.minioClient = minioClient;
+        this.minioProperties = minioProperties;
+        this.snowflakeIdGenerator = snowflakeIdGenerator;
+    }
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
     private static final String MINIO_POLICY_AVATARS = """
@@ -69,9 +76,6 @@ public class MinioUtil {
               ]
             }
             """;
-    private final MinioClient minioClient;
-    private final MinioConfig minioConfig;
-    private final DistributedIdGenerator idGenerator;
 
     private static final Map<String, String> ALLOWED_IMAGE_TYPES = new HashMap<>() {{
         put("jpg", "image/jpeg");
@@ -102,7 +106,7 @@ public class MinioUtil {
     public String uploadAvatar(MultipartFile file, Long id) {
         validateFile(file, ALLOWED_IMAGE_TYPES, true);
         String objectName = generateObjectName("avatars", file, id);
-        ensureBucketExist(MINIO_POLICY_AVATARS, minioConfig.getBucketName());
+        ensureBucketExist(MINIO_POLICY_AVATARS, minioProperties.getBucketName());
         return uploadFile(file, objectName, ALLOWED_IMAGE_TYPES, "头像");
     }
 
@@ -115,7 +119,7 @@ public class MinioUtil {
     public String uploadDocument(MultipartFile file) {
         validateFile(file, ALLOWED_DOCUMENT_TYPES, false);
         String objectName = generateObjectName("ai", file, null);
-        ensureBucketExist(MINIO_POLICY_AI_FILE, minioConfig.getBucketName());
+        ensureBucketExist(MINIO_POLICY_AI_FILE, minioProperties.getBucketName());
         return uploadFile(file, objectName, ALLOWED_DOCUMENT_TYPES, "文档");
     }
 
@@ -127,7 +131,7 @@ public class MinioUtil {
 
         String objectName = null;
         String[] parts = fileUrl.split("/");
-        String bucketName = minioConfig.getBucketName();
+        String bucketName = minioProperties.getBucketName();
         int bucketIndex = -1;
         for (int i = 0; i < parts.length; i++) {
             if (bucketName.equals(parts[i])) {
@@ -146,7 +150,7 @@ public class MinioUtil {
             objectName = objectName1.toString();
         }
         return minioClient.getObject(GetObjectArgs.builder()
-                .bucket(minioConfig.getBucketName())
+                .bucket(minioProperties.getBucketName())
                 .object(objectName)
                 .build());
     }
@@ -156,7 +160,7 @@ public class MinioUtil {
             String extension = getFileExtension(file.getOriginalFilename()).toLowerCase();
             String contentType = typeMap.get(extension);
             minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(minioConfig.getBucketName())
+                    .bucket(minioProperties.getBucketName())
                     .object(objectName)
                     .stream(inputStream, file.getSize(), -1)
                     .contentType(contentType)
@@ -174,7 +178,7 @@ public class MinioUtil {
             throw new BusinessException(ErrorCode.FILE_NULL);
         }
 
-        if (file.getSize() > minioConfig.getFileSizeLimit()) {
+        if (file.getSize() > minioProperties.getFileSizeLimit()) {
             throw new BusinessException(ErrorCode.FILE_TOO_LARGE);
         }
 
@@ -219,7 +223,7 @@ public class MinioUtil {
 
     private String generateObjectName(String businessKey, MultipartFile file, Long id) {
         String extension = getFileExtension(file.getOriginalFilename());
-        Long fileId = idGenerator.generateId(minioConfig.getBusinessKey());
+        long fileId = snowflakeIdGenerator.nextId();
         String datePath = LocalDateTime.now().format(DATE_TIME_FORMATTER);
         if (id != null) {
             return String.format("%s/%d/%s/%s.%s", businessKey, id, datePath, fileId, extension);
@@ -263,7 +267,7 @@ public class MinioUtil {
      * 获取文件访问URL，配置Nginx代理，返回固定URL
      */
     private String getFileUrl(String objectName) {
-        return String.format("http://petcare.com/%s/%s", minioConfig.getBucketName(), objectName);
+        return String.format("http://petcare.com/%s/%s", minioProperties.getBucketName(), objectName);
     }
 
     /**
@@ -275,7 +279,7 @@ public class MinioUtil {
 
         if (StrUtil.isNotBlank(objectName)) {
             minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(minioConfig.getBucketName())
+                    .bucket(minioProperties.getBucketName())
                     .object(objectName)
                     .build());
             log.info("删除文件: {}", objectName);
@@ -295,6 +299,7 @@ public class MinioUtil {
 
     /**
      * 从URL中提取objectName
+     *
      * @param url 文件URL
      * @return objectName
      */
@@ -308,7 +313,7 @@ public class MinioUtil {
             return null;
         }
 
-        String bucketName = minioConfig.getBucketName();
+        String bucketName = minioProperties.getBucketName();
         int bucketIndex = -1;
         for (int i = 0; i < parts.length; i++) {
             if (bucketName.equals(parts[i])) {
@@ -334,14 +339,13 @@ public class MinioUtil {
     public String generatePreviewUrl(String fileUrl) {
         // 返回带签名的临时URL（有效期1天）
         try {
-            String tempUrl = minioClient.getPresignedObjectUrl(
+            return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
-                            .bucket(minioConfig.getBucketName())
+                            .bucket(minioProperties.getBucketName())
                             .object(extractObjectNameFromUrl(fileUrl))
                             .expiry(1, TimeUnit.HOURS)
                             .build());
-            return tempUrl;
         } catch (Exception e) {
             throw new SystemException(ErrorCode.SYSTEM_ERROR, "生成预签名URL失败");
         }

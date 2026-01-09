@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.common.util;
+package pvt.mktech.petcare.common.jwt;
 
 import cn.hutool.core.date.DateUtil;
 import io.jsonwebtoken.Claims;
@@ -7,8 +7,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -19,9 +17,7 @@ import static pvt.mktech.petcare.common.constant.CommonConstant.HEADER_USERNAME;
  * JWT 工具类
  */
 @Data
-@Component
 @ConfigurationProperties(prefix = "jwt")
-@Lazy
 public class JwtUtil {
 
     private String secretKey;

@@ -1,10 +1,9 @@
-package pvt.mktech.petcare.common.util;
+package pvt.mktech.petcare.common.redis;
 
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.Map;
 /**
  * Redis缓存工具类
  */
-@Component
 @RequiredArgsConstructor
 public class RedisCacheUtil {
 

@@ -1,0 +1,5 @@
+pvt.mktech.petcare.common.jwt.JwtAutoConfiguration
+pvt.mktech.petcare.common.minio.MinioAutoConfiguration
+pvt.mktech.petcare.common.redis.RedisAutoConfiguration
+pvt.mktech.petcare.common.snowflake.SnowflakeAutoConfiguration
+pvt.mktech.petcare.common.usercache.UserCacheConfiguration

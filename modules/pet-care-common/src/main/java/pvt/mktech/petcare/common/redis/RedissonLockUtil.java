@@ -1,9 +1,8 @@
-package pvt.mktech.petcare.common.util;
+package pvt.mktech.petcare.common.redis;
 
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
-import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
 
@@ -11,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 @Slf4j
-@Component
 public class RedissonLockUtil {
 
     private final RedissonClient redissonClient;

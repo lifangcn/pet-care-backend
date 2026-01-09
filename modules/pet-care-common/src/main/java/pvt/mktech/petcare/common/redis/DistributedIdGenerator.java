@@ -1,8 +1,7 @@
-package pvt.mktech.petcare.common.util;
+package pvt.mktech.petcare.common.redis;
 
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RedissonClient;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -10,7 +9,6 @@ import java.time.format.DateTimeFormatter;
 
 import static pvt.mktech.petcare.common.constant.CommonConstant.*;
 
-@Component
 @RequiredArgsConstructor
 public class DistributedIdGenerator {
 

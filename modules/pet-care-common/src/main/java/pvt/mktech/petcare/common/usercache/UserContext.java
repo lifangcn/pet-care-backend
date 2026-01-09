@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.common.context;
+package pvt.mktech.petcare.common.usercache;
 
 import pvt.mktech.petcare.common.dto.UserInfoDto;
 
