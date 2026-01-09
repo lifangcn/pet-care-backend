@@ -10,11 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import pvt.mktech.petcare.common.context.UserContext;
+import pvt.mktech.petcare.common.usercache.UserContext;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.exception.BusinessException;
-import pvt.mktech.petcare.common.exception.ErrorCode;
-import pvt.mktech.petcare.common.util.MinioUtil;
+import pvt.mktech.petcare.common.minio.MinioTemplate;
 import pvt.mktech.petcare.core.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.core.dto.response.UserResponse;
 import pvt.mktech.petcare.core.service.UserService;
@@ -28,7 +26,7 @@ import pvt.mktech.petcare.core.service.UserService;
 public class UserController {
     
     private final UserService userService;
-    private final MinioUtil minioUtil;
+    private final MinioTemplate minioTemplate;
     
     @GetMapping("/me")
     @Operation(
@@ -81,7 +79,7 @@ public class UserController {
     public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file) {
         Long userId = UserContext.getUserInfo().getUserId();
         // 上传头像到MinIO
-        String avatarUrl = minioUtil.uploadAvatar(file, userId);
+        String avatarUrl = minioTemplate.uploadAvatar(file, userId);
         return Result.success(avatarUrl);
     }
 }

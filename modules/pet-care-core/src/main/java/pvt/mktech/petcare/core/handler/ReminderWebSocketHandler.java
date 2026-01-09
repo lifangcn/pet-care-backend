@@ -10,11 +10,9 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.websocketx.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import pvt.mktech.petcare.common.util.JwtUtil;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

@@ -21,7 +21,7 @@ import pvt.mktech.petcare.ai.service.KnowledgeDocumentService;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
-import pvt.mktech.petcare.common.util.MinioUtil;
+import pvt.mktech.petcare.common.minio.MinioTemplate;
 
 import java.io.InputStream;
 import java.util.List;
@@ -34,14 +34,13 @@ import static pvt.mktech.petcare.ai.entity.table.KnowledgeDocumentTableDef.DOCUM
 @RequiredArgsConstructor
 public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentMapper, KnowledgeDocument> implements KnowledgeDocumentService {
 
-    private final MinioUtil minioUtil;
+    private final MinioTemplate minioTemplate;
     private final MilvusVectorStore milvusVectorStore;
 
     @Override
-    @Transactional
+    @Transactional()
     public KnowledgeDocumentResponse uploadDocument(MultipartFile file) {
-        String fileUrl = minioUtil.uploadDocument(file);
-
+        String fileUrl = minioTemplate.uploadDocument(file);
         String fileName = file.getOriginalFilename();
         String fileType = getFileExtension(fileName);
 
@@ -92,7 +91,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         save(document);
 
         try {
-            minioUtil.deleteFile(document.getFileUrl());
+            minioTemplate.deleteFile(document.getFileUrl());
         } catch (Exception e) {
             log.warn("删除MinIO文件失败: {}", document.getFileUrl(), e);
         }
@@ -110,7 +109,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         }
 
         try {
-            InputStream inputStream = minioUtil.getInputStreamByUrl(document.getFileUrl());
+            InputStream inputStream = minioTemplate.getInputStreamByUrl(document.getFileUrl());
 
             TikaDocumentReader reader = new TikaDocumentReader(new InputStreamResource(inputStream));
             List<Document> documents = reader.get();

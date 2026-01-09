@@ -8,8 +8,6 @@ import com.alibaba.cloud.ai.dashscope.image.DashScopeImageOptions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.document.Document;
 import org.springframework.ai.image.ImageModel;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
@@ -24,12 +22,10 @@ import pvt.mktech.petcare.ai.advisor.MyLoggerAdvisor;
 import pvt.mktech.petcare.ai.tool.QueryRewriter;
 import pvt.mktech.petcare.common.constant.CommonConstant;
 import pvt.mktech.petcare.ai.util.ConversationIdGenerator;
-import pvt.mktech.petcare.common.context.UserContext;
+import pvt.mktech.petcare.common.usercache.UserContext;
 import reactor.core.publisher.Flux;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -63,7 +59,7 @@ public class ChatController {
      * @param message 用户消息
      * @return 流式响应（Token by Token）
      */
-    @GetMapping(value = "chat", produces = "text/html;charset=UTF-8")
+    @GetMapping("/chat")
     public Flux<String> chat(@RequestParam("message") String message) {
         Long userId = 1L; // 测试用，模拟用户ID
         return chatClient.prompt()
@@ -118,7 +114,7 @@ public class ChatController {
      * @param sessionId 会话标识（可选）
      * @return 流式响应（Token by Token）
      */
-    @GetMapping(value = "/rag/chat", produces = "text/html;charset=UTF-8")
+    @GetMapping("/chat/rag")
     public Flux<String> ragChat(
             @RequestParam("message") String message,
             @RequestParam(value = "sessionId", required = false) String sessionId) {
@@ -134,16 +130,12 @@ public class ChatController {
                 .content();
     }
 
-    record DinnerReport(String title, List<String> suggestions) {
-
-    }
-
     /**
      * 今天吃什么
      *
      * @param message 用户消息
      */
-    @GetMapping(value = "/rag/dinner", produces = "text/html;charset=UTF-8")
+    @GetMapping("/chat/dinner")
     public Flux<String> dinner(@RequestParam("message") String message) {
         String rewriteMessage = queryRewriter.doQueryRewrite(message);
 

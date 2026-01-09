@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
-import pvt.mktech.petcare.common.util.MinioUtil;
+import pvt.mktech.petcare.common.minio.MinioTemplate;
 import pvt.mktech.petcare.core.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.core.dto.response.UserResponse;
 import pvt.mktech.petcare.core.entity.User;
@@ -19,6 +19,7 @@ import pvt.mktech.petcare.core.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static pvt.mktech.petcare.core.entity.table.UserTableDef.USER;
 
@@ -29,7 +30,8 @@ import static pvt.mktech.petcare.core.entity.table.UserTableDef.USER;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     private final UserMapper userMapper;
-    private final MinioUtil minioUtil;
+    private final MinioTemplate minioTemplate;
+    private final ThreadPoolExecutor coreThreadPool;
 
     @Override
     public UserResponse getUserById(Long userId) {
@@ -72,12 +74,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 删除旧头像（如果存在）
         if (StrUtil.isNotBlank(user.getAvatar())) {
-            try {
-                minioUtil.deleteFile(user.getAvatar());
-            } catch (Exception e) {
-                log.warn("删除旧头像失败: {}", user.getAvatar(), e);
-                // 不阻断主流程
-            }
+            coreThreadPool.submit(() -> {
+                try {
+                    minioTemplate.deleteFile(user.getAvatar());
+                } catch (Exception e) {
+                    // 不阻断主流程
+                    log.warn("删除旧头像失败: {}", user.getAvatar(), e);
+                }
+            });
         }
         // 更新基本信息
         Optional.ofNullable(request.getNickname()).ifPresent(user::setNickname);

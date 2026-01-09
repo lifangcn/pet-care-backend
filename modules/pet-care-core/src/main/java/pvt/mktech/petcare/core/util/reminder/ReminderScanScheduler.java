@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import pvt.mktech.petcare.common.util.RedissonLockUtil;
+import pvt.mktech.petcare.common.redis.RedissonLockUtil;
 import pvt.mktech.petcare.core.dto.message.ReminderMessageDto;
 import pvt.mktech.petcare.core.entity.Reminder;
 import pvt.mktech.petcare.core.service.ReminderService;

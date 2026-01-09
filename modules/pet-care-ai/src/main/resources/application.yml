@@ -43,7 +43,7 @@ spring:
 
 # 文件存储 配置：MinIO
 minio:
-  enable: true
+  enabled: true
   business-key: ai
   endpoint: http://localhost:9000
   access-key: minio

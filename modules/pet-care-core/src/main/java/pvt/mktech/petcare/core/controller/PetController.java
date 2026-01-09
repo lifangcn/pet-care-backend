@@ -9,12 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import pvt.mktech.petcare.common.context.UserContext;
+import pvt.mktech.petcare.common.usercache.UserContext;
 import pvt.mktech.petcare.common.dto.UserInfoDto;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.exception.BusinessException;
-import pvt.mktech.petcare.common.exception.ErrorCode;
-import pvt.mktech.petcare.common.util.MinioUtil;
+import pvt.mktech.petcare.common.minio.MinioTemplate;
 import pvt.mktech.petcare.core.dto.request.HealthRecordQueryRequest;
 import pvt.mktech.petcare.core.dto.request.HealthRecordSaveRequest;
 import pvt.mktech.petcare.core.entity.HealthRecord;
@@ -40,7 +38,7 @@ public class PetController {
 
     private final HealthRecordService healthRecordService;
     private final PetService petService;
-    private final MinioUtil minioUtil;
+    private final MinioTemplate minioTemplate;
 
     /**
      * 根据主键删除宠物表。
@@ -104,7 +102,7 @@ public class PetController {
     @PostMapping(value = "/{petId}/avatar", consumes = "multipart/form-data")
     public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file, @PathVariable("petId") Long petId) {
         // 上传头像到MinIO
-        String avatarUrl = minioUtil.uploadAvatar(file, petId);
+        String avatarUrl = minioTemplate.uploadAvatar(file, petId);
         return Result.success(avatarUrl);
     }
 

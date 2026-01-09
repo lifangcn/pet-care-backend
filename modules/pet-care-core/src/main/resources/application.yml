@@ -1,6 +1,41 @@
+server:
+  port: 8080
+  shutdown: graceful
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+spring:
+  application:
+    name: pet-care-core
+  main:
+    banner-mode: off
+
+# Dubbo 配置
+dubbo:
+  application:
+    name: ${spring.application.name}
+    qos-enable: true
+    qos-port: 22221
+    qos-accept-foreign-ip: false
+  registry:
+    address: nacos://${spring.cloud.nacos.discovery.server-addr}
+    username: ${spring.cloud.nacos.discovery.username}
+    password: ${spring.cloud.nacos.discovery.password}
+    register-mode: interface
+  protocol:
+    name: dubbo
+    port: 20881
+    # 不将 Dubbo 端口注册到服务发现
+    register: false
+  provider:
+    register: true
+  scan:
+    base-packages: pvt.mktech.petcare.core.service.dubbo
+
 # 文件存储 配置：MinIO
 minio:
-  enable: true
+  enabled: true
   business-key: avatar
   endpoint: http://localhost:9000
   access-key: minio
@@ -9,7 +44,7 @@ minio:
   file-size-limit: 10485760 # 10MB
   expire-time: 3600 # 1小时
 
-
+# Kafka 配置
 kafka:
   bootstrap-servers: localhost:9092
 
@@ -32,6 +67,31 @@ xxl:
       logpath: ./logs/xxl-job/  # 日志路径
       logretentiondays: 30  # 日志保留天数
 
+# 暴露网关的 actuator 端点
+management:
+  server:
+    port: ${server.port}  # 与主应用同端口或独立端口
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    enable:
+      tomcat: true
+      jvm: true
+      hikaricp: true
+      executor: true
 # 日志配置
 logging:
   level:

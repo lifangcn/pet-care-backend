@@ -7,7 +7,7 @@ import org.apache.dubbo.config.annotation.DubboService;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.api.dto.ReminderSaveRequest;
 import pvt.mktech.petcare.api.service.ReminderDubboService;
-import pvt.mktech.petcare.common.context.UserContext;
+import pvt.mktech.petcare.common.usercache.UserContext;
 import pvt.mktech.petcare.core.entity.Pet;
 import pvt.mktech.petcare.core.entity.Reminder;
 import pvt.mktech.petcare.core.service.PetService;

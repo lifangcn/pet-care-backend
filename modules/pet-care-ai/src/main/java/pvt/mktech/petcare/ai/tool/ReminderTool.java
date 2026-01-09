@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.api.dto.ReminderSaveRequest;
 import pvt.mktech.petcare.api.service.ReminderDubboService;
-import pvt.mktech.petcare.common.context.UserContext;
+import pvt.mktech.petcare.common.usercache.UserContext;
 
 import java.time.LocalDateTime;
 
