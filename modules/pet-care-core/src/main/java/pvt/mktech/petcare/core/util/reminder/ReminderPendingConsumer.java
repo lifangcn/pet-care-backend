@@ -27,7 +27,11 @@ import java.time.LocalDateTime;
 import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 
 /**
- * {@code @description}:
+ * {@code @description}:ReminderPendingConsumer <br/>
+ * 2.1.消费 pending topic 时，根据 reminder 生成 execution，核心逻辑是根据 remindBeforeMinutes 计算 notificationTime
+ * 2.2.将生成的 execution 根据 notificationTime 和 now() 进行比对。
+ * 2.3.如果已经到期，发送到 send queue；
+ * 2.4.未到期，存入 Redis ZSet中，等待扫描处理
  * {@code @date}: 2025/12/24 16:37
  *
  * @author Michael
@@ -89,12 +93,12 @@ public class ReminderPendingConsumer {
     private void sendToSendQueue(ReminderExecutionMessageDto messageDto) {
         String key = messageDto.getId().toString();
         String value = JSONUtil.toJsonStr(messageDto);
-        kafkaTemplate.send(CORE_REMINDER_DELAY_TOPIC_SEND, key, value).thenAccept(result -> {
-            log.info("发送 提醒执行 到立即消费队列，topic: {}, key: {}, body: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, messageDto);
-        }).exceptionally(throwable -> {
-            log.error("发送消息到发送队列失败", throwable);
-            // 死信队列+告警
-            return null;
+        kafkaTemplate.send(CORE_REMINDER_DELAY_TOPIC_SEND, key, value)
+                .thenAccept(result -> log.info("发送 提醒执行 到立即消费队列，topic: {}, key: {}, body: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, messageDto))
+                .exceptionally(throwable -> {
+                    log.error("发送消息到发送队列失败", throwable);
+                    // TODO 死信队列+告警
+                    return null;
         });
     }
 

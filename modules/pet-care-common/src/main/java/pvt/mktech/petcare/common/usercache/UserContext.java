@@ -1,26 +1,34 @@
 package pvt.mktech.petcare.common.usercache;
 
-import pvt.mktech.petcare.common.dto.UserInfoDto;
+import reactor.util.context.ContextView;
 
 /**
- * {@code @description}: 用户信息上下文
+ * {@code @description}: 用户信息上下文（支持 Servlet ThreadLocal 和 WebFlux Reactor Context）
  * {@code @date}: 2025/12/17 08:50
  *
  * @author Michael
  */
 public class UserContext {
 
-    private static final ThreadLocal<UserInfoDto> threadLocal = new ThreadLocal<>();
+    public static final String USER_INFO_KEY = "USER_Id";
 
-    public static void setUserInfo(UserInfoDto userInfoDto) {
-        threadLocal.set(userInfoDto);
+    private static final ThreadLocal<Long> threadLocal = new ThreadLocal<>();
+
+    // Servlet 环境使用
+    public static void setUserId(Long userId) {
+        threadLocal.set(userId);
     }
 
-    public static UserInfoDto getUserInfo() {
-        return threadLocal.get();
+    public static Long getUserId() {
+        // 从 ThreadLocal 获取（Servlet 环境）
+        Long userId = threadLocal.get();
+        if (userId != null) {
+            return userId;
+        }
+        return null;
     }
 
-    public static void removeUserInfo() {
+    public static void removeUserId() {
         threadLocal.remove();
     }
 }

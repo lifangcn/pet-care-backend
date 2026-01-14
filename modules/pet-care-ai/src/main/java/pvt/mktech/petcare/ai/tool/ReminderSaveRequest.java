@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.api.dto;
+package pvt.mktech.petcare.ai.tool;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -15,7 +15,6 @@ public class ReminderSaveRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id;
-    //    private Long petId;
     private String petName;
     private Long userId;
     private String sourceType;
@@ -34,4 +33,3 @@ public class ReminderSaveRequest implements Serializable {
     private Integer completedCount;
     private LocalDateTime completedTime;
 }
-

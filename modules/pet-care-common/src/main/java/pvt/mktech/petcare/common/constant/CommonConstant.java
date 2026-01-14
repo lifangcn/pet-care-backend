@@ -10,7 +10,6 @@ public class CommonConstant {
     public static final String TOKEN_HEADER = "Authorization";
     public static final String TOKEN_PREFIX = "Bearer ";
     public static final String HEADER_USER_ID = "X-User-Id";
-    public static final String HEADER_USERNAME = "X-Username";
     // 限流
     public static final String RATE_LIMIT_KEY = "rate:limiter:api:";
 //    public static final String REDIS_KEY_PREFIX = "petcare:";

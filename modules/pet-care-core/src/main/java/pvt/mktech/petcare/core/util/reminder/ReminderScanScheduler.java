@@ -48,7 +48,6 @@ public class ReminderScanScheduler {
      * 2.4.未到期，存入 Redis ZSet中，等待扫描处理<br>
      * 3.ReminderDelayQueueWorker：定时扫描，将已到期的 execution 发送到 send topic <br>
      * 4.ReminderSendConsumer：最后 send topic 进行消费：1. 推送提醒消息；2.execution 改为已发送；3.TBD 将 reminder 改为非激活
-     *
      */
     @XxlJob("reminderScanJob")
     public void reminderScanJob() {

@@ -34,7 +34,7 @@ public class OpenApiConfig {
                                 用户服务、认证授权相关接口
                                 ## 功能模块
                                 - 用户信息管理：包括用户注册、登录、个人信息维护等功能
-                                
+
                                 ## 技术栈
                                 - Spring Boot 3.5.6
                                 - MyBatis-Flex
@@ -47,15 +47,6 @@ public class OpenApiConfig {
                                 .url("https://petcare.com"))
                         .license(new License()
                                 .name("Apache 2.0")
-                                .url("http://www.apache.org/licenses/LICENSE-2.0.html")))
-                // 服务器配置
-                .servers(List.of(
-                        new Server()
-                                .url("http://localhost:" + serverPort)
-                                .description("开发环境"),
-                        new Server()
-                                .url("https://api.petcare.com")
-                                .description("生产环境")
-                ));
+                                .url("http://www.apache.org/licenses/LICENSE-2.0.html")));
     }
 }

@@ -1,0 +1,106 @@
+server:
+  port: 8082
+  shutdown: graceful
+
+spring:
+  application:
+    name: pet-care-core
+  # MySQL 配置
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:pet_care_root}
+    password: "!QAZ2wsx"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  # Redis 配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: "!QAZ2wsx"
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# 内部服务间调用配置（serverless 环境使用）
+internal:
+  api:
+    enabled: true
+
+# 文件存储 配置：MinIO
+#minio:
+#  enabled: true
+#  business-key: avatar
+#  endpoint: http://localhost:9000
+#  access-key: minio
+#  secret-key: "!QAZ2wsx"
+#  bucket-name: pet-care-core
+#  file-size-limit: 10485760 # 10MB
+#  expire-time: 3600 # 1小时
+
+# 文件存储 配置：Aliyun OSS
+aliyun:
+  oss:
+    endpoint: ${OSS_ENDPOINT:oss-cn-hangzhou.aliyuncs.com}
+    access-key-id: ${OSS_ACCESS_KEY_ID:LTAI5tNmULRZpFZLtEE1xkUe}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:gBTZHXlmcXPmh2Zw7tE7nrkPQOQBeJ}
+    bucket-name: ${OSS_BUCKET_NAME:lifang-pet-care}
+    enabled: true
+
+# Kafka 配置
+kafka:
+  bootstrap-servers: localhost:9092
+
+# WebSocket 配置：Netty
+netty:
+  websocket:
+    port: 8081
+
+# 分布式定时任务 配置：XXL-JOB 配置 (调度中心在Docker中，执行器在宿主机运行)
+xxl:
+  job:
+    enabled: false
+
+# JWT配置
+jwt:
+  enabled: true
+  secret-key: "M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="
+  expire-time: 86400
+  refresh-expire-time: 604800
+
+# SpringDoc OpenAPI 配置
+springdoc:
+  api-docs:
+    path: /v1/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    filter: true
+  packages-to-scan: pvt.mktech.petcare.core.controller
+  #  paths-to-match: /api/**
+  cache:
+    disabled: true
+
+# 日志配置
+logging:
+  level:
+    pvt.mktech.petcare.core: INFO
+    com.mybatisflex: INFO
+    com.alibaba.nacos: WARN
+    org.apache.kafka: WARN
+    org.springframework.kafka: WARN
+    com.zaxxer.hikari: WARN
+    com.xxl.job: WARN

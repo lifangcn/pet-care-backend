@@ -1,7 +1,8 @@
-package pvt.mktech.petcare.common.minio;
+package pvt.mktech.petcare.common.storage;
 
 import cn.hutool.core.io.FileTypeUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
 import io.minio.*;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class MinioTemplate {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy:MM:dd");
     private final MinioProperties minioProperties;
     private final MinioClient minioClient;
     private final SnowflakeIdGenerator snowflakeIdGenerator;
@@ -129,29 +129,9 @@ public class MinioTemplate {
             throw new BusinessException(ErrorCode.FILE_URL_NULL);
         }
 
-        String objectName = null;
-        String[] parts = fileUrl.split("/");
-        String bucketName = minioProperties.getBucketName();
-        int bucketIndex = -1;
-        for (int i = 0; i < parts.length; i++) {
-            if (bucketName.equals(parts[i])) {
-                bucketIndex = i;
-                break;
-            }
-        }
-        if (bucketIndex != -1 && bucketIndex < parts.length - 1) {
-            StringBuilder objectName1 = new StringBuilder();
-            for (int j = bucketIndex + 1; j < parts.length; j++) {
-                objectName1.append(parts[j]);
-                if (j < parts.length - 1) {
-                    objectName1.append("/");
-                }
-            }
-            objectName = objectName1.toString();
-        }
         return minioClient.getObject(GetObjectArgs.builder()
                 .bucket(minioProperties.getBucketName())
-                .object(objectName)
+                .object(extractObjectNameFromUrl(fileUrl))
                 .build());
     }
 
@@ -304,36 +284,38 @@ public class MinioTemplate {
      * @return objectName
      */
     private String extractObjectNameFromUrl(String url) {
-        if (StrUtil.isBlank(url)) {
-            return null;
-        }
-
-        String[] parts = url.split("/");
-        if (parts.length < 2) {
-            return null;
-        }
-
+//        if (StrUtil.isBlank(url)) {
+//            return null;
+//        }
+//
+//        String[] parts = url.split("/");
+//        if (parts.length < 2) {
+//            return null;
+//        }
+//
+//        String bucketName = minioProperties.getBucketName();
+//        int bucketIndex = -1;
+//        for (int i = 0; i < parts.length; i++) {
+//            if (bucketName.equals(parts[i])) {
+//                bucketIndex = i;
+//                break;
+//            }
+//        }
+//
+//        if (bucketIndex == -1 || bucketIndex >= parts.length - 1) {
+//            return null;
+//        }
+//
+//        StringBuilder objectName = new StringBuilder();
+//        for (int j = bucketIndex + 1; j < parts.length; j++) {
+//            objectName.append(parts[j]);
+//            if (j < parts.length - 1) {
+//                objectName.append("/");
+//            }
+//        }
+        String path = URLUtil.getPath(url);
         String bucketName = minioProperties.getBucketName();
-        int bucketIndex = -1;
-        for (int i = 0; i < parts.length; i++) {
-            if (bucketName.equals(parts[i])) {
-                bucketIndex = i;
-                break;
-            }
-        }
-
-        if (bucketIndex == -1 || bucketIndex >= parts.length - 1) {
-            return null;
-        }
-
-        StringBuilder objectName = new StringBuilder();
-        for (int j = bucketIndex + 1; j < parts.length; j++) {
-            objectName.append(parts[j]);
-            if (j < parts.length - 1) {
-                objectName.append("/");
-            }
-        }
-        return objectName.toString();
+        return StrUtil.sub(path, bucketName.length() + 1, path.length());
     }
 
     public String generatePreviewUrl(String fileUrl) {

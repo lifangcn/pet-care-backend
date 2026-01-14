@@ -9,7 +9,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
-import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
+//import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +21,7 @@ import pvt.mktech.petcare.ai.service.KnowledgeDocumentService;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
-import pvt.mktech.petcare.common.minio.MinioTemplate;
+import pvt.mktech.petcare.common.storage.OssTemplate;
 
 import java.io.InputStream;
 import java.util.List;
@@ -34,13 +34,14 @@ import static pvt.mktech.petcare.ai.entity.table.KnowledgeDocumentTableDef.DOCUM
 @RequiredArgsConstructor
 public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentMapper, KnowledgeDocument> implements KnowledgeDocumentService {
 
-    private final MinioTemplate minioTemplate;
-    private final MilvusVectorStore milvusVectorStore;
+    private final OssTemplate ossTemplate;
+    // Milvus 暂时禁用
+    // private final MilvusVectorStore milvusVectorStore;
 
     @Override
     @Transactional()
     public KnowledgeDocumentResponse uploadDocument(MultipartFile file) {
-        String fileUrl = minioTemplate.uploadDocument(file);
+        String fileUrl = ossTemplate.uploadDocument(file);
         String fileName = file.getOriginalFilename();
         String fileType = getFileExtension(fileName);
 
@@ -54,7 +55,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
 
         save(document);
 
-        processDocumentToVectorStore(document.getId());
+//        processDocumentToVectorStore(document.getId());
 
         return convertToResponse(document);
     }
@@ -91,7 +92,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         save(document);
 
         try {
-            minioTemplate.deleteFile(document.getFileUrl());
+            ossTemplate.deleteFile(document.getFileUrl());
         } catch (Exception e) {
             log.warn("删除MinIO文件失败: {}", document.getFileUrl(), e);
         }
@@ -109,7 +110,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         }
 
         try {
-            InputStream inputStream = minioTemplate.getInputStreamByUrl(document.getFileUrl());
+            InputStream inputStream = ossTemplate.getInputStreamByUrl(document.getFileUrl());
 
             TikaDocumentReader reader = new TikaDocumentReader(new InputStreamResource(inputStream));
             List<Document> documents = reader.get();
@@ -130,12 +131,18 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
                     })
                     .collect(Collectors.toList());
 
-            milvusVectorStore.add(documentsWithMetadata);
+            // Milvus 暂时禁用
+            log.warn("Milvus 未启用，跳过向量存储");
+            /*if (milvusVectorStore != null) {
+                milvusVectorStore.add(documentsWithMetadata);
+            } else {
+                log.warn("Milvus 未启用，跳过向量存储");
+            }*/
 
             document.setChunkCount(chunks.size());
             updateById(document);
 
-            log.info("文档已处理并存储到向量数据库: id={}, name={}, chunks={}",
+            log.info("文档已处理: id={}, name={}, chunks={}",
                     documentId, document.getName(), chunks.size());
         } catch (Exception e) {
             log.error("处理文档到向量数据库失败: id={}", documentId, e);
@@ -144,7 +151,9 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
     }
 
     private void deleteDocumentFromVectorStore(Long documentId) {
-        try {
+        // Milvus 暂时禁用
+        log.warn("Milvus 未启用，跳过向量删除");
+        /*try {
             List<Document> documents = milvusVectorStore.similaritySearch("documentId:" + documentId);
             if (!documents.isEmpty()) {
                 List<String> ids = documents.stream()
@@ -157,7 +166,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
             log.info("从向量数据库删除文档: id={}", documentId);
         } catch (Exception e) {
             log.warn("从向量数据库删除文档失败: id={}", documentId, e);
-        }
+        }*/
     }
 
     private String getFileExtension(String filename) {

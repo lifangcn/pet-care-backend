@@ -2,33 +2,33 @@ package pvt.mktech.petcare.ai.tool;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Component;
-import pvt.mktech.petcare.api.dto.ReminderSaveRequest;
-import pvt.mktech.petcare.api.service.ReminderDubboService;
-import pvt.mktech.petcare.common.usercache.UserContext;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ReminderTool {
 
-    @DubboReference(
-            interfaceClass = ReminderDubboService.class,
-            version = "1.0.0",
-            check = false
-    )
-    private ReminderDubboService reminderService;
+    @Value("${core.service.url:http://localhost:8080}")
+    private String coreServiceUrl;
+
+    private final WebClient.Builder webClientBuilder;
+    private final ThreadPoolExecutor aiThreadPool;
 
     @Tool(name = "设置宠物提醒事项服务")
     public String addReminderFunction(AddReminderRequest request) {
         log.info("制定宠物提醒事项调用成功，请求参数为: {}", request);
-
+        
         try {
+            // 转换为 core 服务期望的格式
             ReminderSaveRequest saveRequest = new ReminderSaveRequest();
             saveRequest.setPetName(request.petName());
             saveRequest.setTitle(request.title());
@@ -36,20 +36,23 @@ public class ReminderTool {
             saveRequest.setScheduleTime(request.scheduleTime());
             saveRequest.setRemindBeforeMinutes(request.remindBeforeMinutes());
             saveRequest.setRepeatType(request.repeatType());
-            saveRequest.setSourceType("manual");
+            saveRequest.setSourceType("ai-service");
             saveRequest.setRecordTime(LocalDateTime.now());
-            saveRequest.setIsActive(true);
+            saveRequest.setUserId(request.userId());
 
-            if (UserContext.getUserInfo() != null) {
-                saveRequest.setUserId(UserContext.getUserInfo().getUserId());
-            }
+            Boolean result = webClientBuilder.build()
+                    .post()
+                    .uri(coreServiceUrl + "/internal/reminder")
+                    .bodyValue(saveRequest)
+                    .retrieve()
+                    .bodyToMono(Boolean.class)
+                    .onErrorResume(e -> {
+                        log.error("调用提醒服务失败", e);
+                        return Mono.just(false);
+                    })
+                    .block();
 
-            // TODO  测试模拟用户ID
-            saveRequest.setUserId(1L);
-
-            boolean result = reminderService.saveReminder(saveRequest);
-
-            if (result) {
+            if (Boolean.TRUE.equals(result)) {
                 return "提醒事项设置成功，已保存到数据库";
             } else {
                 return "提醒事项设置失败";
@@ -62,11 +65,11 @@ public class ReminderTool {
 
     public record AddReminderRequest(
             @Description("宠物名称") String petName,
+            @Description("用户ID") Long userId,
             @Description("标题") String title,
             @Description("描述") String description,
-            @Description("预计执行时间，格式：yyyy-MM-dd HH:mm") LocalDateTime scheduleTime,
+            @Description("预计执行时间，格式：yyyy-MM-dd HH:mm:ss") LocalDateTime scheduleTime,
             @Description("提前提醒时间(分钟)") Integer remindBeforeMinutes,
             @Description("重复类型：'none' | 'daily' | 'weekly' | 'monthly' | 'custom'") String repeatType
-    ) {
-    }
+    ) {}
 }

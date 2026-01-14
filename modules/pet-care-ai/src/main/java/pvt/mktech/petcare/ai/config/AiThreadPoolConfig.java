@@ -1,8 +1,7 @@
-package pvt.mktech.petcare.core.config;
+package pvt.mktech.petcare.ai.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
-import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pvt.mktech.petcare.common.thread.ThreadPoolManager;
@@ -10,20 +9,19 @@ import pvt.mktech.petcare.common.thread.ThreadPoolManager;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
-public class CoreThreadPoolConfig {
+public class AiThreadPoolConfig {
 
-    @Bean(name = "coreThreadPool")
+    @Bean(name = "aiThreadPool")
     public ThreadPoolExecutor customThreadPool(MeterRegistry meterRegistry) {
-        ThreadPoolExecutor theadPool = ThreadPoolManager.createTheadPool("core-service");
-        ExecutorServiceMetrics.monitor(meterRegistry, theadPool, "core-service");
+        ThreadPoolExecutor theadPool = ThreadPoolManager.createTheadPool("ai-service");
+        ExecutorServiceMetrics.monitor(meterRegistry, theadPool, "ai-service");
         // 预热线程
         theadPool.prestartAllCoreThreads();
         return theadPool;
     }
 
-    // 监控指标注入
 //    @Bean
 //    public MeterRegistryCustomizer<MeterRegistry> metricsCommonTags() {
-//        return registry -> registry.config().commonTags("application", "pet-care-core");
+//        return registry -> registry.config().commonTags("application", "pet-care-ai");
 //    }
 }

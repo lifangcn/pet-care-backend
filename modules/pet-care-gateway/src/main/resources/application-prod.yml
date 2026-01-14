@@ -1,15 +1,16 @@
 server:
-  port: 8888
+  port: 8000
   shutdown: graceful
 
+# 不依赖配置中心
 spring:
   application:
     name: pet-care-gateway
   # Redis 配置
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:8.162.13.22}
+      port: ${REDIS_PORT:6379}
       password: "!QAZ2wsx"
       database: 0
       timeout: 3000
@@ -28,7 +29,13 @@ spring:
         cors-configurations:
           '[/**]':
             allowedOriginPatterns: "*"
-            allowedMethods: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
             allowedHeaders: "*"
             allowCredentials: true
             maxAge: 3600
@@ -56,7 +63,7 @@ spring:
             - name: JwtAuth
           order: 0
         - id: ai-sse-route
-          uri: ${AI_SERVICE_URL:http://localhost:8082}
+          uri: ${AI_SSE_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/ai/chat/**
           filters:
@@ -72,12 +79,13 @@ spring:
             - StripPrefix=1
             - name: JwtAuth
           order: 0
+
 # JWT配置
 jwt:
   enabled: true
-  secret-key: "M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="
-  expire-time: 86400
-  refresh-expire-time: 604800
+  secret-key: ${JWT_SECRET_KEY:"M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="}
+  expire-time: ${JWT_EXPIRE_TIME:86400}
+  refresh-expire-time: ${JWT_REFRESH_EXPIRE_TIME:604800}
 
 # 暴露网关的 actuator 端点 (用于刷新配置，可选但推荐)
 management:
@@ -95,10 +103,3 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
-  file:
-    name: ./logs/pet-care-gateway.log
-  logback:
-    rollingpolicy:
-      max-file-size: 100MB
-      max-history: 7
-      total-size-cap: 1GB

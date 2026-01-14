@@ -63,4 +63,11 @@ public interface UserService extends IService<User> {
      * @return 活跃用户ID列表
      */
     List<Long> getActiveUserIds();
+
+    /**
+     * 用户签到
+     *
+     * @param petId 宠物ID
+     */
+    void checkin(Long petId);
 }

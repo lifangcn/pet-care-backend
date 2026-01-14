@@ -11,7 +11,6 @@
     <modules>
         <module>modules/pet-care-gateway</module>
         <module>modules/pet-care-common</module>
-        <module>modules/pet-care-api</module>
         <module>modules/pet-care-core</module>
         <module>modules/pet-care-ai</module>
         <module>modules/pet-care-mcp</module>
@@ -25,7 +24,7 @@
         <spring-boot.version>3.3.5</spring-boot.version>
         <spring-cloud-alibaba.version>2023.0.1.2</spring-cloud-alibaba.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
-        <dubbo.version>3.3.1</dubbo.version>
+<!--        <dubbo.version>3.3.1</dubbo.version>-->
         <!-- DB -->
         <mysql-connector.version>9.1.0</mysql-connector.version>
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
@@ -34,8 +33,12 @@
         <caffeine.version>3.1.8</caffeine.version>
         <!--JWT-->
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
+        <!-- 任务调度：XXL-JOB 核心依赖 -->
+        <xxl-job.version>3.2.0</xxl-job.version>
         <!-- 文件存储：MinIO -->
         <minio.version>8.5.7</minio.version>
+        <!-- 文件存储：Aliyun OSS -->
+        <aliyun.oss.version>3.17.0</aliyun.oss.version>
         <!-- 搜索组件 (关键更新) -->
         <spring-data-elasticsearch.version>4.4.15</spring-data-elasticsearch.version>
         <!-- AI -->
@@ -47,13 +50,14 @@
         <lombok.version>1.18.34</lombok.version>
         <!-- API文档 -->
         <springdoc-openapi.version>2.1.0</springdoc-openapi.version>
+        <knife4j.version>4.5.0</knife4j.version>
         <!-- 日志收集：logstash -->
         <logstash.version>7.4</logstash.version>
         <!-- 监控：Prometheus -->
         <prometheus.version>1.13.14</prometheus.version>
-        <!-- 任务调度：XXL-JOB 核心依赖 -->
-        <xxl-job.version>3.2.0</xxl-job.version>
-        <!-- 基础 -->
+
+        <!-- maven-compiler-plugin-->
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -78,13 +82,13 @@
                 <scope>import</scope>
             </dependency>
             <!-- Dubbo -->
-            <dependency>
+            <!--<dependency>
                 <groupId>org.apache.dubbo</groupId>
                 <artifactId>dubbo-bom</artifactId>
                 <version>${dubbo.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
+            </dependency>-->
             <!-- Spring Cloud Alibaba -->
             <dependency>
                 <groupId>com.alibaba.cloud</groupId>
@@ -163,6 +167,18 @@
                 <artifactId>minio</artifactId>
                 <version>${minio.version}</version>
             </dependency>
+            <!-- Aliyun OSS -->
+            <dependency>
+                <groupId>com.aliyun.oss</groupId>
+                <artifactId>aliyun-sdk-oss</artifactId>
+                <version>${aliyun.oss.version}</version>
+            </dependency>
+            <!-- 任务调度：XXL-JOB 核心依赖 -->
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job.version}</version>
+            </dependency>
             <!-- 搜索引擎：Elasticsearch -->
             <dependency>
                 <groupId>org.springframework.data</groupId>
@@ -174,6 +190,11 @@
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>${springdoc-openapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
             </dependency>
             <!-- 日志收集: logstash -->
             <dependency>
@@ -187,12 +208,8 @@
                 <artifactId>micrometer-registry-prometheus</artifactId>
                 <version>${prometheus.version}</version>
             </dependency>
-            <!-- 任务调度：XXL-JOB 核心依赖 -->
-            <dependency>
-                <groupId>com.xuxueli</groupId>
-                <artifactId>xxl-job-core</artifactId>
-                <version>${xxl-job.version}</version>
-            </dependency>
+
+
             <!-- Nacos Client (排除日志适配器以避免与 Spring Boot Logback 冲突) -->
             <dependency>
                 <groupId>com.alibaba.nacos</groupId>
@@ -208,11 +225,24 @@
     </dependencyManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
                 <configuration>
                     <excludes>
                         <exclude>

@@ -6,11 +6,12 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
-import pvt.mktech.petcare.common.minio.MinioTemplate;
+import pvt.mktech.petcare.common.storage.OssTemplate;
 import pvt.mktech.petcare.core.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.core.dto.response.UserResponse;
 import pvt.mktech.petcare.core.entity.User;
@@ -30,8 +31,9 @@ import static pvt.mktech.petcare.core.entity.table.UserTableDef.USER;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
     private final UserMapper userMapper;
-    private final MinioTemplate minioTemplate;
+    private final OssTemplate ossTemplate;
     private final ThreadPoolExecutor coreThreadPool;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     public UserResponse getUserById(Long userId) {
@@ -76,7 +78,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (StrUtil.isNotBlank(user.getAvatar())) {
             coreThreadPool.submit(() -> {
                 try {
-                    minioTemplate.deleteFile(user.getAvatar());
+                    ossTemplate.deleteFile(user.getAvatar());
                 } catch (Exception e) {
                     // 不阻断主流程
                     log.warn("删除旧头像失败: {}", user.getAvatar(), e);
@@ -108,6 +110,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public List<Long> getActiveUserIds() {
         QueryWrapper queryWrapper = QueryWrapper.create().select(USER.ID).where(USER.STATUS.eq(true)).from(USER);
         return userMapper.selectObjectListByQueryAs(queryWrapper, Long.class);
+    }
+
+    @Override
+    public void checkin(Long petId) {
     }
 
     private UserResponse convertToResponse(User user) {

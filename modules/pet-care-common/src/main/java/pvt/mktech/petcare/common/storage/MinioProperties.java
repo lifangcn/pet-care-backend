@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.common.minio;
+package pvt.mktech.petcare.common.storage;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

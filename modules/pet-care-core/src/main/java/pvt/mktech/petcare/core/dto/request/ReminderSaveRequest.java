@@ -23,6 +23,8 @@ public class ReminderSaveRequest {
     private Long id;
     @Schema(description = "宠物ID")
     private Long petId;
+    @Schema(description = "宠物名称")
+    private String petName;
     @Schema(description = "用户ID")
     private Long userId;
     @Schema(description = "来源类型：'manual' | 'health_record' | 'system'")

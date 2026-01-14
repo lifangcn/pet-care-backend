@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 @Slf4j
 @AutoConfiguration
 @EnableConfigurationProperties(JwtUtil.class)
-@ConditionalOnProperty(prefix = "jwt", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "jwt", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class JwtAutoConfiguration {
     static {
         log.info("初始化 JWT 工具");

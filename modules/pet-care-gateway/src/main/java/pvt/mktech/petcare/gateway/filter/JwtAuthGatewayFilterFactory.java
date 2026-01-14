@@ -7,6 +7,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import lombok.Data;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
@@ -16,21 +17,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.server.ServerWebExchange;
-import pvt.mktech.petcare.common.util.JwtUtil;
+import pvt.mktech.petcare.common.jwt.JwtUtil;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static pvt.mktech.petcare.common.constant.CommonConstant.TOKEN_HEADER;
-import static pvt.mktech.petcare.common.constant.CommonConstant.TOKEN_PREFIX;
-import static pvt.mktech.petcare.common.constant.CommonConstant.HEADER_USER_ID;
-import static pvt.mktech.petcare.common.constant.CommonConstant.HEADER_USERNAME;
+import static pvt.mktech.petcare.common.constant.CommonConstant.*;
 
-@Order(-1)
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @Component
 public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtAuthGatewayFilterFactory.Config> {
 
@@ -85,12 +82,9 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
 
                 // 4. 解析用户信息并透传给下游服务
                 Long userId = Long.parseLong(claims.getSubject());
-                String username = claims.get(HEADER_USERNAME, String.class);
 
                 ServerWebExchange serverWebExchange = exchange.mutate()
-                        .request(builder -> builder
-                                .header(HEADER_USER_ID, String.valueOf(userId))
-                                .header(HEADER_USERNAME, username))
+                        .request(builder -> builder.header(HEADER_USER_ID, String.valueOf(userId)))
                         .build();
 
                 return chain.filter(serverWebExchange);

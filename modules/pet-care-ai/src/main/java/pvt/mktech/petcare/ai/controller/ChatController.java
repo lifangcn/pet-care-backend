@@ -10,7 +10,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.image.ImageModel;
 import org.springframework.ai.image.ImagePrompt;
-import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
+//import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.util.StreamUtils;
@@ -20,16 +20,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import pvt.mktech.petcare.ai.advisor.MyLoggerAdvisor;
 import pvt.mktech.petcare.ai.tool.QueryRewriter;
-import pvt.mktech.petcare.common.constant.CommonConstant;
 import pvt.mktech.petcare.ai.util.ConversationIdGenerator;
+import pvt.mktech.petcare.common.constant.CommonConstant;
 import pvt.mktech.petcare.common.usercache.UserContext;
 import reactor.core.publisher.Flux;
-
-import java.nio.charset.StandardCharsets;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
@@ -47,25 +46,10 @@ public class ChatController {
 
     private final ChatClient chatClient;
     private final ConversationIdGenerator conversationIdGenerator;
-    private final MilvusVectorStore milvusVectorStore;
+//    private final MilvusVectorStore milvusVectorStore;
     private final ImageModel imageModel;
     private final SpeechSynthesisModel speechSynthesisModel;
     private final QueryRewriter queryRewriter;
-
-
-    /**
-     * AI 对话接口
-     *
-     * @param message 用户消息
-     * @return 流式响应（Token by Token）
-     */
-    @GetMapping("/chat")
-    public Flux<String> chat(@RequestParam("message") String message) {
-        Long userId = 1L; // 测试用，模拟用户ID
-        return chatClient.prompt()
-                .advisors(advisorSpec -> advisorSpec.param(CONVERSATION_ID, userId))
-                .user(message).stream().content();
-    }
 
     /**
      * AI 文生图 接口
@@ -118,16 +102,19 @@ public class ChatController {
     public Flux<String> ragChat(
             @RequestParam("message") String message,
             @RequestParam(value = "sessionId", required = false) String sessionId) {
+        return Flux.deferContextual(contextView -> {
+            Long userId = UserContext.getUserId();
+            String conversationId = conversationIdGenerator.generate(userId, sessionId);
+//            String rewriteMessage = queryRewriter.doQueryRewrite(message); // 重写不一定是好事
 
-        Long userId = UserContext.getUserInfo().getUserId();
-        String conversationId = conversationIdGenerator.generate(userId, sessionId);
-        String rewriteMessage = queryRewriter.doQueryRewrite(message);
-        return chatClient.prompt()
-                .advisors(advisorSpec -> advisorSpec.param(CONVERSATION_ID, conversationId))
-                .advisors(advisorSpec -> new QuestionAnswerAdvisor(milvusVectorStore))
-                .user(rewriteMessage)
-                .stream()
-                .content();
+            return chatClient.prompt()
+                    .system("当前登录用户ID：" + userId) // 因为模型会调用工具，会多线程访问，所以需要全局会话ID
+                    .advisors(advisorSpec -> advisorSpec.param(CONVERSATION_ID, conversationId))
+//                    .advisors(advisorSpec -> new QuestionAnswerAdvisor(milvusVectorStore))
+                    .user(message)
+                    .stream()
+                    .content();
+        });
     }
 
     /**

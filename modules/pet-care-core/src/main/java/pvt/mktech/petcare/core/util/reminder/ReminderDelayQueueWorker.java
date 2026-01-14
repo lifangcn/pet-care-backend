@@ -27,7 +27,10 @@ import java.util.concurrent.CompletableFuture;
 import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 
 /**
- * 定时任务处理 Redis 延迟消息
+ * {@code @description}: ReminderDelayQueueWorker：定时扫描，将已到期的 execution 发送到 send topic
+ * {@code @date}: 2025/12/24 15:37
+ *
+ * @author Michael
  */
 @Component
 @Slf4j

@@ -11,8 +11,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
-import static pvt.mktech.petcare.common.constant.CommonConstant.HEADER_USERNAME;
-
 /**
  * JWT 工具类
  */
@@ -20,6 +18,7 @@ import static pvt.mktech.petcare.common.constant.CommonConstant.HEADER_USERNAME;
 @ConfigurationProperties(prefix = "jwt")
 public class JwtUtil {
 
+    private Boolean enabled;
     private String secretKey;
     private Long expireTime;
     private Long refreshExpireTime;
@@ -30,7 +29,6 @@ public class JwtUtil {
         Date expiryDate = new Date(now.getTime() + (expireTime * 1000));
         return Jwts.builder()
                 .subject(String.valueOf(userId))
-                .claim(HEADER_USERNAME, username)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(getSignInKey())
@@ -60,11 +58,6 @@ public class JwtUtil {
     // 获取用户 ID
     public Long getUserIdFromToken(String token) {
         return Long.valueOf(getClaimsFromToken(token).getSubject());
-    }
-
-    // 获取用户名
-    public String getUsernameFromToken(String token) {
-        return getClaimsFromToken(token).get(HEADER_USERNAME, String.class);
     }
 
     // 解析令牌

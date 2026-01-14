@@ -10,6 +10,8 @@ import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.support.ToolCallbacks;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -43,8 +45,9 @@ public class SpringChatConfig {
     public ChatClient chatClient(DashScopeChatModel chatModel,
                                  ChatMemory chatMemory,
                                  ToolCallbackProvider toolCallbackProvider) {
-//        ToolCallback[] from = ToolCallbacks.from(reminderTool); // 本地 Tools
+        ToolCallback[] localTools = ToolCallbacks.from(reminderTool); // 本地 Tools
         return ChatClient.builder(chatModel)
+                .defaultToolCallbacks(localTools)
                 .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
                 .defaultSystem(loadSystemPrompt())
                 .defaultAdvisors(
@@ -95,7 +98,9 @@ public class SpringChatConfig {
     private String loadSystemPrompt() {
         try {
             ClassPathResource resource = new ClassPathResource("system.txt");
-            return StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            String prompt = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            log.info("加载系统提示词：{}", prompt);
+            return prompt;
         } catch (Exception e) {
             return "你是宠物关怀提供的专业的服务咨询顾问";
         }

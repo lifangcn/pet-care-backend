@@ -27,7 +27,7 @@ public class PetServiceImpl extends ServiceImpl<PetsMapper, Pet> implements PetS
 
     @Override
     public Pet savePet(Pet pet) {
-        Long userId = UserContext.getUserInfo().getUserId();
+        Long userId = UserContext.getUserId();
         pet.setUserId(userId);
         saveOrUpdate(pet);
         return pet;

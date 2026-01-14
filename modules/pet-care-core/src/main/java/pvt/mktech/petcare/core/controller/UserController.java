@@ -10,9 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import pvt.mktech.petcare.common.storage.OssTemplate;
 import pvt.mktech.petcare.common.usercache.UserContext;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.minio.MinioTemplate;
 import pvt.mktech.petcare.core.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.core.dto.response.UserResponse;
 import pvt.mktech.petcare.core.service.UserService;
@@ -26,7 +26,7 @@ import pvt.mktech.petcare.core.service.UserService;
 public class UserController {
     
     private final UserService userService;
-    private final MinioTemplate minioTemplate;
+    private final OssTemplate ossTemplate;
     
     @GetMapping("/me")
     @Operation(
@@ -34,7 +34,7 @@ public class UserController {
         description = "获取当前登录用户的详细信息"
     )
     public ResponseEntity<UserResponse> getCurrentUser() {
-        UserResponse user = userService.getUserById(UserContext.getUserInfo().getUserId());
+        UserResponse user = userService.getUserById(UserContext.getUserId());
         return ResponseEntity.ok(user);
     }
 
@@ -46,7 +46,7 @@ public class UserController {
     public Result<UserResponse> update(
             @Parameter(description = "用户更新信息", required = true)
             @Valid @RequestBody UserUpdateRequest request) {
-        UserResponse updatedUser = userService.updateUser(UserContext.getUserInfo().getUserId(), request);
+        UserResponse updatedUser = userService.updateUser(UserContext.getUserId(), request);
         return Result.success(updatedUser);
     }
 
@@ -63,10 +63,7 @@ public class UserController {
     }
 
     @GetMapping("/check-phone")
-    @Operation(
-        summary = "检查手机号是否存在",
-        description = "检查手机号是否已被注册"
-    )
+    @Operation(summary = "检查手机号是否存在")
     public ResponseEntity<Boolean> checkPhoneExists(
             @Parameter(description = "手机号", required = true, example = "13800138000")
             @RequestParam String phone) {
@@ -74,12 +71,19 @@ public class UserController {
         return ResponseEntity.ok(exists);
     }
 
-    @Operation(summary = "上传用户头像")
     @PostMapping(value = "/avatar", consumes = "multipart/form-data")
+    @Operation(summary = "上传用户头像")
     public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file) {
-        Long userId = UserContext.getUserInfo().getUserId();
+        Long userId = UserContext.getUserId();
         // 上传头像到MinIO
-        String avatarUrl = minioTemplate.uploadAvatar(file, userId);
+        String avatarUrl = ossTemplate.uploadAvatar(file, userId);
         return Result.success(avatarUrl);
+    }
+
+    @PostMapping(value = "/{petId}/checkin")
+    @Operation(summary = "用户签到")
+    public Result<String> checkin(@PathVariable Long petId) {
+        userService.checkin(petId);
+        return Result.success("checkin success");
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.ai.dto.KnowledgeDocumentResponse;
 import pvt.mktech.petcare.ai.service.KnowledgeDocumentService;
-import pvt.mktech.petcare.common.minio.MinioTemplate;
+import pvt.mktech.petcare.common.storage.OssTemplate;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import static pvt.mktech.petcare.common.dto.response.ResultCode.NOT_FOUND;
 public class KnowledgeDocumentController {
 
     private final KnowledgeDocumentService documentService;
-    private final MinioTemplate minioTemplate;
+    private final OssTemplate ossTemplate;
 
     @PostMapping("/upload")
     public Result<KnowledgeDocumentResponse> uploadDocument(@RequestParam("file") MultipartFile file) {
@@ -40,7 +40,7 @@ public class KnowledgeDocumentController {
         if (document == null) {
             return Result.error(NOT_FOUND, "文档不存在");
         }
-        String presignedUrl = minioTemplate.generatePreviewUrl(document.getFileUrl());
+        String presignedUrl = ossTemplate.generateAccessUrl(document.getFileUrl());
         return Result.success(presignedUrl);
     }
 

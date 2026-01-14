@@ -20,12 +20,11 @@ public class UserInfoInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
                              Object handler) throws Exception {
         String userId = request.getHeader(CommonConstant.HEADER_USER_ID);
-        String username = request.getHeader(CommonConstant.HEADER_USERNAME);
-        if (StrUtil.isNotBlank(userId) && StrUtil.isNotBlank(username)) {
+        if (StrUtil.isNotBlank(userId)) {
             try {
-                UserContext.setUserInfo(new UserInfoDto(Long.parseLong(userId), username));
+                UserContext.setUserId(Long.parseLong(userId));
                 if (log.isDebugEnabled()) {
-                    log.debug("用户信息设置成功: userId={}, username={}", userId, username);
+                    log.debug("用户信息设置成功: userId={}", userId);
                 }
             } catch (NumberFormatException e) {
                 // userId 格式错误，记录日志但不影响请求继续
@@ -38,6 +37,6 @@ public class UserInfoInterceptor implements HandlerInterceptor {
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
                                 Object handler, Exception ex) throws Exception {
-        UserContext.removeUserInfo();
+        UserContext.removeUserId();
     }
 }

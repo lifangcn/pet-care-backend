@@ -6,43 +6,62 @@ server:
       enabled: true
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
   application:
     name: pet-care-core
-  main:
-    banner-mode: off
+  # MySQL 配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: "!QAZ2wsx"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: "!QAZ2wsx"
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
 
-# Dubbo 配置
-dubbo:
-  application:
-    name: ${spring.application.name}
-    qos-enable: true
-    qos-port: 22221
-    qos-accept-foreign-ip: false
-  registry:
-    address: nacos://${spring.cloud.nacos.discovery.server-addr}
-    username: ${spring.cloud.nacos.discovery.username}
-    password: ${spring.cloud.nacos.discovery.password}
-    register-mode: interface
-  protocol:
-    name: dubbo
-    port: 20881
-    # 不将 Dubbo 端口注册到服务发现
-    register: false
-  provider:
-    register: true
-  scan:
-    base-packages: pvt.mktech.petcare.core.service.dubbo
+# 内部服务间调用配置（serverless 环境使用）
+internal:
+  api:
+    enabled: true
 
 # 文件存储 配置：MinIO
-minio:
-  enabled: true
-  business-key: avatar
-  endpoint: http://localhost:9000
-  access-key: minio
-  secret-key: "!QAZ2wsx"
-  bucket-name: pet-care-core
-  file-size-limit: 10485760 # 10MB
-  expire-time: 3600 # 1小时
+#minio:
+#  enabled: true
+#  business-key: avatar
+#  endpoint: http://localhost:9000
+#  access-key: minio
+#  secret-key: "!QAZ2wsx"
+#  bucket-name: pet-care-core
+#  file-size-limit: 10485760 # 10MB
+#  expire-time: 3600 # 1小时
+
+# 文件存储 配置：Aliyun OSS
+aliyun:
+  oss:
+    endpoint: ${OSS_ENDPOINT:oss-cn-hangzhou.aliyuncs.com}
+    access-key-id: ${OSS_ACCESS_KEY_ID:LTAI5tNmULRZpFZLtEE1xkUe}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:gBTZHXlmcXPmh2Zw7tE7nrkPQOQBeJ}
+    bucket-name: ${OSS_BUCKET_NAME:lifang-pet-care}
+    enabled: true
 
 # Kafka 配置
 kafka:
@@ -66,6 +85,13 @@ xxl:
       port: 9998 # 执行器端口号，确保宿主机防火墙允许此端口访问
       logpath: ./logs/xxl-job/  # 日志路径
       logretentiondays: 30  # 日志保留天数
+
+# JWT配置
+jwt:
+  enabled: true
+  secret-key: "M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="
+  expire-time: 86400
+  refresh-expire-time: 604800
 
 # 暴露网关的 actuator 端点
 management:
@@ -92,6 +118,31 @@ management:
       jvm: true
       hikaricp: true
       executor: true
+
+# Knife4j 配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+    swagger-model-name: 实体类列表
+  production: false
+
+# SpringDoc OpenAPI 配置 (Knife4j 底层依赖)
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    filter: true
+  packages-to-scan: pvt.mktech.petcare.core.controller
+  cache:
+    disabled: true
+
 # 日志配置
 logging:
   level:
@@ -102,7 +153,7 @@ logging:
     org.springframework.kafka: WARN
     com.zaxxer.hikari: WARN
     com.xxl.job: WARN
-    org.apache.dubbo: WARN
+#    org.apache.dubbo: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"

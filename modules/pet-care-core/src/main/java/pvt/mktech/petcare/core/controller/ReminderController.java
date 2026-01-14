@@ -41,7 +41,7 @@ public class ReminderController {
     public Result<Boolean> save(@RequestBody ReminderSaveRequest saveRequest) {
         Reminder reminder = new Reminder();
         BeanUtil.copyProperties(saveRequest, reminder);
-        reminder.setUserId(UserContext.getUserInfo().getUserId());
+        reminder.setUserId(UserContext.getUserId());
         // 设置下次提醒时间
         reminder.setNextTriggerTime(reminder.getScheduleTime());
         return Result.success(reminderService.save(reminder));
@@ -98,7 +98,7 @@ public class ReminderController {
 
     @GetMapping("/page")
     public Result<Page<Reminder>> pageReminder(@ModelAttribute ReminderQueryRequest request) {
-        request.setUserId(UserContext.getUserInfo().getUserId());
+        request.setUserId(UserContext.getUserId());
         return Result.success(reminderService.findPageByQueryRequest(request));
     }
 
@@ -118,7 +118,7 @@ public class ReminderController {
     @Operation(summary = "查询 所有提醒执行记录", description = "根据宠物ID，查询所有提醒执行记录")
     @GetMapping("/execution/page")
     public Result<Page<ReminderExecution>> pageReminderExecution(@ModelAttribute ReminderQueryRequest request) {
-        request.setUserId(UserContext.getUserInfo().getUserId());
+        request.setUserId(UserContext.getUserId());
         return Result.success(reminderExecutionService.pageReminderExecution(request));
     }
 }

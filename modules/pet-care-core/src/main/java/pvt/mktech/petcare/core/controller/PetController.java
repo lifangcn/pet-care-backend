@@ -9,10 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import pvt.mktech.petcare.common.usercache.UserContext;
-import pvt.mktech.petcare.common.dto.UserInfoDto;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.minio.MinioTemplate;
+import pvt.mktech.petcare.common.storage.OssTemplate;
+import pvt.mktech.petcare.common.usercache.UserContext;
 import pvt.mktech.petcare.core.dto.request.HealthRecordQueryRequest;
 import pvt.mktech.petcare.core.dto.request.HealthRecordSaveRequest;
 import pvt.mktech.petcare.core.entity.HealthRecord;
@@ -38,7 +37,7 @@ public class PetController {
 
     private final HealthRecordService healthRecordService;
     private final PetService petService;
-    private final MinioTemplate minioTemplate;
+    private final OssTemplate ossTemplate;
 
     /**
      * 根据主键删除宠物表。
@@ -57,8 +56,7 @@ public class PetController {
             description = "用户信息基于前端请求头的Authorization获取用户信息，避免明文传递用户私密信息"
     )
     public Result<List<Pet>> listMyPets() {
-        UserInfoDto userInfo = UserContext.getUserInfo();
-        return Result.success(petService.findByUserId(userInfo.getUserId()));
+        return Result.success(petService.findByUserId(UserContext.getUserId()));
     }
 
     /**
@@ -102,7 +100,7 @@ public class PetController {
     @PostMapping(value = "/{petId}/avatar", consumes = "multipart/form-data")
     public Result<String> uploadAvatar(@RequestParam("file") MultipartFile file, @PathVariable("petId") Long petId) {
         // 上传头像到MinIO
-        String avatarUrl = minioTemplate.uploadAvatar(file, petId);
+        String avatarUrl = ossTemplate.uploadAvatar(file, petId);
         return Result.success(avatarUrl);
     }
 
@@ -118,7 +116,7 @@ public class PetController {
     public boolean saveHealthRecord(@RequestBody HealthRecordSaveRequest saveRequest) {
         HealthRecord healthRecord = new HealthRecord();
         BeanUtil.copyProperties(saveRequest, healthRecord);
-        healthRecord.setUserId(UserContext.getUserInfo().getUserId());
+        healthRecord.setUserId(UserContext.getUserId());
         // TODO 扩展点，根据已经填写的健康记录分类，发送到消息队列，消息队列将任务推送给AI，调用对应的诊断Tool。返回一些有意义的提醒通知
         return healthRecordService.save(healthRecord);
     }

@@ -1,17 +1,46 @@
+server:
+  port: 8082
+
 spring:
+  # MySQL 配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: "!QAZ2wsx"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: "!QAZ2wsx"
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  # AI 配置
   ai:
     # 向量存储
-    vectorstore:
-      milvus:
-        database-name: default
-        collection-name: pet_care_ai
-        client:
-          host: localhost
-          port: 19530
-          username: milvus
-          password: "!QAZ2wsx"
-        initialize-schema: true
-        embedding-dimension: 1024
+#    vectorstore:
+#      milvus:
+#        database-name: default
+#        collection-name: pet_care_ai
+#        client:
+#          host: localhost
+#          port: 19530
+#          username: milvus
+#          password: "!QAZ2wsx"
+#        initialize-schema: true
+#        embedding-dimension: 1024
     #    ollama:
     #      chat:
     #        model: deepseek-r1:latest
@@ -22,6 +51,7 @@ spring:
       embedding:
         options:
           model: text-embedding-v3
+
     # 会话记忆 Redis 配置
     chat:
       memory:
@@ -42,15 +72,53 @@ spring:
 #              url: http://localhost:8083
 
 # 文件存储 配置：MinIO
-minio:
-  enabled: true
-  business-key: ai
-  endpoint: http://localhost:9000
-  access-key: minio
-  secret-key: "!QAZ2wsx"
-  bucket-name: pet-care-ai
-  file-size-limit: 10485760 # 10MB
-  expire-time: 3600 # 1小时
+#minio:
+#  enabled: true
+#  business-key: ai
+#  endpoint: http://localhost:9000
+#  access-key: minio
+#  secret-key: "!QAZ2wsx"
+#  bucket-name: pet-care-ai
+#  file-size-limit: 10485760 # 10MB
+#  expire-time: 3600 # 1小时
+# 文件存储 配置：Aliyun OSS
+aliyun:
+  oss:
+    endpoint: ${OSS_ENDPOINT:oss-cn-hangzhou.aliyuncs.com}
+    access-key-id: ${OSS_ACCESS_KEY_ID:LTAI5tNmULRZpFZLtEE1xkUe}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:gBTZHXlmcXPmh2Zw7tE7nrkPQOQBeJ}
+    bucket-name: ${OSS_BUCKET_NAME:lifang-pet-care}
+    enabled: true
+
+
+# Core 服务地址（serverless 环境使用环境变量配置）
+core:
+  service:
+    url: ${CORE_SERVICE_URL:http://localhost:8080}
+
+# Knife4j 配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+    swagger-model-name: 实体类列表
+  production: false
+
+# SpringDoc OpenAPI 配置 (Knife4j 底层依赖)
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    filter: true
+  packages-to-scan: pvt.mktech.petcare.ai.controller
+  cache:
+    disabled: true
 
 # 日志配置
 logging:
@@ -58,7 +126,7 @@ logging:
     pvt.mktech.petcare.ai: INFO
     com.alibaba.nacos: WARN
     org.springframework.ai: INFO
-    org.apache.dubbo: WARN
+#    org.apache.dubbo: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
@@ -69,4 +137,3 @@ logging:
       max-file-size: 100MB
       max-history: 7
       total-size-cap: 1GB
-
