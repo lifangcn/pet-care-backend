@@ -155,11 +155,3 @@ logging:
 #    org.apache.dubbo: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
-  file:
-    name: ./logs/pet-care-ai.log
-  logback:
-    rollingpolicy:
-      max-file-size: 100MB
-      max-history: 7
-      total-size-cap: 1GB

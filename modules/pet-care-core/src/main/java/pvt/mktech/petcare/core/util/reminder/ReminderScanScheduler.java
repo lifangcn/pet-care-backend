@@ -1,20 +1,20 @@
 package pvt.mktech.petcare.core.util.reminder;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.xxl.job.core.context.XxlJobHelper;
-import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import pvt.mktech.petcare.common.exception.ErrorCode;
+import pvt.mktech.petcare.common.exception.SystemException;
 import pvt.mktech.petcare.common.redis.RedissonLockUtil;
+import pvt.mktech.petcare.core.constant.CoreConstant;
 import pvt.mktech.petcare.core.dto.message.ReminderMessageDto;
 import pvt.mktech.petcare.core.entity.Reminder;
 import pvt.mktech.petcare.core.service.ReminderService;
-import pvt.mktech.petcare.common.exception.ErrorCode;
-import pvt.mktech.petcare.common.exception.SystemException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,6 +36,12 @@ public class ReminderScanScheduler {
     private final RedissonLockUtil redissonLockUtil;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
+    @Value("${scheduler.reminder-scan.look-ahead-minutes:30}")
+    private Long lookAheadMinutes;
+    @Value("${scheduler.reminder-scan.lock-wait-time:3}")
+    private Long lockWaitTime;
+    @Value("${scheduler.reminder-scan.lock-lease-time:30}")
+    private Long lockLeaseTime;
     /**
      * 完整提醒逻辑：<br>
      * 1.ReminderScanScheduler:
@@ -49,16 +55,12 @@ public class ReminderScanScheduler {
      * 3.ReminderDelayQueueWorker：定时扫描，将已到期的 execution 发送到 send topic <br>
      * 4.ReminderSendConsumer：最后 send topic 进行消费：1. 推送提醒消息；2.execution 改为已发送；3.TBD 将 reminder 改为非激活
      */
-    @XxlJob("reminderScanJob")
+    @Scheduled(cron = "${scheduler.reminder-scan.cron:0 */1 * * * ?}")  // 默认每1分钟执行一次
     public void reminderScanJob() {
-        JSONObject params = JSONUtil.parseObj(XxlJobHelper.getJobParam());
-        Long lookAheadMinutes = params.getLong("look-ahead-minutes");
-        String lockKey = params.getStr("lock-key");
-        Long lockWaitTime = params.getLong("lock-wait-time");
-        Long lockLeaseTime = params.getLong("lock-lease-time");
         boolean locked = false;
         try {
-            locked = redissonLockUtil.tryLock(lockKey, lockWaitTime, lockLeaseTime, TimeUnit.SECONDS);
+            locked = redissonLockUtil.tryLock(CoreConstant.REMINDER_SCAN_LOCK_KEY,
+                    lockWaitTime, lockLeaseTime, TimeUnit.SECONDS);
             if (locked) {
                 log.info("获取分布式锁成功，开始执行提醒扫描");
                 // 找出所有激活的、且计划时间在未来一段时间内的提醒
@@ -85,7 +87,7 @@ public class ReminderScanScheduler {
             }
         } finally {
             if (locked) {
-                redissonLockUtil.unlock(lockKey);
+                redissonLockUtil.unlock(CoreConstant.REMINDER_SCAN_LOCK_KEY);
                 log.info("释放分布式锁");
             }
         }

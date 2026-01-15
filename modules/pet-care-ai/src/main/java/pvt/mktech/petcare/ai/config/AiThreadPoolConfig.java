@@ -13,11 +13,11 @@ public class AiThreadPoolConfig {
 
     @Bean(name = "aiThreadPool")
     public ThreadPoolExecutor customThreadPool(MeterRegistry meterRegistry) {
-        ThreadPoolExecutor theadPool = ThreadPoolManager.createTheadPool("ai-service");
-        ExecutorServiceMetrics.monitor(meterRegistry, theadPool, "ai-service");
+        ThreadPoolExecutor threadPoolExecutor = ThreadPoolManager.createTheadPool("ai-service");
+        ExecutorServiceMetrics.monitor(meterRegistry, threadPoolExecutor, "ai-service");
         // 预热线程
-        theadPool.prestartAllCoreThreads();
-        return theadPool;
+        threadPoolExecutor.prestartAllCoreThreads();
+        return threadPoolExecutor;
     }
 
 //    @Bean

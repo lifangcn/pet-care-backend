@@ -3,15 +3,13 @@ package pvt.mktech.petcare.core.util.reminder;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
-import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.redisson.client.protocol.ScoredEntry;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.kafka.support.SendResult;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
@@ -24,10 +22,10 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import static pvt.mktech.petcare.core.constant.CoreConstant.*;
+import static pvt.mktech.petcare.core.constant.CoreConstant.CORE_REMINDER_DELAY_TOPIC_SEND;
+import static pvt.mktech.petcare.core.constant.CoreConstant.CORE_REMINDER_SEND_QUEUE_KEY;
 
 /**
  * {@code @description}: ReminderDelayQueueWorker：定时扫描，将已到期的 execution 发送到 send topic
@@ -49,7 +47,7 @@ public class ReminderDelayQueueWorker {
      * TODO: 后续可优化扫描频率和批量处理
      * TODO： 潜在的并发问题 1.Redis ZSet 操作并发：多个实例同时扫描和删除 ZSet 中的消息可能导致数据不一致 2.消息重复消费：在分布式环境下，多个消费者实例可能同时处理相同的消息
      */
-    @XxlJob("delayQueueScanJob")
+    @Scheduled(cron = "${scheduler.delay-queue-scan.cron:0/1 * * * * ?}")  // 默认每1分钟执行一次
     public void delayQueueScanJob() {
         Collection<ScoredEntry<Object>> expiredMessages = redisUtil.rangeByScoreWithScores(
                 CORE_REMINDER_SEND_QUEUE_KEY, 0, System.currentTimeMillis());

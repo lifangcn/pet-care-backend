@@ -137,17 +137,6 @@ public class RedisUtil {
     }
 
     /**
-     * 获取 BitMap 位
-     *
-     * @param key    缓存键
-     * @return BitMap
-     *
-     */
-    public boolean getBitOffset(String key, long offset) {
-        return redissonClient.getBitSet(key).get(offset);
-    }
-
-    /**
      * 获取 BitMap 中位true 位数
      *
      * @param key 缓存键

@@ -43,12 +43,12 @@ public class SpringChatConfig {
 
     @Bean
     public ChatClient chatClient(DashScopeChatModel chatModel,
-                                 ChatMemory chatMemory,
-                                 ToolCallbackProvider toolCallbackProvider) {
+                                 ChatMemory chatMemory/*,
+                                 ToolCallbackProvider toolCallbackProvider*/) {
         ToolCallback[] localTools = ToolCallbacks.from(reminderTool); // 本地 Tools
         return ChatClient.builder(chatModel)
                 .defaultToolCallbacks(localTools)
-                .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
+//                .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
                 .defaultSystem(loadSystemPrompt())
                 .defaultAdvisors(
                         new SimpleLoggerAdvisor(),
@@ -99,7 +99,6 @@ public class SpringChatConfig {
         try {
             ClassPathResource resource = new ClassPathResource("system.txt");
             String prompt = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-            log.info("加载系统提示词：{}", prompt);
             return prompt;
         } catch (Exception e) {
             return "你是宠物关怀提供的专业的服务咨询顾问";

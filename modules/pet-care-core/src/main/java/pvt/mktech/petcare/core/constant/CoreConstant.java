@@ -27,5 +27,8 @@ public class CoreConstant {
     public static final String CORE_REMINDER_SEND_QUEUE_KEY = "core:reminder:send_queue";
     // 用户签到
     public static final String CORE_USER_CHECKIN_KEY = "core:user:checkin:";
+    // 提醒扫描锁KEY
+    public static final String REMINDER_SCAN_LOCK_KEY = "reminder:scan:lock";
+
 
 }

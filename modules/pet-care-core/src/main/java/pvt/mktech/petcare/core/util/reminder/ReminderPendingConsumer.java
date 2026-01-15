@@ -86,10 +86,9 @@ public class ReminderPendingConsumer {
             return;
         }
         long timestamp = System.currentTimeMillis() + delayMillis;
-        // 4.2.如果距离提醒时间还有一段时间，存入 Redis 队列，后续每秒扫描，到期后再处理。
-        boolean flag = redisUtil.addToZSet(CORE_REMINDER_SEND_QUEUE_KEY, execution.getId().toString(), timestamp);
-
-        log.info("存入 Redis 队列，是否成功：{}, execution.id: {}， 消费时间戳：{}", flag, execution.getId(), timestamp);
+        // 4.2.如果距离提醒时间还有一段时间，存入 Redis 延迟队列，后续每秒扫描，到期后再处理。
+        redisUtil.addToZSet(CORE_REMINDER_SEND_QUEUE_KEY, execution.getId().toString(), timestamp);
+        log.info("存入 Redis 延迟队列，execution.id: {}， 消费时间戳：{}", execution.getId(), timestamp);
     }
 
     private void sendToSendQueue(ReminderExecutionMessageDto messageDto) {

@@ -72,19 +72,31 @@ netty:
   websocket:
     port: 8081
 
+scheduler:
+  enabled: true
+  reminder-scan:
+    cron: 0 */1 * * * ?
+    look-ahead-minutes: 720
+    lock-wait-time: 3
+    lock-lease-time: 30
+  delay-queue-scan:
+    cron: 0/1 * * * * ?
+
 # 分布式定时任务 配置：XXL-JOB 配置 (调度中心在Docker中，执行器在宿主机运行)
-xxl:
-  job:
-    admin:
-      addresses: http://localhost:9999/xxl-job-admin
-      accessToken: default_token  # 与调度中心的通信令牌（配置文件在xxl-job.application.yml有）
-      # 注意：如果调度中心未配置 token，这里必须注释掉或留空，否则会导致注册失败
-    executor:
-      appname: reminder-executor  # 执行器名称，需要在调度中心手动创建同名执行器
-      ip: host.docker.internal  # 执行器IP，Docker容器需要能访问此IP
-      port: 9998 # 执行器端口号，确保宿主机防火墙允许此端口访问
-      logpath: ./logs/xxl-job/  # 日志路径
-      logretentiondays: 30  # 日志保留天数
+#xxl:
+#  job:
+#    admin:
+#      addresses: http://localhost:9999/xxl-job-admin
+#      accessToken: default_token  # 与调度中心的通信令牌（配置文件在xxl-job.application.yml有）
+#      # 注意：如果调度中心未配置 token，这里必须注释掉或留空，否则会导致注册失败
+#    executor:
+#      appname: reminder-executor  # 执行器名称，需要在调度中心手动创建同名执行器
+#      ip: host.docker.internal  # 执行器IP，Docker容器需要能访问此IP
+#      port: 9998 # 执行器端口号，确保宿主机防火墙允许此端口访问
+#      logpath: ./logs/xxl-job/  # 日志路径
+#      logretentiondays: 30  # 日志保留天数
+
+
 
 # JWT配置
 jwt:
@@ -126,7 +138,6 @@ knife4j:
     language: zh_cn
     swagger-model-name: 实体类列表
   production: false
-
 # SpringDoc OpenAPI 配置 (Knife4j 底层依赖)
 springdoc:
   api-docs:
@@ -156,11 +167,6 @@ logging:
 #    org.apache.dubbo: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+#    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
   file:
     name: ./logs/pet-care-core.log
-  logback:
-    rollingpolicy:
-      max-file-size: 100MB
-      max-history: 7
-      total-size-cap: 1GB

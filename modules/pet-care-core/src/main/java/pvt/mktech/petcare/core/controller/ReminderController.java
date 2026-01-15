@@ -11,6 +11,7 @@ import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.core.dto.request.CompleteReminderRequest;
 import pvt.mktech.petcare.core.dto.request.ReminderQueryRequest;
 import pvt.mktech.petcare.core.dto.request.ReminderSaveRequest;
+import pvt.mktech.petcare.core.dto.response.ReminderExecutionResponse;
 import pvt.mktech.petcare.core.entity.Reminder;
 import pvt.mktech.petcare.core.entity.ReminderExecution;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
@@ -104,10 +105,10 @@ public class ReminderController {
     }
 
     /* 执行记录处理 */
-    @Operation(summary = "完成 提醒执行记录", description = "将提醒执行记录标记为已完成，并填写完成记录")
+    @Operation(summary = "完成 提醒执行记录", description = "将提醒执行记录标记为已完成")
     @PutMapping("/execution/{id}/complete")
-    public Result<Boolean> complete(@PathVariable("id") Long id, @RequestBody(required = false) CompleteReminderRequest completeReminderRequest) {
-        return Result.success(reminderExecutionService.updateCompleteStatusById(id, completeReminderRequest));
+    public Result<Boolean> complete(@PathVariable("id") Long id) {
+        return Result.success(reminderExecutionService.updateCompleteStatusById(id));
     }
 
     @Operation(summary = "读取 提醒执行记录", description = "将提醒执行记录标记为已读，并填写完成记录")
@@ -118,10 +119,10 @@ public class ReminderController {
 
     @Operation(summary = "查询 所有提醒执行记录", description = "根据宠物ID，查询所有提醒执行记录")
     @PostMapping("/execution/page")
-    public Result<Page<ReminderExecution>> pageReminderExecution(@RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
-                                                                 @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize,
-                                                                 @RequestBody ReminderQueryRequest request) {
+    public Result<Page<ReminderExecutionResponse>> pageReminderExecution(@RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
+                                                                          @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize,
+                                                                          @RequestBody ReminderQueryRequest request) {
         request.setUserId(UserContext.getUserId());
-        return Result.success(reminderExecutionService.pageReminderExecution(pageNumber, pageSize, request));
+        return Result.success(reminderExecutionService.pageReminderExecutionResponse(pageNumber, pageSize, request));
     }
 }

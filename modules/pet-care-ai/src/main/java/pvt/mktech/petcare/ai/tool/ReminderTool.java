@@ -1,5 +1,6 @@
 package pvt.mktech.petcare.ai.tool;
 
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
@@ -14,14 +15,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class ReminderTool {
 
     @Value("${core.service.url:http://localhost:8080}")
     private String coreServiceUrl;
-
-    private final WebClient.Builder webClientBuilder;
-    private final ThreadPoolExecutor aiThreadPool;
+    @Resource
+    private WebClient.Builder webClientBuilder;
 
     @Tool(name = "设置宠物提醒事项服务")
     public String addReminderFunction(AddReminderRequest request) {

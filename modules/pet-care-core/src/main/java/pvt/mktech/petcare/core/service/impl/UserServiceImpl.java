@@ -123,14 +123,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Boolean checkin(Long userId) {
         String key = String.format("%s%d:%d%02d",
                 CORE_USER_CHECKIN_KEY, userId, DateUtil.thisYear(), DateUtil.thisMonth() + 1);
-
-        boolean exists = redisUtil.getBitOffset(key, DateUtil.thisDayOfMonth() - 1);
-        if (exists) {
-            throw new BusinessException(ErrorCode.USER_ALREADY_CHECKIN);
+        RBitSet bitSet = redisUtil.getBitSet(key);
+        // 今天是几号 -1 即为二进制的下标
+        int offset = DateUtil.thisDayOfMonth() - 1;
+        // 校验今天是否已经打卡
+        if (bitSet != null) {
+            boolean exists = bitSet.get(offset);
+            if (exists) {
+                throw new BusinessException(ErrorCode.USER_ALREADY_CHECKIN);
+            }
         }
-
         // 1号对应索引下标0，2号对应索引下标1， 3号对应索引下标2，以此类推
-        boolean flag = redisUtil.setBit(key, DateUtil.thisDayOfMonth() - 1, true);
+        boolean flag = redisUtil.setBit(key, offset, true);
         redisUtil.expire(key, Duration.ofDays(366));
         return flag;
     }

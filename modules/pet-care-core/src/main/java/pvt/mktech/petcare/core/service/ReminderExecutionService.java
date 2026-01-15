@@ -4,6 +4,7 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
 import pvt.mktech.petcare.core.dto.request.CompleteReminderRequest;
 import pvt.mktech.petcare.core.dto.request.ReminderQueryRequest;
+import pvt.mktech.petcare.core.dto.response.ReminderExecutionResponse;
 import pvt.mktech.petcare.core.entity.ReminderExecution;
 
 /**
@@ -18,7 +19,9 @@ public interface ReminderExecutionService extends IService<ReminderExecution> {
 
     Boolean updateReadStatusById(Long id);
 
-    Boolean updateCompleteStatusById(Long id, CompleteReminderRequest request);
+    Boolean updateCompleteStatusById(Long id);
 
     Page<ReminderExecution> pageReminderExecution(Long pageNumber, Long pageSize, ReminderQueryRequest request);
+
+    Page<ReminderExecutionResponse> pageReminderExecutionResponse(Long pageNumber, Long pageSize, ReminderQueryRequest request);
 }
