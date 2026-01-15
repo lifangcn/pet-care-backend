@@ -28,7 +28,8 @@ public class ReminderSendConsumer {
     private final ReminderExecutionService reminderExecutionService;
     private final ReminderWebSocketHandler reminderWebSocketHandler;
 
-    @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_SEND, groupId = CORE_REMINDER_SEND_CONSUMER)
+    @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_SEND, groupId = CORE_REMINDER_SEND_CONSUMER,
+            containerFactory = "kafkaListenerContainerFactory")
     public void consume(@Payload String message, @Header(KafkaHeaders.RECEIVED_KEY) String key, Acknowledgment acknowledgment) {
         try {
             ReminderExecutionMessageDto messageDto = JSONUtil.toBean(message, ReminderExecutionMessageDto.class);

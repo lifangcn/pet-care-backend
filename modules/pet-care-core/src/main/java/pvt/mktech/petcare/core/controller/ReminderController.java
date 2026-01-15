@@ -88,18 +88,19 @@ public class ReminderController {
      * @return {@code true} 更新成功，{@code false} 更新失败
      */
     @PutMapping("/{id}")
-    public Result<Boolean> update(@PathVariable("id") Long id,
-                          @RequestBody ReminderSaveRequest saveRequest) {
+    public Result<Boolean> update(@PathVariable("id") Long id, @RequestBody ReminderSaveRequest saveRequest) {
         Reminder reminder = new Reminder();
         BeanUtil.copyProperties(saveRequest, reminder);
         reminder.setId(id);
         return Result.success(reminderService.updateById(reminder));
     }
 
-    @GetMapping("/page")
-    public Result<Page<Reminder>> pageReminder(@ModelAttribute ReminderQueryRequest request) {
+    @PostMapping("/page")
+    public Result<Page<Reminder>> pageReminder(@RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
+                                               @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize,
+                                               @RequestBody ReminderQueryRequest request) {
         request.setUserId(UserContext.getUserId());
-        return Result.success(reminderService.findPageByQueryRequest(request));
+        return Result.success(reminderService.findPageByQueryRequest(pageNumber, pageSize, request));
     }
 
     /* 执行记录处理 */
@@ -116,9 +117,11 @@ public class ReminderController {
     }
 
     @Operation(summary = "查询 所有提醒执行记录", description = "根据宠物ID，查询所有提醒执行记录")
-    @GetMapping("/execution/page")
-    public Result<Page<ReminderExecution>> pageReminderExecution(@ModelAttribute ReminderQueryRequest request) {
+    @PostMapping("/execution/page")
+    public Result<Page<ReminderExecution>> pageReminderExecution(@RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
+                                                                 @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize,
+                                                                 @RequestBody ReminderQueryRequest request) {
         request.setUserId(UserContext.getUserId());
-        return Result.success(reminderExecutionService.pageReminderExecution(request));
+        return Result.success(reminderExecutionService.pageReminderExecution(pageNumber, pageSize, request));
     }
 }

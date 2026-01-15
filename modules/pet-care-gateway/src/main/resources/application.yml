@@ -79,12 +79,12 @@ jwt:
   expire-time: 86400
   refresh-expire-time: 604800
 
-# 暴露网关的 actuator 端点 (用于刷新配置，可选但推荐)
+# 暴露网关的 actuator 端点
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,metrics,prometheus
 
 # 日志配置
 logging:

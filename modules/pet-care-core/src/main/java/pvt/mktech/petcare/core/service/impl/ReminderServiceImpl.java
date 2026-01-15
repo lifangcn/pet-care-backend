@@ -25,7 +25,7 @@ import static pvt.mktech.petcare.core.entity.table.ReminderTableDef.REMINDER;
 public class ReminderServiceImpl extends ServiceImpl<ReminderMapper, Reminder> implements ReminderService {
 
     @Override
-    public Page<Reminder> findPageByQueryRequest(ReminderQueryRequest request) {
+    public Page<Reminder> findPageByQueryRequest(Long pageNumber, Long pageSize, ReminderQueryRequest request) {
         QueryChain<Reminder> queryChain = queryChain().select(REMINDER.ALL_COLUMNS);
 
         if (request.getUserId() != null) {
@@ -45,7 +45,7 @@ public class ReminderServiceImpl extends ServiceImpl<ReminderMapper, Reminder> i
         }
 
         queryChain.orderBy(REMINDER.SCHEDULE_TIME.desc());
-        return page(new Page<>(request.getPageNumber(), request.getPageSize()), queryChain);
+        return page(new Page<>(pageNumber, pageSize), queryChain);
     }
 
     @Override

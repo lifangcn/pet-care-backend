@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.core.dto.message.ReminderMessageDto;
 import pvt.mktech.petcare.core.entity.Reminder;
@@ -42,11 +43,12 @@ import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 public class ReminderPendingConsumer {
 
     private final ReminderService reminderService;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisUtil redisUtil;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ReminderExecutionService reminderExecutionService;
 
-    @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_PENDING, groupId = CORE_REMINDER_PENDING_CONSUMER)
+    @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_PENDING, groupId = CORE_REMINDER_PENDING_CONSUMER,
+            containerFactory = "kafkaListenerContainerFactory")
     public void consume(@Payload String message,
                         @Header(KafkaHeaders.RECEIVED_KEY) String key,
                         Acknowledgment acknowledgment) {
@@ -85,8 +87,8 @@ public class ReminderPendingConsumer {
         }
         long timestamp = System.currentTimeMillis() + delayMillis;
         // 4.2.如果距离提醒时间还有一段时间，存入 Redis 队列，后续每秒扫描，到期后再处理。
-        Boolean flag = stringRedisTemplate.opsForZSet()
-                .add(CORE_REMINDER_SEND_QUEUE_KEY, execution.getId().toString(), timestamp);
+        boolean flag = redisUtil.addToZSet(CORE_REMINDER_SEND_QUEUE_KEY, execution.getId().toString(), timestamp);
+
         log.info("存入 Redis 队列，是否成功：{}, execution.id: {}， 消费时间戳：{}", flag, execution.getId(), timestamp);
     }
 

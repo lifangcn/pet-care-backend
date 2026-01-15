@@ -25,4 +25,7 @@ public class CoreConstant {
     public static final String CORE_REMINDER_SEND_CONSUMER = "core-reminder-send-consumer";
     // Redis 对于延迟消费的信息，进行缓存
     public static final String CORE_REMINDER_SEND_QUEUE_KEY = "core:reminder:send_queue";
+    // 用户签到
+    public static final String CORE_USER_CHECKIN_KEY = "core:user:checkin:";
+
 }

@@ -14,10 +14,10 @@ public class BusinessException extends RuntimeException {
     private final Object data;
 
     // 性能优化： 重写Throwable.fillInStackTrace() 方法，避免生成堆栈信息
-    @Override
-    public synchronized Throwable fillInStackTrace() {
-        return this;
-    }
+//    @Override
+//    public synchronized Throwable fillInStackTrace() {
+//        return this;
+//    }
 
     /**
      * 构造方法 - 使用错误码枚举

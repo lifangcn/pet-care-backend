@@ -14,9 +14,9 @@ import org.springframework.context.annotation.Bean;
 public class RedisAutoConfiguration {
 
     @Bean
-    public RedisCacheUtil redisCacheUtil(RedissonClient redissonClient) {
+    public RedisUtil redisCacheUtil(RedissonClient redissonClient) {
         log.info("初始化 Redis 缓存工具");
-        return new RedisCacheUtil(redissonClient);
+        return new RedisUtil(redissonClient);
     }
 
     @Bean

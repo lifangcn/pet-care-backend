@@ -1,18 +1,21 @@
 package pvt.mktech.petcare.common.redis;
 
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RBitSet;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.protocol.ScoredEntry;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Map;
 
 /**
  * Redis缓存工具类
  */
 @RequiredArgsConstructor
-public class RedisCacheUtil {
+public class RedisUtil {
 
     private final RedissonClient redissonClient;
 
@@ -97,5 +100,64 @@ public class RedisCacheUtil {
      */
     public boolean expire(String key, Duration duration) {
         return redissonClient.getBucket(key).expire(duration);
+    }
+
+    /* 扩展功能 ZSet */
+    public boolean addToZSet(String key, Object value, double score) {
+        return redissonClient.getScoredSortedSet(key).add(score, value);
+    }
+
+    public boolean removeFromZSet(String key, Object value) {
+        return redissonClient.getScoredSortedSet(key).remove(value);
+    }
+
+
+    /* 扩展功能 BitMap */
+    /**
+     * 设置 BitMap 位
+     *
+     * @param key    缓存键
+     * @param offset 位置
+     * @param value  值
+     * @return 设置结果
+     */
+    public boolean setBit(String key, long offset, boolean value) {
+        return redissonClient.getBitSet(key).set(offset, value);
+    }
+
+    /**
+     * 获取 BitMap 位
+     *
+     * @param key    缓存键
+     * @return BitMap
+     *
+     */
+    public RBitSet getBitSet(String key) {
+        return redissonClient.getBitSet(key);
+    }
+
+    /**
+     * 获取 BitMap 位
+     *
+     * @param key    缓存键
+     * @return BitMap
+     *
+     */
+    public boolean getBitOffset(String key, long offset) {
+        return redissonClient.getBitSet(key).get(offset);
+    }
+
+    /**
+     * 获取 BitMap 中位true 位数
+     *
+     * @param key 缓存键
+     * @return 统计位数
+     */
+    public long getBitCount(String key) {
+        return redissonClient.getBitSet(key).cardinality();
+    }
+
+    public Collection<ScoredEntry<Object>> rangeByScoreWithScores(String key, double min, double max) {
+        return redissonClient.getScoredSortedSet(key).entryRange(min, true, max, true);
     }
 }

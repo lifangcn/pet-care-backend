@@ -3,6 +3,7 @@ package pvt.mktech.petcare.core.service;
 import com.mybatisflex.core.service.IService;
 import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.core.dto.request.UserUpdateRequest;
+import pvt.mktech.petcare.core.dto.response.CheckinStatsResponse;
 import pvt.mktech.petcare.core.dto.response.UserResponse;
 import pvt.mktech.petcare.core.entity.User;
 
@@ -67,7 +68,17 @@ public interface UserService extends IService<User> {
     /**
      * 用户签到
      *
-     * @param petId 宠物ID
+     * @param userId 用户ID
      */
-    void checkin(Long petId);
+    Boolean checkin(Long userId);
+
+    /**
+     * 获取用户签到统计信息
+     *
+     * @param userId 用户ID
+     * @param year   年份
+     * @param month  月份
+     * @return 签到统计信息
+     */
+    CheckinStatsResponse getCheckinStats(Long userId, Long year, Long month);
 }

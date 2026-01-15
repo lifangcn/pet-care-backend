@@ -7,6 +7,7 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.redisson.client.protocol.ScoredEntry;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -14,6 +15,7 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
+import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.core.entity.ReminderExecution;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
@@ -21,6 +23,7 @@ import pvt.mktech.petcare.core.service.ReminderExecutionService;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -37,7 +40,7 @@ import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 @RequiredArgsConstructor
 public class ReminderDelayQueueWorker {
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final RedisUtil redisUtil;
     private final ReminderExecutionService reminderExecutionService;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
@@ -48,17 +51,16 @@ public class ReminderDelayQueueWorker {
      */
     @XxlJob("delayQueueScanJob")
     public void delayQueueScanJob() {
-        Set<ZSetOperations.TypedTuple<String>> expiredMessages = stringRedisTemplate.opsForZSet()
-                .rangeByScoreWithScores(CORE_REMINDER_SEND_QUEUE_KEY, 0, System.currentTimeMillis());
-
+        Collection<ScoredEntry<Object>> expiredMessages = redisUtil.rangeByScoreWithScores(
+                CORE_REMINDER_SEND_QUEUE_KEY, 0, System.currentTimeMillis());
         if (CollUtil.isEmpty(expiredMessages)) {
             return;
         }
 
-        log.info("处理 Redis 消息：{} 条", expiredMessages.size());
+        log.info("处理 Redis 延迟提醒消息：{} 条", expiredMessages.size());
 
-        for (ZSetOperations.TypedTuple<String> tuple : expiredMessages) {
-            String executionId = tuple.getValue();
+        for (ScoredEntry<Object> tuple : expiredMessages) {
+            String executionId = tuple.getValue().toString();
             Double scheduleTime = tuple.getScore();
             if (executionId == null || scheduleTime == null) {
                 log.error("延迟消息格式错误，executionId={}, scheduleTime={}", executionId, scheduleTime);
@@ -100,7 +102,7 @@ public class ReminderDelayQueueWorker {
         future.thenAccept(result -> {
                     log.info("成功发送 提醒执行 消息，topic: {}, key: {}, offset: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, result.getRecordMetadata().offset());
                     // 4. 处理成功后，从Sorted Set中移除该消息，防止重复消费
-                    stringRedisTemplate.opsForZSet().remove(CORE_REMINDER_SEND_QUEUE_KEY, key);
+                    redisUtil.removeFromZSet(CORE_REMINDER_SEND_QUEUE_KEY, key);
                     log.info("成功处理并移除延时消息: executionId={}", key);
                 })
                 .exceptionally(throwable -> {

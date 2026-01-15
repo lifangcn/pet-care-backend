@@ -96,6 +96,32 @@ core:
   service:
     url: ${CORE_SERVICE_URL:http://localhost:8080}
 
+# 暴露网关的 actuator 端点
+management:
+  server:
+    port: ${server.port}  # 与主应用同端口或独立端口
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    enable:
+      tomcat: true
+      jvm: true
+      hikaricp: true
+      executor: true
+
 # Knife4j 配置
 knife4j:
   enable: true

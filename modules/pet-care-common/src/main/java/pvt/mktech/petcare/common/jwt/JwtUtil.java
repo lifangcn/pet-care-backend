@@ -24,7 +24,7 @@ public class JwtUtil {
     private Long refreshExpireTime;
 
     // 生成 Token
-    public String generateAccessToken(String username, Long userId) {
+    public String generateAccessToken(Long userId) {
         Date now = DateUtil.date();
         Date expiryDate = new Date(now.getTime() + (expireTime * 1000));
         return Jwts.builder()

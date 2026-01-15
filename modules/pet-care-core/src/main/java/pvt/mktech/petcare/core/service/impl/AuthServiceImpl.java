@@ -12,7 +12,7 @@ import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.jwt.JwtUtil;
-import pvt.mktech.petcare.common.redis.RedisCacheUtil;
+import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.core.dto.LoginInfoDto;
 import pvt.mktech.petcare.core.dto.request.LoginRequest;
 import pvt.mktech.petcare.core.entity.User;
@@ -37,7 +37,7 @@ import static pvt.mktech.petcare.core.entity.table.UserTableDef.USER;
 public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements AuthService {
 
     private final JwtUtil jwtUtil;
-    private final RedisCacheUtil redisCacheUtil;
+    private final RedisUtil redisUtil;
 
     @Override
     public Result<String> sendCode(String phone, HttpSession httpSession) {
@@ -48,7 +48,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         // 3.生成验证码
         String code = RandomUtil.randomNumbers(6);
         // 4.保存验证码到 redis
-        redisCacheUtil.set(LOGIN_CODE_KEY + phone, code, Duration.ofSeconds(LOGIN_CODE_TTL));
+        redisUtil.set(LOGIN_CODE_KEY + phone, code, Duration.ofSeconds(LOGIN_CODE_TTL));
         log.info("向手机发送验证码: {}", code);
         return Result.success("发送短信验证码成功");
     }
@@ -62,7 +62,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         if (ValidatorUtil.isPhoneInvalid(phone)) {
             throw new BusinessException(ErrorCode.PHONE_FORMAT_ERROR);
         }
-        String cacheCode = redisCacheUtil.get(LOGIN_CODE_KEY + phone);
+        String cacheCode = redisUtil.get(LOGIN_CODE_KEY + phone);
         // TODO cacheCode为空，可能验证码过期；request.code为空，可能请求错误。这里简单判断
         if (!StrUtil.equals(code, cacheCode)) {
             throw new BusinessException(ErrorCode.VERIFICATION_CODE_ERROR);
@@ -82,7 +82,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         // 4.生成双token, 并保存 refreshToken 到 Redis中用于后续认证
         generateDoubleToken(loginInfoDto);
         // 将验证码移除
-        redisCacheUtil.delete(LOGIN_CODE_KEY + phone);
+        redisUtil.delete(LOGIN_CODE_KEY + phone);
         return Result.success(loginInfoDto);
     }
 
@@ -93,12 +93,12 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
      * @return 登录信息Dto
      */
     private void generateDoubleToken(LoginInfoDto loginInfoDto) {
-        String accessToken = jwtUtil.generateAccessToken(loginInfoDto.getUsername(), loginInfoDto.getId());
+        String accessToken = jwtUtil.generateAccessToken(loginInfoDto.getId());
         String refreshToken = jwtUtil.generateRefreshToken(loginInfoDto.getId());
         loginInfoDto.setAccessToken(accessToken);
         loginInfoDto.setRefreshToken(refreshToken);
         loginInfoDto.setExpiresIn(ACCESS_TOKEN_TTL);
-        redisCacheUtil.set(REFRESH_TOKEN_KEY + loginInfoDto.getId(), refreshToken, Duration.ofSeconds(REFRESH_TOKEN_TTL));
+        redisUtil.set(REFRESH_TOKEN_KEY + loginInfoDto.getId(), refreshToken, Duration.ofSeconds(REFRESH_TOKEN_TTL));
     }
 
     @Override
@@ -120,7 +120,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
             throw new BusinessException(ErrorCode.TOKEN_INVALID);
         }
         // 3. 验证Redis中的refresh token是否匹配
-        String storedToken = redisCacheUtil.get(REFRESH_TOKEN_KEY + userId);
+        String storedToken = redisUtil.get(REFRESH_TOKEN_KEY + userId);
         if (!refreshToken.equals(storedToken)) {
             throw new BusinessException(ErrorCode.TOKEN_INVALID);
         }
@@ -129,7 +129,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
-        String newAccessToken = jwtUtil.generateAccessToken(user.getUsername(), userId);
+        String newAccessToken = jwtUtil.generateAccessToken(userId);
         dto.setAccessToken(newAccessToken);
         dto.setExpiresIn(ACCESS_TOKEN_TTL);
         return dto;
@@ -143,7 +143,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         try {
             // 删除refresh token
             Long userId = jwtUtil.getUserIdFromToken(dto.getRefreshToken());
-            redisCacheUtil.delete(REFRESH_TOKEN_KEY + userId);
+            redisUtil.delete(REFRESH_TOKEN_KEY + userId);
         } catch (Exception e) {
             log.warn("登出时解析refresh token失败", e);
         }

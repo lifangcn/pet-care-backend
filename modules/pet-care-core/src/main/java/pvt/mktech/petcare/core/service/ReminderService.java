@@ -3,7 +3,6 @@ package pvt.mktech.petcare.core.service;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
 import pvt.mktech.petcare.core.dto.request.ReminderQueryRequest;
-import pvt.mktech.petcare.core.dto.request.ReminderSaveRequest;
 import pvt.mktech.petcare.core.entity.Reminder;
 
 import java.time.LocalDateTime;
@@ -20,10 +19,12 @@ public interface ReminderService extends IService<Reminder> {
     /**
      * 根据查询条件分页查询提醒事件表。
      *
-     * @param request 查询条件
+     * @param pageNumber 页码
+     * @param pageSize   页大小
+     * @param request    查询条件
      * @return 分页查询结果
      */
-    Page<Reminder> findPageByQueryRequest(ReminderQueryRequest request);
+    Page<Reminder> findPageByQueryRequest(Long pageNumber, Long pageSize, ReminderQueryRequest request);
 
     /**
      * 根据主键，更新提醒事件状态。

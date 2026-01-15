@@ -3,6 +3,7 @@ package pvt.mktech.petcare.core.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryChain;
+import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,14 +47,18 @@ public class ReminderExecutionServiceImpl extends ServiceImpl<ReminderExecutionM
 
     @Override
     public Boolean updateCompleteStatusById(Long id, CompleteReminderRequest request) {
-        return updateChain().set(REMINDER_EXECUTION.STATUS, "COMPLETED")
-                .set(REMINDER_EXECUTION.COMPLETION_NOTES, request.getCompletionNotes())
-                .set(REMINDER_EXECUTION.IS_READ, true)
-                .where(REMINDER_EXECUTION.ID.eq(id)).update();
+        UpdateChain<ReminderExecution> updateChain = updateChain()
+                .set(REMINDER_EXECUTION.STATUS, "COMPLETED")
+                .where(REMINDER_EXECUTION.ID.eq(id));
+        if (StrUtil.isNotBlank(request.getCompletionNotes())) {
+            updateChain.set(REMINDER_EXECUTION.COMPLETION_NOTES, request.getCompletionNotes());
+        }
+
+        return updateChain.update();
     }
 
     @Override
-    public Page<ReminderExecution> pageReminderExecution(ReminderQueryRequest request) {
+    public Page<ReminderExecution> pageReminderExecution(Long pageNumber, Long pageSize, ReminderQueryRequest request) {
         QueryChain<ReminderExecution> queryChain = queryChain().select(REMINDER_EXECUTION.ALL_COLUMNS);
 
         if (request.getUserId() != null) {
@@ -73,6 +78,6 @@ public class ReminderExecutionServiceImpl extends ServiceImpl<ReminderExecutionM
         }
 
         queryChain.orderBy(REMINDER_EXECUTION.NOTIFICATION_TIME.desc());
-        return page(new Page<>(request.getPageNumber(), request.getPageSize()), queryChain);
+        return page(new Page<>(pageNumber, pageSize), queryChain);
     }
 }

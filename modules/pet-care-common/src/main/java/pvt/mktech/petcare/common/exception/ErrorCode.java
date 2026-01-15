@@ -46,7 +46,9 @@ public enum ErrorCode {
     VERIFICATION_CODE_EXPIRED("10015", "验证码已过期"),
     UNAUTHORIZED("10016", "未授权访问"),
     FORBIDDEN("10017", "禁止访问"),
-    
+
+    USER_ALREADY_CHECKIN("10018", "用户已签到"),
+
     // ========== 宠物相关错误码 (20000-29999) ==========
     PET_NOT_FOUND("20001", "宠物不存在"),
     PET_DISABLED("20002", "宠物已被删除"),

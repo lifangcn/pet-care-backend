@@ -103,10 +103,10 @@ public class ReminderScanScheduler {
             String key = reminder.getId().toString();
             String value = JSONUtil.toJsonStr(messageDto);
             kafkaTemplate.send(CORE_REMINDER_DELAY_TOPIC_PENDING, key, value).get();
-            log.info("发送 提醒项 到延迟消费队列，topic: {}, key: {}, body: {}",
+            log.info("发送 提醒项 到延迟消费队列 成功，topic: {}, key: {}, body: {}",
                     CORE_REMINDER_DELAY_TOPIC_PENDING, key, messageDto);
         } catch (Exception e) {
-            log.error("发送 提醒项 到延迟消费队列，reminder.id: {}", reminder.getId(), e);
+            log.error("发送 提醒项 到延迟消费队列 失败，reminder.id: {}", reminder.getId(), e);
             throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);
         }
     }
