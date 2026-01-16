@@ -164,9 +164,10 @@ logging:
     org.springframework.kafka: WARN
     com.zaxxer.hikari: WARN
     com.xxl.job: WARN
+    org.redisson.command: DEBUG
 #    org.apache.dubbo: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
 #    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
-  file:
-    name: ./logs/pet-care-core.log
+#  file:
+#    name: ./logs/pet-care-core.log
