@@ -3,18 +3,24 @@ package pvt.mktech.petcare.core.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.qrcode.QrCodeUtil;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.common.dto.response.Result;
+
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.jwt.JwtUtil;
 import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.core.dto.LoginInfoDto;
 import pvt.mktech.petcare.core.dto.request.LoginRequest;
+import pvt.mktech.petcare.core.dto.response.WechatQRCodeResponse;
+import pvt.mktech.petcare.core.dto.response.WechatScanStatus;
 import pvt.mktech.petcare.core.entity.User;
 import pvt.mktech.petcare.core.mapper.UserMapper;
 import pvt.mktech.petcare.core.service.AuthService;
@@ -147,5 +153,60 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         } catch (Exception e) {
             log.warn("登出时解析refresh token失败", e);
         }
+    }
+
+    @Override
+    public Result<WechatQRCodeResponse> getWechatQRCode() {
+        String ticket = "平台审核太苛刻，我只能假装调用接口";
+        // TODO 后续替换为微信开放平台真实调用
+        //  暂时生成二维码Base64
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        QrCodeUtil.generate(ticket, 300, 300, "jpg", stream);
+        String base64 = Base64.getEncoder().encodeToString(stream.toByteArray());
+        String qrcodeUrl = "data:image/jpeg;base64," + base64;
+        redisUtil.set(WECHAT_LOGIN_TICKET_KEY + ticket, "WAITING", Duration.ofSeconds(WECHAT_LOGIN_TTL));
+        return Result.success(WechatQRCodeResponse.builder()
+                .qrcodeUrl(qrcodeUrl)
+                .ticket(ticket)
+                .expireTime(WECHAT_LOGIN_TTL)
+                .build());
+    }
+
+    @Override
+    public Result<WechatScanStatus> checkWechatScanStatus(String ticket) {
+        // TODO 后续替换为微信开放平台真实调用
+        String status = redisUtil.get(WECHAT_LOGIN_TICKET_KEY + ticket);
+        if (status == null) {
+            return Result.success(WechatScanStatus.builder()
+                    .status("EXPIRED")
+                    .build());
+        }
+        // 模拟状态：WAITING -> CONFIRMED（实际应接入微信回调更新状态）
+        if ("WAITING".equals(status)) {
+            // 模拟：首次查询后自动变为已确认状态（方便测试）
+            redisUtil.set(WECHAT_LOGIN_TICKET_KEY + ticket, "CONFIRMED", Duration.ofSeconds(WECHAT_LOGIN_TTL));
+            return Result.success(WechatScanStatus.builder()
+                    .status("WAITING")
+                    .build());
+        }
+        if ("CONFIRMED".equals(status)) {
+            // 模拟创建用户并返回登录信息
+            User user = new User();
+            user.setUsername("wechat_user_" + RandomUtil.randomString(6));
+            user.setNickname("WechatUser");
+            save(user);
+            LoginInfoDto loginInfoDto = new LoginInfoDto();
+            BeanUtil.copyProperties(user, loginInfoDto);
+            generateDoubleToken(loginInfoDto);
+            // 清除ticket
+            redisUtil.delete(WECHAT_LOGIN_TICKET_KEY + ticket);
+            return Result.success(WechatScanStatus.builder()
+                    .status("CONFIRMED")
+                    .loginInfo(loginInfoDto)
+                    .build());
+        }
+        return Result.success(WechatScanStatus.builder()
+                .status(status)
+                .build());
     }
 }

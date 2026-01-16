@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpSession;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.core.dto.LoginInfoDto;
 import pvt.mktech.petcare.core.dto.request.LoginRequest;
+import pvt.mktech.petcare.core.dto.response.WechatQRCodeResponse;
+import pvt.mktech.petcare.core.dto.response.WechatScanStatus;
 
 /**
  * {@code @description}: 鉴权接口
@@ -40,4 +42,17 @@ public interface AuthService {
      * 退出登录
      */
     void logout(LoginInfoDto dto);
+
+    /**
+     * 获取微信登录二维码
+     * @return 二维码响应
+     */
+    Result<WechatQRCodeResponse> getWechatQRCode();
+
+    /**
+     * 检查微信扫码状态
+     * @param ticket 二维码票据
+     * @return 扫码状态响应
+     */
+    Result<WechatScanStatus> checkWechatScanStatus(String ticket);
 }

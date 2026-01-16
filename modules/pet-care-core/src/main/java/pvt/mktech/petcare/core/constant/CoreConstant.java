@@ -17,6 +17,10 @@ public class CoreConstant {
     public static final String REFRESH_TOKEN_KEY = "core:auth:refresh_token:";
     public static final Long REFRESH_TOKEN_TTL = 604800L;
 
+    // 微信登录
+    public static final String WECHAT_LOGIN_TICKET_KEY = "core:auth:wechat:ticket:";
+    public static final Long WECHAT_LOGIN_TTL = 300L;
+
     // 消息队列相关(组装消息体逻辑：Topic: core-reminder-delay, Tag: pending|send, Key: executionId, Body: ExecutionDto)
     public static final String CORE_REMINDER_DELAY_TOPIC_PENDING = "CORE_REMINDER_PENDING";
     public static final String CORE_REMINDER_DELAY_TOPIC_SEND = "CORE_REMINDER_SEND";

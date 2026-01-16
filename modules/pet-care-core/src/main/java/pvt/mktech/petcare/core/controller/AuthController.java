@@ -10,8 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.core.dto.LoginInfoDto;
-import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.core.dto.request.LoginRequest;
+import pvt.mktech.petcare.core.dto.response.WechatQRCodeResponse;
+import pvt.mktech.petcare.core.dto.response.WechatScanStatus;
 import pvt.mktech.petcare.core.handler.ReminderWebSocketHandler;
 import pvt.mktech.petcare.core.service.AuthService;
 
@@ -66,16 +67,23 @@ public class AuthController {
         return Result.success("登出成功");
     }
 
-    @PostMapping("/wstest")
-    public Result<Void> wstest() {
-        ReminderExecutionMessageDto messageDto = new ReminderExecutionMessageDto();
-        messageDto.setTitle("测试");
-        messageDto.setDescription("测试");
-        try {
-            reminderWebSocketHandler.sendReminderToUser(1L, messageDto);
-        } catch (Exception e) {
-            System.out.println(e.getLocalizedMessage());
-        }
-        return Result.success();
+    @PostMapping("/wechat/qrcode")
+    @Operation(
+            summary = "获取微信登录二维码",
+            description = "生成微信登录二维码，前端轮询/checkWechatScanStatus检查扫码状态"
+    )
+    public Result<WechatQRCodeResponse> getWechatQRCode() {
+        return authService.getWechatQRCode();
+    }
+
+    @GetMapping("/wechat/scan-status")
+    @Operation(
+            summary = "检查微信扫码状态",
+            description = "轮询接口，返回扫码状态：WAITING-等待扫码，SCANNED-已扫码待确认，CONFIRMED-已确认登录"
+    )
+    public Result<WechatScanStatus> checkWechatScanStatus(
+            @Parameter(description = "二维码ticket", required = true)
+            @RequestParam("ticket") String ticket) {
+        return authService.checkWechatScanStatus(ticket);
     }
 }

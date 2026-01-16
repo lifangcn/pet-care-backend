@@ -2,5 +2,6 @@
 <project version="4">
   <component name="DataSourcePerFileMappings">
     <file url="file://$PROJECT_DIR$/modules/pet-care-common/src/main/java/pvt/mktech/petcare/common/redis/RedisUtil.java" value="90109a5f-293f-49b5-acdf-2b68030cf7eb" />
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/be14d5c0-7cb9-46e5-b12a-a4b44e48a6a0/console.sql" value="be14d5c0-7cb9-46e5-b12a-a4b44e48a6a0" />
   </component>
 </project>
