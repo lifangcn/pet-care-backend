@@ -44,6 +44,6 @@ public class MyLoggerAdvisor implements CallAdvisor, StreamAdvisor {
 
     @Override
     public int getOrder() {
-        return 0;
+        return -1;
     }
 }

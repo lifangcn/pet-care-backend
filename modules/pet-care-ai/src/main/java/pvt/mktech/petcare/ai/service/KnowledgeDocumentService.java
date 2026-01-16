@@ -16,7 +16,5 @@ public interface KnowledgeDocumentService extends IService<KnowledgeDocument> {
     KnowledgeDocumentResponse getDocument(Long id);
 
     void deleteDocument(Long id);
-
-    void processDocumentToVectorStore(Long documentId);
 }
 

@@ -1,15 +1,22 @@
 package pvt.mktech.petcare.ai.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.model.transformer.KeywordMetadataEnricher;
+import org.springframework.ai.reader.markdown.MarkdownDocumentReader;
+import org.springframework.ai.reader.markdown.config.MarkdownDocumentReaderConfig;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 //import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,15 +42,21 @@ import static pvt.mktech.petcare.ai.entity.table.KnowledgeDocumentTableDef.DOCUM
 public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentMapper, KnowledgeDocument> implements KnowledgeDocumentService {
 
     private final OssTemplate ossTemplate;
-    // Milvus 暂时禁用
-    // private final MilvusVectorStore milvusVectorStore;
+    private final VectorStore customPgVectorStore;
+    private final ChatModel dashscopeChatModel;
 
     @Override
     @Transactional()
     public KnowledgeDocumentResponse uploadDocument(MultipartFile file) {
-        String fileUrl = ossTemplate.uploadDocument(file);
+
+        // 暂时仅支持 MD格式文件
         String fileName = file.getOriginalFilename();
         String fileType = getFileExtension(fileName);
+        if (!fileType.equals("md")) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "文件格式错误，请上传Markdown格式文件");
+        }
+
+        String fileUrl = ossTemplate.uploadDocument(file);
 
         KnowledgeDocument document = new KnowledgeDocument();
         document.setName(fileName);
@@ -52,11 +65,10 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         document.setFileSize(file.getSize());
         document.setVersion(1);
         document.setStatus(1);
-
+        // 加入
+        Integer chunkCount = processDocumentToVectorStore(file);
+        document.setChunkCount(chunkCount);
         save(document);
-
-//        processDocumentToVectorStore(document.getId());
-
         return convertToResponse(document);
     }
 
@@ -97,58 +109,62 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
             log.warn("删除MinIO文件失败: {}", document.getFileUrl(), e);
         }
 
-        deleteDocumentFromVectorStore(document.getId());
+//        deleteDocumentFromVectorStore(document.getId());
 
         log.info("文档已删除: id={}, name={}", id, document.getName());
     }
 
-    @Override
-    public void processDocumentToVectorStore(Long documentId) {
-        KnowledgeDocument document = getOne(DOCUMENT.ID.eq(documentId));
-        if (document == null) {
-            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "文档不存在");
-        }
+    /**
+     *
+     * @param file
+     * @return
+     */
+    public Integer processDocumentToVectorStore(MultipartFile file) {
 
-        try {
-            InputStream inputStream = ossTemplate.getInputStreamByUrl(document.getFileUrl());
+        try (InputStream inputStream = file.getInputStream()) {
+            // 1.提取文件名 - .md 之间的尾缀
+            String fileName = StrUtil.isBlank(file.getOriginalFilename()) ?
+                    "unknown_file" : file.getOriginalFilename();
+            String tag = StrUtil.subBetween(fileName, "-", ".md");
+            log.info("fileName: {} tag: {}", fileName, tag);
 
-            TikaDocumentReader reader = new TikaDocumentReader(new InputStreamResource(inputStream));
+            // 2.读取 markdown 文件
+            MarkdownDocumentReaderConfig config = MarkdownDocumentReaderConfig.builder()
+                    .withHorizontalRuleCreateDocument(true)
+                    .withIncludeCodeBlock(false)
+                    .withIncludeBlockquote(false)
+                    .withAdditionalMetadata("filename", fileName)
+                    .withAdditionalMetadata("tag", tag)
+                    .build();
+            MarkdownDocumentReader reader = new MarkdownDocumentReader(
+                    new InputStreamResource(inputStream), config);
             List<Document> documents = reader.get();
 
-            TextSplitter textSplitter = new TokenTextSplitter();
-            List<Document> chunks = textSplitter.apply(documents);
+            // 3.文档拆分
+            TokenTextSplitter textSplitter = new TokenTextSplitter();
+            List<Document> splitDocuments = textSplitter.apply(documents);
+            // 百炼API单批次添加上限为10
+            int batchSize = 10;
+            for (int i = 0; i < splitDocuments.size(); i += batchSize) {
+                int endIndex = Math.min(i + batchSize, splitDocuments.size());
+                List<Document> batch = splitDocuments.subList(i, endIndex);
 
-            List<Document> documentsWithMetadata = chunks.stream()
-                    .filter(chunk -> chunk.getText() != null && !chunk.getText().isEmpty())
-                    .map(chunk -> {
-                        Document doc = new Document(
-                                chunk.getText(),
-                                chunk.getMetadata()
-                        );
-                        doc.getMetadata().put("documentId", documentId.toString());
-                        doc.getMetadata().put("documentName", document.getName());
-                        return doc;
-                    })
-                    .collect(Collectors.toList());
+                // 5.补充关键词元信息
+                KeywordMetadataEnricher keywordMetadataEnricher = new KeywordMetadataEnricher(dashscopeChatModel, 5);
+                List<Document> enrichedBatch = keywordMetadataEnricher.apply(batch);
 
-            // Milvus 暂时禁用
-            log.warn("Milvus 未启用，跳过向量存储");
-            /*if (milvusVectorStore != null) {
-                milvusVectorStore.add(documentsWithMetadata);
-            } else {
-                log.warn("Milvus 未启用，跳过向量存储");
-            }*/
+                // 6.添加到向量存储
+                customPgVectorStore.add(enrichedBatch);
+            }
 
-            document.setChunkCount(chunks.size());
-            updateById(document);
-
-            log.info("文档已处理: id={}, name={}, chunks={}",
-                    documentId, document.getName(), chunks.size());
+            return splitDocuments.size();
         } catch (Exception e) {
-            log.error("处理文档到向量数据库失败: id={}", documentId, e);
+            log.error("处理文档到向量数据库失败", e);
             throw new SystemException(ErrorCode.SYSTEM_ERROR, "文档处理失败", e);
         }
     }
+
+
 
     private void deleteDocumentFromVectorStore(Long documentId) {
         // Milvus 暂时禁用

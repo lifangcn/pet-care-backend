@@ -221,6 +221,14 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+            <!-- 冲突、漏洞 依赖约束-->
+            <dependency>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson</artifactId>
+                <version>3.42.0</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

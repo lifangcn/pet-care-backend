@@ -42,11 +42,11 @@ public class SpringChatConfig {
     private final ReminderTool reminderTool; // 本地 Tools
 
     @Bean
-    public ChatClient chatClient(DashScopeChatModel chatModel,
+    public ChatClient chatClient(DashScopeChatModel dashScopeChatModel,
                                  ChatMemory chatMemory/*,
                                  ToolCallbackProvider toolCallbackProvider*/) {
         ToolCallback[] localTools = ToolCallbacks.from(reminderTool); // 本地 Tools
-        return ChatClient.builder(chatModel)
+        return ChatClient.builder(dashScopeChatModel)
                 .defaultToolCallbacks(localTools)
 //                .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
                 .defaultSystem(loadSystemPrompt())

@@ -1,13 +1,16 @@
 package pvt.mktech.petcare.ai.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import pvt.mktech.petcare.ai.tool.QueryRewriter;
+import pvt.mktech.petcare.ai.advisor.MyLoggerAdvisor;
 import pvt.mktech.petcare.ai.util.ConversationIdGenerator;
 import pvt.mktech.petcare.common.constant.CommonConstant;
 import pvt.mktech.petcare.common.usercache.UserContext;
@@ -25,14 +28,14 @@ import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
  * @author Michael
  */
 @RestController
+@Slf4j
 @RequestMapping("/ai")
 @RequiredArgsConstructor
 public class ChatController {
 
     private final ChatClient chatClient;
     private final ConversationIdGenerator conversationIdGenerator;
-//    private final MilvusVectorStore milvusVectorStore;
-    private final QueryRewriter queryRewriter;
+    private final VectorStore customPgVectorStore;
 
     /**
      * RAG对话接口（基于向量数据库检索）
@@ -47,11 +50,11 @@ public class ChatController {
             @RequestParam(value = "sessionId", required = false) String sessionId) {
         Long userId = UserContext.getUserId();
         String conversationId = conversationIdGenerator.generate(userId, sessionId);
-//            String rewriteMessage = queryRewriter.doQueryRewrite(message); // 重写不一定是好事
 
         return chatClient.prompt()
+                .advisors(new MyLoggerAdvisor())
                 .advisors(advisorSpec -> advisorSpec.param(CONVERSATION_ID, conversationId))
-//                    .advisors(advisorSpec -> new QuestionAnswerAdvisor(milvusVectorStore))
+                .advisors(new QuestionAnswerAdvisor(customPgVectorStore))
                 .user("[用户ID:" + userId + "]\n[当前时间:" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "]\n" + message)
                 .stream()
                 .content();
