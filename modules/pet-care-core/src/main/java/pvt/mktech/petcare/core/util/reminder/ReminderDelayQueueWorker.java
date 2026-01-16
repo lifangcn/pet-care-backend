@@ -87,8 +87,9 @@ public class ReminderDelayQueueWorker {
         // 1. 可以根据ID从数据库再查询一次最新状态（二次校验的又一机会）
         ReminderExecution execution = reminderExecutionService.getById(reminderExecutionId);
         if (execution == null || !"pending".equals(execution.getStatus())) {
-            log.warn("执行记录 {} 状态不符，取消转发", execution);
-            return; // 返回true，让上游从Redis删除，因为业务上已无效
+            redisUtil.removeFromZSet(CORE_REMINDER_SEND_QUEUE_KEY, reminderExecutionId.toString());
+            log.warn("执行记录状态不是待发送，取消转发 {} ", execution);
+            return; // 返回，让上游从Redis删除，因为业务上已无效
         }
         // 2. 发送到Kafka，由下游的 NotificationService 消费并实际推送
         ReminderExecutionMessageDto messageDto = new ReminderExecutionMessageDto();

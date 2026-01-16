@@ -129,8 +129,18 @@ public class RedisUtil {
      * 获取 BitMap 位
      *
      * @param key    缓存键
-     * @return BitMap
+     * @param offset 位置
+     * @return 位值，key不存在返回false
+     */
+    public boolean getBit(String key, long offset) {
+        return redissonClient.getBitSet(key).get(offset);
+    }
+
+    /**
+     * 获取 BitMap 位
      *
+     * @param key    缓存键
+     * @return BitMap，key不存在返回null
      */
     public RBitSet getBitSet(String key) {
         return redissonClient.getBitSet(key);

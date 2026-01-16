@@ -8,6 +8,8 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBitSet;
+import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.ByteArrayCodec;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.common.exception.BusinessException;
@@ -41,6 +43,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private final OssTemplate ossTemplate;
     private final ThreadPoolExecutor coreThreadPool;
     private final RedisUtil redisUtil;
+    private final RedissonClient redissonClient;
 
     @Override
     public UserResponse getUserById(Long userId) {
@@ -123,15 +126,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Boolean checkin(Long userId) {
         String key = String.format("%s%d:%d%02d",
                 CORE_USER_CHECKIN_KEY, userId, DateUtil.thisYear(), DateUtil.thisMonth() + 1);
-        RBitSet bitSet = redisUtil.getBitSet(key);
-        // 今天是几号 -1 即为二进制的下标
         int offset = DateUtil.thisDayOfMonth() - 1;
         // 校验今天是否已经打卡
-        if (bitSet != null) {
-            boolean exists = bitSet.get(offset);
-            if (exists) {
-                throw new BusinessException(ErrorCode.USER_ALREADY_CHECKIN);
-            }
+        if (redisUtil.getBit(key, offset)) {
+            throw new BusinessException(ErrorCode.USER_ALREADY_CHECKIN);
         }
         // 1号对应索引下标0，2号对应索引下标1， 3号对应索引下标2，以此类推
         boolean flag = redisUtil.setBit(key, offset, true);
@@ -144,33 +142,42 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         CheckinStatsResponse checkinStatsResponse = new CheckinStatsResponse();
         String key = String.format("%s%d:%d%02d",
                 CORE_USER_CHECKIN_KEY, userId, year, month);
+
         RBitSet bitSet = redisUtil.getBitSet(key);
-        // 没有记录，返回空对象
-        if (bitSet == null || bitSet.length() == 0) {
+        if (!bitSet.isExists()) {
             return checkinStatsResponse;
         }
-        // 1.获取本月打卡次数
-        long bitCount = bitSet.cardinality();
-        checkinStatsResponse.setMonthCheckinCount((int) bitCount);
-        // 2.向前计算连续打卡时间和上次打卡时间
+
+        // 一次性获取所有位数据（使用GETRANGE命令获取整个BitMap）
+        byte[] data = redissonClient.<byte[]>getBucket(key, ByteArrayCodec.INSTANCE).get();
         int todayIndex = DateUtil.thisDayOfMonth() - 1;
+
+        // 1.获取本月打卡次数
+        int monthCheckinCount = 0;
+        for (int i = 0; i <= todayIndex; i++) {
+            if (getBitFromBytes(data, i)) {
+                monthCheckinCount++;
+            }
+        }
+        checkinStatsResponse.setMonthCheckinCount(monthCheckinCount);
+
+        // 2.向前计算连续打卡天数
         Integer continuousDays = 0;
         for (int i = todayIndex; i >= 0; i--) {
-            if (bitSet.get(i)) {
+            if (getBitFromBytes(data, i)) {
                 continuousDays++;
                 continue;
             }
-            // 如果今天没有打卡，继续循环不跳出
             if (i == todayIndex) {
                 continue;
             }
             break;
         }
         checkinStatsResponse.setContinuousDays(continuousDays);
+
         // 3.获取最后一次打卡时间
         for (int i = todayIndex; i >= 0; i--) {
-            if (bitSet.get(i)) {
-                // 本月没有打卡，则不做处理
+            if (getBitFromBytes(data, i)) {
                 checkinStatsResponse.setLastCheckinDate(String.format("%d-%02d-%02d", year, month, i + 1));
                 break;
             }
@@ -179,19 +186,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return checkinStatsResponse;
     }
 
-    private int calculateContinuousDays(RBitSet bitSet) {
-        int continuousDays = 0;
-        int todayIndex = DateUtil.thisDayOfMonth() - 1;
-
-        // 从今天往前计算连续打卡天数
-        for (int i = todayIndex; i >= 0; i--) {
-            if (bitSet.get(i)) {
-                continuousDays++;
-            } else {
-                break;
-            }
+    /**
+     * 从字节数组中获取指定位的值
+     */
+    private boolean getBitFromBytes(byte[] data, int bitIndex) {
+        if (data == null || bitIndex < 0 || bitIndex >>> 3 >= data.length) {
+            return false;
         }
-        return continuousDays;
+        return ((data[bitIndex >>> 3] >>> bitIndex & 7) & 1) == 1;
     }
 
     private UserResponse convertToResponse(User user) {
