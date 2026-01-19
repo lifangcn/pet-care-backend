@@ -17,7 +17,7 @@ public class KnowledgeDocumentTableDef extends TableDef {
     public final QueryColumn UPDATED_AT = new QueryColumn(this, "updated_at");
     public final QueryColumn CHUNK_COUNT = new QueryColumn(this, "chunk_count");
     public final QueryColumn ALL_COLUMNS = new QueryColumn(this, "*");
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, NAME, FILE_URL, FILE_TYPE, FILE_SIZE, VERSION, STATUS, CHUNK_COUNT, CREATED_AT, UPDATED_AT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, NAME, FILE_URL, FILE_TYPE, FILE_SIZE, VERSION, STATUS, CHUNK_COUNT};
 
     public KnowledgeDocumentTableDef() {
         super("", "tb_knowledge_document");

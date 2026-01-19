@@ -16,6 +16,7 @@
         <module>modules/pet-care-mcp</module>
         <!-- mybatis-flex代码生成 -->
         <module>codegen</module>
+        <module>modules/pet-care-club</module>
     </modules>
 
 

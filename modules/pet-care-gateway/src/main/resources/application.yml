@@ -72,6 +72,14 @@ spring:
             - StripPrefix=1
             - name: JwtAuth
           order: 0
+        - id: club-route
+          uri: ${AI_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/activity/**, /api/post/**, /api/tag/**,
+          filters:
+            - StripPrefix=1
+            - name: JwtAuth
+          order: 0
 # JWT配置
 jwt:
   enabled: true
