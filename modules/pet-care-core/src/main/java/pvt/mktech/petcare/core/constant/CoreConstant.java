@@ -33,6 +33,8 @@ public class CoreConstant {
     public static final String CORE_USER_CHECKIN_KEY = "core:user:checkin:";
     // 提醒扫描锁KEY
     public static final String REMINDER_SCAN_LOCK_KEY = "reminder:scan:lock";
+    // 延迟队列扫描锁KEY
+    public static final String DELAY_QUEUE_SCAN_LOCK_KEY = "reminder:delay_queue:scan:lock";
 
 
 }

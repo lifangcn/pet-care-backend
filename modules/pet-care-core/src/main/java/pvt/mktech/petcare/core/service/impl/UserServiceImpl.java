@@ -41,7 +41,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private final UserMapper userMapper;
     private final OssTemplate ossTemplate;
-    private final ThreadPoolExecutor coreThreadPool;
+    private final ThreadPoolExecutor coreThreadPoolExecutor;
     private final RedisUtil redisUtil;
     private final RedissonClient redissonClient;
 
@@ -86,7 +86,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 删除旧头像（如果存在）
         if (StrUtil.isNotBlank(user.getAvatar())) {
-            coreThreadPool.submit(() -> {
+            coreThreadPoolExecutor.submit(() -> {
                 try {
                     ossTemplate.deleteFile(user.getAvatar());
                 } catch (Exception e) {

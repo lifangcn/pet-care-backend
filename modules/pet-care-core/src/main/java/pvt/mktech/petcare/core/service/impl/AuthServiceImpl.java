@@ -56,7 +56,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         // 4.保存验证码到 redis
         redisUtil.set(LOGIN_CODE_KEY + phone, code, Duration.ofSeconds(LOGIN_CODE_TTL));
         log.info("向手机发送验证码: {}", code);
-        return Result.success("发送短信验证码成功");
+        return Result.success(code);
     }
 
 

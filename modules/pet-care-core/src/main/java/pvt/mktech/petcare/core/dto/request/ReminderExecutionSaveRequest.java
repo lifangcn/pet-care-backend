@@ -5,11 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Schema(description = "提醒状态修改请求，标记完成、已读")
+@Schema(description = "提醒执行项保存请求")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CompleteReminderRequest {
+public class ReminderExecutionSaveRequest {
 
     @Schema(description = "完成备注")
     private String completionNotes;

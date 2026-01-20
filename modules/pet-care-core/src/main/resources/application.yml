@@ -67,11 +67,6 @@ aliyun:
 kafka:
   bootstrap-servers: localhost:9092
 
-# WebSocket 配置：Netty
-netty:
-  websocket:
-    port: 8081
-
 scheduler:
   enabled: true
   reminder-scan:
@@ -81,6 +76,8 @@ scheduler:
     lock-lease-time: 30
   delay-queue-scan:
     cron: 0/1 * * * * ?
+    lock-wait-time: 1
+    lock-lease-time: 10
 
 # 分布式定时任务 配置：XXL-JOB 配置 (调度中心在Docker中，执行器在宿主机运行)
 #xxl:

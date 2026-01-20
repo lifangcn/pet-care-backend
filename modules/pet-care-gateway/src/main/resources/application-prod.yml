@@ -40,20 +40,15 @@ spring:
             allowCredentials: true
             maxAge: 3600
       routes:
-        - id: auth-default-route
+        # 认证路由
+        - id: auth-route
           uri: ${CORE_SERVICE_URL:http://localhost:8080}
           predicates:
             - Path=/api/auth/**
           filters:
             - StripPrefix=1
-          order: 0
-        - id: ws-route
-          uri: ${WS_SERVICE_URL:http://localhost:8081}
-          predicates:
-            - Path=/ws/**
-          filters:
-            - name: JwtAuth
-          order: 0
+          order: 10
+        # 核心服务 路由
         - id: core-route
           uri: ${CORE_SERVICE_URL:http://localhost:8080}
           predicates:
@@ -61,24 +56,45 @@ spring:
           filters:
             - StripPrefix=1
             - name: JwtAuth
-          order: 0
+          order: 10
+        # 核心服务 SSE 路由
+        - id: core-sse-route
+          uri: ${CORE_SERVICE_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/reminder/sse/notifications
+          filters:
+            - StripPrefix=1
+            - name: JwtAuth
+            - name: Sse
+          order: 1
+        # AI服务 路由
+        - id: ai-route
+          uri: ${AI_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/ai/document/**
+          filters:
+            - StripPrefix=1
+            - name: JwtAuth
+          order: 10
+        # AI服务 SSE 路由
         - id: ai-sse-route
-          uri: ${AI_SSE_SERVICE_URL:http://localhost:8082}
+          uri: ${AI_SERVICE_URL:http://localhost:8081}
           predicates:
             - Path=/api/ai/chat/**
           filters:
             - StripPrefix=1
             - name: JwtAuth
             - name: Sse
-          order: 0
-        - id: ai-route
-          uri: ${AI_SERVICE_URL:http://localhost:8082}
+          order: 1
+        # 俱乐部服务 路由
+        - id: club-route
+          uri: ${CLUB_SERVICE_URL:http://localhost:8082}
           predicates:
-            - Path=/api/ai/document/**
+            - Path=/api/activity/**, /api/post/**, /api/tag/**,
           filters:
             - StripPrefix=1
             - name: JwtAuth
-          order: 0
+          order: 10
 
 # JWT配置
 jwt:
@@ -99,7 +115,6 @@ logging:
   level:
     pvt.mktech.petcare.gateway: INFO
     org.springframework.cloud.gateway: INFO
-    reactor.netty.http.client: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"

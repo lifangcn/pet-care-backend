@@ -64,7 +64,7 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
             String token = request.getHeaders().getFirst(TOKEN_HEADER);
             if (token != null && token.startsWith(TOKEN_PREFIX)) {
                 token = token.substring(TOKEN_PREFIX.length());
-            } else if (request.getURI().getPath().startsWith("/ws")) {
+            } else if (request.getURI().getPath().endsWith("sse-connect")) {
                 // 从 URL 查询参数获取 token（WebSocket 不支持自定义 Header）
                 String query = request.getURI().getQuery();
                 if (query != null) {
