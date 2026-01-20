@@ -2,23 +2,37 @@ package pvt.mktech.petcare.core.config;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
-import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pvt.mktech.petcare.common.thread.ThreadPoolManager;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 public class CoreThreadPoolConfig {
 
-    @Bean(name = "coreThreadPool")
-    public ThreadPoolExecutor customThreadPool(MeterRegistry meterRegistry) {
-        ThreadPoolExecutor theadPool = ThreadPoolManager.createTheadPool("core-service");
-        ExecutorServiceMetrics.monitor(meterRegistry, theadPool, "core-service");
+    @Bean
+    public ThreadPoolExecutor coreThreadPoolExecutor(MeterRegistry meterRegistry) {
+        ThreadPoolExecutor threadPoolExecutor = ThreadPoolManager.createThreadPool("core-service");
+        ExecutorServiceMetrics.monitor(meterRegistry, threadPoolExecutor, "core-service");
         // 预热线程
-        theadPool.prestartAllCoreThreads();
-        return theadPool;
+        threadPoolExecutor.prestartAllCoreThreads();
+        return threadPoolExecutor;
+    }
+
+    @Bean
+    public ScheduledThreadPoolExecutor coreScheduledThreadPoolExecutor(MeterRegistry meterRegistry) {
+        ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = ThreadPoolManager.createScheduledThreadPool("core-scheduled");
+        ExecutorServiceMetrics.monitor(meterRegistry, scheduledThreadPoolExecutor, "core-scheduled");
+        return scheduledThreadPoolExecutor;
+    }
+
+    @Bean
+    public ScheduledThreadPoolExecutor sseHeartbeatThreadPoolExecutor(MeterRegistry meterRegistry) {
+        ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = ThreadPoolManager.createScheduledThreadPool("core-sse-heartbeat");
+        ExecutorServiceMetrics.monitor(meterRegistry, scheduledThreadPoolExecutor, "core-sse-heartbeat");
+        return scheduledThreadPoolExecutor;
     }
 
     // 监控指标注入

@@ -15,7 +15,7 @@ public class UserServiceApplicationTest {
     @Resource
     private DistributedIdGenerator distributedIdGenerator;
     @Resource
-    private ThreadPoolExecutor coreThreadPool;
+    private ThreadPoolExecutor coreThreadPoolExecutor;
 
     //    @Test
     void testGenerateIdConcurrency() throws InterruptedException {

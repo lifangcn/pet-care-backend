@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.redisson.client.protocol.ScoredEntry;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
 import pvt.mktech.petcare.common.redis.RedisUtil;
+import pvt.mktech.petcare.common.redis.RedissonLockUtil;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.core.entity.ReminderExecution;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
@@ -23,9 +25,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
-import static pvt.mktech.petcare.core.constant.CoreConstant.CORE_REMINDER_DELAY_TOPIC_SEND;
-import static pvt.mktech.petcare.core.constant.CoreConstant.CORE_REMINDER_SEND_QUEUE_KEY;
+import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 
 /**
  * {@code @description}: ReminderDelayQueueWorker：定时扫描，将已到期的 execution 发送到 send topic
@@ -41,39 +43,53 @@ public class ReminderDelayQueueWorker {
     private final RedisUtil redisUtil;
     private final ReminderExecutionService reminderExecutionService;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final RedissonLockUtil redissonLockUtil;
+
+    @Value("${scheduler.delay-queue-scan.lock-wait-time:1}")
+    private Long lockWaitTime;
+    @Value("${scheduler.delay-queue-scan.lock-lease-time:10}")
+    private Long lockLeaseTime;
 
     /**
-     * 扫描延迟队列并处理到期消息，
-     * TODO: 后续可优化扫描频率和批量处理
-     * TODO： 潜在的并发问题 1.Redis ZSet 操作并发：多个实例同时扫描和删除 ZSet 中的消息可能导致数据不一致 2.消息重复消费：在分布式环境下，多个消费者实例可能同时处理相同的消息
+     * 扫描延迟队列并处理到期消息，使用分布式锁避免多实例重复处理
      */
-    @Scheduled(cron = "${scheduler.delay-queue-scan.cron:0/1 * * * * ?}")  // 默认每1分钟执行一次
+    @Scheduled(cron = "${scheduler.delay-queue-scan.cron:0/1 * * * * ?}")
     public void delayQueueScanJob() {
-        Collection<ScoredEntry<Object>> expiredMessages = redisUtil.rangeByScoreWithScores(
-                CORE_REMINDER_SEND_QUEUE_KEY, 0, System.currentTimeMillis());
-        if (CollUtil.isEmpty(expiredMessages)) {
-            return;
-        }
-
-        log.info("处理 Redis 延迟提醒消息：{} 条", expiredMessages.size());
-
-        for (ScoredEntry<Object> tuple : expiredMessages) {
-            String executionId = tuple.getValue().toString();
-            Double scheduleTime = tuple.getScore();
-            if (executionId == null || scheduleTime == null) {
-                log.error("延迟消息格式错误，executionId={}, scheduleTime={}", executionId, scheduleTime);
-                continue;
+        boolean locked = false;
+        try {
+            locked = redissonLockUtil.tryLock(DELAY_QUEUE_SCAN_LOCK_KEY,
+                    lockWaitTime, lockLeaseTime, TimeUnit.SECONDS);
+            if (!locked) {
+                return;
             }
-            try {
-                log.info("处理到期消息: executionId={}, 计划发送时间={}",
-                        executionId, LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduleTime.longValue()),
-                                ZoneId.of("Asia/Shanghai")));
+            Collection<ScoredEntry<Object>> expiredMessages = redisUtil.rangeByScoreWithScores(
+                    CORE_REMINDER_SEND_QUEUE_KEY, 0, System.currentTimeMillis());
+            if (CollUtil.isEmpty(expiredMessages)) {
+                return;
+            }
 
-                // 3. 核心：取出消息后，将其转发到真正的发送队列（Kafka主题）
-                this.forwardToSendQueue(Long.parseLong(executionId));
-            } catch (Exception e) {
-                log.error("处理延时消息异常，executionId: {}", executionId, e);
-                // 异常处理：可加入重试机制或告警
+            log.info("处理 Redis 延迟提醒消息：{} 条", expiredMessages.size());
+
+            for (ScoredEntry<Object> tuple : expiredMessages) {
+                String executionId = tuple.getValue().toString();
+                Double scheduleTime = tuple.getScore();
+                if (executionId == null || scheduleTime == null) {
+                    log.error("延迟消息格式错误，executionId={}, scheduleTime={}", executionId, scheduleTime);
+                    continue;
+                }
+                try {
+                    log.info("处理到期消息: executionId={}, 计划发送时间={}",
+                            executionId, LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduleTime.longValue()),
+                                    ZoneId.of("Asia/Shanghai")));
+
+                    this.forwardToSendQueue(Long.parseLong(executionId));
+                } catch (Exception e) {
+                    log.error("处理延时消息异常，executionId: {}", executionId, e);
+                }
+            }
+        } finally {
+            if (locked) {
+                redissonLockUtil.unlock(DELAY_QUEUE_SCAN_LOCK_KEY);
             }
         }
     }

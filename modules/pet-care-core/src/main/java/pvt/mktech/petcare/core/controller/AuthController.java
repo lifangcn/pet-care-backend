@@ -13,7 +13,6 @@ import pvt.mktech.petcare.core.dto.LoginInfoDto;
 import pvt.mktech.petcare.core.dto.request.LoginRequest;
 import pvt.mktech.petcare.core.dto.response.WechatQRCodeResponse;
 import pvt.mktech.petcare.core.dto.response.WechatScanStatus;
-import pvt.mktech.petcare.core.handler.ReminderWebSocketHandler;
 import pvt.mktech.petcare.core.service.AuthService;
 
 @RestController
@@ -23,7 +22,6 @@ import pvt.mktech.petcare.core.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
-    private final ReminderWebSocketHandler reminderWebSocketHandler;
 
     @PostMapping("/code")
     @Operation(

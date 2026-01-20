@@ -49,11 +49,6 @@ aliyun:
 kafka:
   bootstrap-servers: localhost:9092
 
-# WebSocket 配置：Netty
-netty:
-  websocket:
-    port: 8081
-
 scheduler:
   enabled: true
   reminder-scan:

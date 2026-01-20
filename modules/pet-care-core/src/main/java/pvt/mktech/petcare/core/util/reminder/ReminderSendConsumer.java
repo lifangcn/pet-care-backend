@@ -9,10 +9,9 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.core.dto.message.ReminderExecutionMessageDto;
-import pvt.mktech.petcare.core.handler.ReminderWebSocketHandler;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
+import pvt.mktech.petcare.core.util.SseConnectionManager;
 
 import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 
@@ -26,14 +25,13 @@ import static pvt.mktech.petcare.core.constant.CoreConstant.*;
 public class ReminderSendConsumer {
 
     private final ReminderExecutionService reminderExecutionService;
-    private final ReminderWebSocketHandler reminderWebSocketHandler;
+    private final SseConnectionManager sseConnectionManager;
 
     @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_SEND, groupId = CORE_REMINDER_SEND_CONSUMER,
             containerFactory = "kafkaListenerContainerFactory")
     public void consume(@Payload String message, @Header(KafkaHeaders.RECEIVED_KEY) String key, Acknowledgment acknowledgment) {
         try {
-            ReminderExecutionMessageDto messageDto = JSONUtil.toBean(message, ReminderExecutionMessageDto.class);
-            processMessage(messageDto);
+            processMessage(message);
             acknowledgment.acknowledge();
         } catch (Exception e) {
             log.error("消费消息失败，key: {}", key, e);
@@ -41,16 +39,20 @@ public class ReminderSendConsumer {
         }
     }
 
-    private void processMessage(ReminderExecutionMessageDto messageDto) {
+    private void processMessage(String jsonString) {
+        ReminderExecutionMessageDto messageDto = JSONUtil.toBean(jsonString, ReminderExecutionMessageDto.class);
+
         Long executionId = messageDto.getId();
         log.info("收到待发送提醒消息，执行ID: {}", executionId);
 
         try {
             // 4. 调用推送服务（APP推送、短信等）
-            log.info("开始推送提醒，执行ID: {}", executionId);
-            reminderWebSocketHandler.sendReminderToUser(messageDto.getUserId(), messageDto);
-            // 5.更新执行记录状态
+            log.info("开始推送提醒，消息内容: {}", jsonString);
+            // 5. 用页面实时提醒
+            sseConnectionManager.sendMessage(messageDto.getUserId(), jsonString);
+            // 6.更新执行记录状态
             boolean updatedResult = reminderExecutionService.updateSendStatusById(executionId);
+            // 7.将已经发送的消息存入 Redis，当查看消息时可以获取
             log.info("提醒执行 更新为已发送，执行ID: {}", executionId);
         } catch (Exception e) {
             log.error("推送处理发生异常，执行ID: {}", executionId, e);

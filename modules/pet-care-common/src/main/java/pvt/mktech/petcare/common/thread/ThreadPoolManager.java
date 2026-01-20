@@ -18,7 +18,7 @@ public class ThreadPoolManager {
      *
      * @return 线程池对象
      */
-    public static ThreadPoolExecutor createTheadPool(String BusinessPoolName) {
+    public static ThreadPoolExecutor createThreadPool(String BusinessPoolName) {
         // 必要参数：核心线程数，最大线程数，核心线程存活时间，单位
         int corePoolSize = Runtime.getRuntime().availableProcessors();
         int maxPoolSize = corePoolSize + 1;
@@ -39,11 +39,22 @@ public class ThreadPoolManager {
 
         // 任务队列
         BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<>(1024);
-        // 自定义线程工程
+        // 自定义线程工厂
         ThreadFactory customThreadFactory = new CustomThreadFactory(BusinessPoolName);
+        // 拒绝策略
         RejectedExecutionHandler handler = new CustomRejectionPolicy();
         log.info("创建线程池：{}，核心线程数：{}，最大线程数：{}", BusinessPoolName, corePoolSize, maxPoolSize);
-        // 拒绝策略
         return new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, timeUnit, workQueue, customThreadFactory, handler);
+    }
+
+    public static ScheduledThreadPoolExecutor createScheduledThreadPool(String BusinessPoolName) {
+        // 核心线程数
+        int corePoolSize = 2;
+        // 自定义线程工厂
+        ThreadFactory customThreadFactory = new CustomThreadFactory(BusinessPoolName);
+        RejectedExecutionHandler handler = new CustomRejectionPolicy();
+        log.info("创建定时任务线程池：{}，核心线程数：{}", BusinessPoolName, corePoolSize);
+        // 拒绝策略
+        return new ScheduledThreadPoolExecutor( corePoolSize, customThreadFactory, handler);
     }
 }

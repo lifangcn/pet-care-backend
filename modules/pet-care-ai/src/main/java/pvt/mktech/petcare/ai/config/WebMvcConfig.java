@@ -27,7 +27,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
-        ThreadPoolExecutor threadPoolExecutor = ThreadPoolManager.createTheadPool("mvc-async");
+        ThreadPoolExecutor threadPoolExecutor = ThreadPoolManager.createThreadPool("mvc-async");
         ExecutorServiceMetrics.monitor(meterRegistry, threadPoolExecutor, "mvc-async");
         // 预热线程
         threadPoolExecutor.prestartAllCoreThreads();

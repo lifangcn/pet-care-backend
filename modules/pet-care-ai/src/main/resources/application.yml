@@ -1,5 +1,5 @@
 server:
-  port: 8082
+  port: 8081
 
 spring:
   # MySQL 配置
@@ -32,7 +32,7 @@ spring:
     # 使用 PGVector，自定义配置PG数据源
     pgvector:
       datasource:
-        url: jdbc:postgresql://rm-cn-rno4m4ooy0001u1o.rwlb.rds.aliyuncs.com:5432/pet_care_ai_vector?sslmode=disable&timezone=Asia/Shanghai
+        url: jdbc:postgresql://localhost:5432/pet_care_ai_vector?sslmode=disable&timezone=Asia/Shanghai
         username: postgres_root
         password: "!QAZ2wsx"
         driver-class-name: org.postgresql.Driver

@@ -11,9 +11,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Configuration
 public class AiThreadPoolConfig {
 
-    @Bean(name = "aiThreadPool")
-    public ThreadPoolExecutor customThreadPool(MeterRegistry meterRegistry) {
-        ThreadPoolExecutor threadPoolExecutor = ThreadPoolManager.createTheadPool("ai-service");
+    @Bean
+    public ThreadPoolExecutor aiThreadPoolExecutor(MeterRegistry meterRegistry) {
+        ThreadPoolExecutor threadPoolExecutor = ThreadPoolManager.createThreadPool("ai-service");
         ExecutorServiceMetrics.monitor(meterRegistry, threadPoolExecutor, "ai-service");
         // 预热线程
         threadPoolExecutor.prestartAllCoreThreads();

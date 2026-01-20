@@ -2,18 +2,14 @@ package pvt.mktech.petcare.core.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
-import com.mybatisflex.core.query.QueryChain;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.update.UpdateChain;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import pvt.mktech.petcare.core.dto.request.CompleteReminderRequest;
 import pvt.mktech.petcare.core.dto.request.ReminderQueryRequest;
 import pvt.mktech.petcare.core.dto.response.ReminderExecutionResponse;
-import pvt.mktech.petcare.core.entity.Pet;
-import pvt.mktech.petcare.core.entity.Reminder;
 import pvt.mktech.petcare.core.entity.ReminderExecution;
 import pvt.mktech.petcare.core.mapper.ReminderExecutionMapper;
 import pvt.mktech.petcare.core.service.ReminderExecutionService;
@@ -52,36 +48,23 @@ public class ReminderExecutionServiceImpl extends ServiceImpl<ReminderExecutionM
     }
 
     @Override
-    public Boolean updateCompleteStatusById(Long id) {
+    public Boolean updateReadStatusByUserId(Long userId) {
+        return updateChain()
+                .set(REMINDER_EXECUTION.READ_AT, LocalDateTime.now())
+                .set(REMINDER_EXECUTION.IS_READ, true)
+                .where(REMINDER_EXECUTION.USER_ID.eq(userId)).update();
+    }
+
+    @Override
+    public Boolean updateCompleteStatusById(Long id, String completionNotes) {
         UpdateChain<ReminderExecution> updateChain = updateChain()
                 .set(REMINDER_EXECUTION.STATUS, "COMPLETED")
+                .set(REMINDER_EXECUTION.COMPLETION_NOTES, completionNotes)
                 .where(REMINDER_EXECUTION.ID.eq(id));
         return updateChain.update();
     }
 
-    @Override
-    public Page<ReminderExecution> pageReminderExecution(Long pageNumber, Long pageSize, ReminderQueryRequest request) {
-        QueryChain<ReminderExecution> queryChain = queryChain().select(REMINDER_EXECUTION.ALL_COLUMNS);
 
-        if (request.getUserId() != null) {
-            queryChain.where(REMINDER_EXECUTION.USER_ID.eq(request.getUserId()));
-        }
-        if (request.getPetId() != null) {
-            queryChain.and(REMINDER_EXECUTION.PET_ID.eq(request.getPetId()));
-        }
-        if (StrUtil.isNotEmpty(request.getStatus())) {
-            queryChain.and(REMINDER_EXECUTION.STATUS.eq(request.getStatus()));
-        }
-        if (request.getStartTime() != null) {
-            queryChain.and(REMINDER_EXECUTION.NOTIFICATION_TIME.ge(request.getStartTime()));
-        }
-        if (request.getEndTime() != null) {
-            queryChain.and(REMINDER_EXECUTION.NOTIFICATION_TIME.le(request.getEndTime()));
-        }
-
-        queryChain.orderBy(REMINDER_EXECUTION.NOTIFICATION_TIME.desc());
-        return page(new Page<>(pageNumber, pageSize), queryChain);
-    }
 
     @Override
     public Page<ReminderExecutionResponse> pageReminderExecutionResponse(Long pageNumber, Long pageSize, ReminderQueryRequest request) {
