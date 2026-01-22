@@ -3,7 +3,6 @@ application-local.yml
 application-prod.yml
 .lingma
 
-
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -12,10 +11,7 @@ target/
 logs/
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea
 *.iws
 *.iml
 *.ipr

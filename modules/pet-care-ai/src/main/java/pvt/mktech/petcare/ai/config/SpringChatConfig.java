@@ -12,7 +12,6 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -97,7 +96,7 @@ public class SpringChatConfig {
      */
     private String loadSystemPrompt() {
         try {
-            ClassPathResource resource = new ClassPathResource("system.txt");
+            ClassPathResource resource = new ClassPathResource("system.md");
             String prompt = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
             return prompt;
         } catch (Exception e) {
