@@ -8,18 +8,18 @@
 4. 持久层: MyBatis-Plus
 5. 数据库: MySQL（主库） + Redis（缓存）
 6. 消息队列: Kafka
-7. 安全: Spring Security + JWT
+7. 安全: JWT
 8. 文档: Knife4j
 9. 监控: Spring Boot Actuator, Micrometer, Prometheus, Grafana
 10. 日志: ELK Stack（Elasticsearch, Logstash, Kibana）
-11. AI：Spring AI + Spring AI Alibaba + Milvus
+11. AI：Spring AI + Spring AI Alibaba + PgVector
 
 ## Serverless environment
 1. Spring Boot: 微服务框架基础
 2. Spring Cloud: Gateway
-3. 持久层: MyBatis-Plus
+3. 持久层: MyBatis-Flex
 4. 数据库: MySQL（主库） + Redis（缓存）
 5. 消息队列: Kafka
 6. 安全: JWT
 7. 文档: Knife4j
-8. AI：Spring AI + Spring AI Alibaba.
+8. AI：Spring AI + Spring AI Alibaba + PgVector
