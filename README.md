@@ -1,25 +1,64 @@
-# 项目需求说明
+# Pet Care System
 
-# 技术架构
-## Development environment
-1. Spring Boot: 微服务框架基础
-2. Spring Cloud: Nacos + Gateway + Dubbo
-3. Nginx: 负载均衡
-4. 持久层: MyBatis-Plus
-5. 数据库: MySQL（主库） + Redis（缓存）
-6. 消息队列: Kafka
-7. 安全: JWT
-8. 文档: Knife4j
-9. 监控: Spring Boot Actuator, Micrometer, Prometheus, Grafana
-10. 日志: ELK Stack（Elasticsearch, Logstash, Kibana）
-11. AI：Spring AI + Spring AI Alibaba + PgVector
+基于 Spring Boot 的宠物关怀服务平台，提供宠物健康管理、提醒推送、社区互动等功能。
 
-## Serverless environment
-1. Spring Boot: 微服务框架基础
-2. Spring Cloud: Gateway
-3. 持久层: MyBatis-Flex
-4. 数据库: MySQL（主库） + Redis（缓存）
-5. 消息队列: Kafka
-6. 安全: JWT
-7. 文档: Knife4j
-8. AI：Spring AI + Spring AI Alibaba + PgVector
+## 技术栈
+
+| 组件 | 版本 |
+|------|------|
+| Java | 21 |
+| Spring Boot | 3.3.5 |
+| Spring Cloud Alibaba | 2023.0.1.2 |
+| MyBatis-Flex | 1.11.4 |
+| Redis (Redisson) | 3.27.0 |
+| Kafka | - |
+| MySQL | 9.1.0 |
+| Knife4j | 4.5.0 |
+
+## 快速启动
+
+### 1. 依赖服务
+- MySQL 8.0+
+- Redis 6.0+
+- Kafka 2.8+
+
+### 2. 数据库初始化
+```bash
+mysql -u root -p < scripts/db/init_all.sql
+mysql -u root -p < scripts/db/init_default_labels.sql
+```
+
+### 3. 配置环境变量
+```bash
+export JWT_SECRET_KEY=your-secret-key
+export OSS_ENDPOINT=your-oss-endpoint
+export OSS_ACCESS_KEY_ID=your-access-key-id
+export OSS_ACCESS_KEY_SECRET=your-access-key-secret
+export OSS_BUCKET_NAME=your-bucket-name
+```
+
+### 4. 修改配置
+编辑 `modules/pet-care-core/src/main/resources/application.yml`：
+- 数据库连接信息
+- Redis 连接信息
+- Kafka 连接信息
+
+### 5. 编译运行
+```bash
+mvn clean install
+cd modules/pet-care-core
+mvn spring-boot:run
+```
+
+### 6. 访问
+- 服务地址：http://localhost:8080
+- API 文档：http://localhost:8080/doc.html
+
+## 模块说明
+
+| 模块 | 说明 |
+|------|------|
+| pet-care-common | 公共组件 |
+| pet-care-core | 核心服务 |
+| pet-care-ai | AI 智能助手 |
+| pet-care-gateway | 网关服务 |
