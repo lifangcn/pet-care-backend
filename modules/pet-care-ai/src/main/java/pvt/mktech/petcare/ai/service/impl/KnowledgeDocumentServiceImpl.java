@@ -65,7 +65,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         document.setFileSize(file.getSize());
         document.setVersion(1);
         document.setStatus(1);
-        // 加入
+        // TODO 加入消息队列进行解耦，提高响应速度
         Integer chunkCount = processDocumentToVectorStore(file);
         document.setChunkCount(chunkCount);
         save(document);

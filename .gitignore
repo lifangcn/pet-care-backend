@@ -1,8 +1,8 @@
 ### CUSTOM ###
-application-local.yml
-application-prod.yml
-.lingma
+modules/pet-care-core/src/main/resources/application-prod.yml
+modules/pet-care-gateway/src/main/resources/application-prod.yml
 
+.lingma
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

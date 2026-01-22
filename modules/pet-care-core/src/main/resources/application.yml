@@ -93,8 +93,6 @@ scheduler:
 #      logpath: ./logs/xxl-job/  # 日志路径
 #      logretentiondays: 30  # 日志保留天数
 
-
-
 # JWT配置
 jwt:
   enabled: true
@@ -147,7 +145,7 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
     filter: true
-  packages-to-scan: pvt.mktech.petcare.core.controller
+  packages-to-scan: pvt.mktech.petcare.core.controller,pvt.mktech.petcare.club.controller
   cache:
     disabled: true
 
@@ -155,6 +153,7 @@ springdoc:
 logging:
   level:
     pvt.mktech.petcare.core: INFO
+    pvt.mktech.petcare.club: INFO
     com.mybatisflex: INFO
     com.alibaba.nacos: WARN
     org.apache.kafka: WARN

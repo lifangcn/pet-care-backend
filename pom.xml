@@ -9,12 +9,10 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>modules/pet-care-gateway</module>
         <module>modules/pet-care-common</module>
         <module>modules/pet-care-core</module>
         <module>modules/pet-care-ai</module>
-        <!-- mybatis-flex代码生成 -->
-        <module>modules/pet-care-club</module>
+        <module>modules/pet-care-gateway</module>
     </modules>
 
 

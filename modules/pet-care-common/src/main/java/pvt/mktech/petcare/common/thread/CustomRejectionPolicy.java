@@ -16,6 +16,11 @@ import java.util.concurrent.TimeUnit;
 public class CustomRejectionPolicy implements RejectedExecutionHandler {
     @Override
     public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+        // 线程池关闭时的拒绝是正常行为，不记录 ERROR
+        if (executor.isShutdown()) {
+            log.debug("线程池正在关闭，任务被忽略，线程池信息：{}", executor.toString());
+            return;
+        }
         log.error("任务被拒绝， 线程池信息：{}", executor.toString());
         try {
             boolean offered = executor.getQueue().offer(r, 60, TimeUnit.SECONDS);
@@ -26,6 +31,5 @@ public class CustomRejectionPolicy implements RejectedExecutionHandler {
             Thread.currentThread().interrupt();
             log.error("重新提交任务时被中断", e);
         }
-        // TODO 或者选择其他策略，如： 1. 保存到数据库稍后重试  2. 记录到死信队列 3. 根据业务需求选择抛异常或丢弃
     }
 }

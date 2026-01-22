@@ -40,12 +40,13 @@ spring:
             - Path=/api/auth/**
           filters:
             - StripPrefix=1
-          order: 10
+          order: 1
+
         # 核心服务 路由
         - id: core-route
           uri: ${CORE_SERVICE_URL:http://localhost:8080}
           predicates:
-            - Path=/api/user/**,/api/pet/**,/api/reminder/**
+            - Path=/api/user/**,/api/pet/**,/api/reminder/**, /api/activity/**, /api/post/**, /api/label/**
           filters:
             - StripPrefix=1
             - name: JwtAuth
@@ -60,6 +61,7 @@ spring:
             - name: JwtAuth
             - name: Sse
           order: 1
+
         # AI服务 路由
         - id: ai-route
           uri: ${AI_SERVICE_URL:http://localhost:8081}
@@ -79,15 +81,7 @@ spring:
             - name: JwtAuth
             - name: Sse
           order: 1
-        # 俱乐部服务 路由
-        - id: club-route
-          uri: ${CLUB_SERVICE_URL:http://localhost:8082}
-          predicates:
-            - Path=/api/activity/**, /api/post/**, /api/label/**,
-          filters:
-            - StripPrefix=1
-            - name: JwtAuth
-          order: 10
+
 # JWT配置
 jwt:
   enabled: true

@@ -29,7 +29,7 @@ public class KnowledgeDocument implements Serializable {
     private Long fileSize;
     @Schema(description = "版本号")
     private Integer version = 1;
-    @Schema(description = "状态")
+    @Schema(description = "状态：1-有效，0-禁用")
     private Integer status = 1;
     @Schema(description = "分块数量")
     private Integer chunkCount = 0;
@@ -39,5 +39,17 @@ public class KnowledgeDocument implements Serializable {
     @Schema(description = "更新时间")
     @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
+
+    /**
+     * 逻辑删除：0-正常，1-已删除
+     */
+    @Column(value = "is_deleted", onInsertValue = "0")
+    private Integer isDeleted;
+
+    /**
+     * 删除时间
+     */
+    @Column(value = "deleted_at")
+    private LocalDateTime deletedAt;
 }
 
