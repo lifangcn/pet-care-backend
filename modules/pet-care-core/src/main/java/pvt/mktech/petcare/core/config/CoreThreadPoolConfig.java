@@ -25,6 +25,12 @@ public class CoreThreadPoolConfig {
     public ScheduledThreadPoolExecutor coreScheduledThreadPoolExecutor(MeterRegistry meterRegistry) {
         ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = ThreadPoolManager.createScheduledThreadPool("core-scheduled");
         ExecutorServiceMetrics.monitor(meterRegistry, scheduledThreadPoolExecutor, "core-scheduled");
+        // 关闭后继续执行已存在的延迟任务
+        scheduledThreadPoolExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(true);
+        // 关闭后继续执行已存在的周期性任务
+        scheduledThreadPoolExecutor.setContinueExistingPeriodicTasksAfterShutdownPolicy(true);
+        // 取消任务时从队列中移除
+        scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
         return scheduledThreadPoolExecutor;
     }
 
@@ -32,6 +38,8 @@ public class CoreThreadPoolConfig {
     public ScheduledThreadPoolExecutor sseHeartbeatThreadPoolExecutor(MeterRegistry meterRegistry) {
         ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = ThreadPoolManager.createScheduledThreadPool("core-sse-heartbeat");
         ExecutorServiceMetrics.monitor(meterRegistry, scheduledThreadPoolExecutor, "core-sse-heartbeat");
+        // 取消任务时从队列中移除
+        scheduledThreadPoolExecutor.setRemoveOnCancelPolicy(true);
         return scheduledThreadPoolExecutor;
     }
 

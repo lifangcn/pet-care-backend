@@ -5,6 +5,8 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.club.handler.LocationInfoTypeHandler;
+import pvt.mktech.petcare.club.handler.MediaUrlListTypeHandler;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -44,14 +46,14 @@ public class Post implements Serializable {
     private String content;
 
     /**
-     * 1-好物分享 2-服务推荐 3-地点推荐 4-日常分享 5-活动打卡
+     * 1-好物分享 2-服务推荐 3-地点推荐 4-日常分享 5-活动打卡 6-活动报名
      */
     private Integer postType;
 
     /**
      * 图片/视频URL数组
      */
-    @Column(typeHandler = pvt.mktech.petcare.club.handler.MediaUrlListTypeHandler.class)
+    @Column(typeHandler = MediaUrlListTypeHandler.class)
     private List<MediaUrl> mediaUrls;
 
     /**
@@ -62,7 +64,7 @@ public class Post implements Serializable {
     /**
      * 地点信息
      */
-    @Column(typeHandler = pvt.mktech.petcare.club.handler.LocationInfoTypeHandler.class)
+    @Column(typeHandler = LocationInfoTypeHandler.class)
     private LocationInfo locationInfo;
 
     /**
@@ -104,11 +106,6 @@ public class Post implements Serializable {
      * 关联的活动ID
      */
     private Long activityId;
-
-    /**
-     * 是否为活动打卡 0-否 1-是
-     */
-    private Integer isCheckin;
 
     /**
      * 创建时间

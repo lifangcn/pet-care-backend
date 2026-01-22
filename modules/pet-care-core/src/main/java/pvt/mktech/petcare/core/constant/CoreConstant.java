@@ -30,7 +30,7 @@ public class CoreConstant {
     // Redis 对于延迟消费的信息，进行缓存
     public static final String CORE_REMINDER_SEND_QUEUE_KEY = "core:reminder:send_queue";
     // 用户签到
-    public static final String CORE_USER_CHECKIN_KEY = "core:user:checkin:";
+    public static final String CORE_USER_CHECK_IN_KEY = "core:user:check_in:";
     // 提醒扫描锁KEY
     public static final String REMINDER_SCAN_LOCK_KEY = "reminder:scan:lock";
     // 延迟队列扫描锁KEY

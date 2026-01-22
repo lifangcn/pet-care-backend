@@ -6,8 +6,6 @@ import pvt.mktech.petcare.club.dto.request.ActivityQueryRequest;
 import pvt.mktech.petcare.club.entity.Activity;
 import pvt.mktech.petcare.club.entity.Post;
 
-import java.util.List;
-
 /**
  * 活动表 服务层。
  */
@@ -21,7 +19,7 @@ public interface ActivityService extends IService<Activity> {
     /**
      * 活动列表
      */
-    Page<Activity> getActivityList(ActivityQueryRequest request);
+    Page<Activity> getActivityList(Long pageNumber, Long pageSize, ActivityQueryRequest request);
 
     /**
      * 活动详情
@@ -31,15 +29,11 @@ public interface ActivityService extends IService<Activity> {
     /**
      * 报名活动
      */
-    boolean joinActivity(Long userId, Long activityId);
+    Boolean joinActivity(Long userId, Long activityId);
 
     /**
      * 活动打卡
      */
-    Post checkinActivity(Long userId, Long activityId, Post post);
+    Post checkInActivity(Long userId, Long activityId, Post post);
 
-    /**
-     * 获取打卡动态
-     */
-    List<Post> getActivityCheckins(Long activityId);
 }

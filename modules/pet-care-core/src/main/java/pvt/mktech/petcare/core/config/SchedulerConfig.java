@@ -1,5 +1,6 @@
 package pvt.mktech.petcare.core.config;
 
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,9 +21,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 @Configuration
 @EnableScheduling
 @ConditionalOnProperty(prefix = "scheduler", name = "enabled", havingValue = "true")
-@RequiredArgsConstructor
 public class SchedulerConfig implements SchedulingConfigurer {
-    private final ScheduledThreadPoolExecutor coreScheduledThreadPoolExecutor;
+    @Resource
+    private ScheduledThreadPoolExecutor coreScheduledThreadPoolExecutor;
     @Override
     public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
         // 使用 2 个线程的线程池，让 reminderScanJob 和 delayQueueScanJob 可并行执行

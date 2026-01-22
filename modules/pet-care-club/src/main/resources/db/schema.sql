@@ -3,7 +3,7 @@ CREATE DATABASE IF NOT EXISTS `pet_care_club` DEFAULT CHARACTER SET utf8mb4 COLL
 
 USE `pet_care_club`;
 
--- 1. 动态表 (核心表)
+-- 1. 动态表
 CREATE TABLE `tb_post` (
   `id` BIGINT PRIMARY KEY AUTO_INCREMENT,
   `user_id` BIGINT NOT NULL COMMENT '发布者ID',
@@ -21,7 +21,6 @@ CREATE TABLE `tb_post` (
   `view_count` INT DEFAULT 0,
   `status` TINYINT DEFAULT 1 COMMENT '1-正常 2-隐藏 3-删除',
   `activity_id` BIGINT DEFAULT NULL COMMENT '关联的活动ID',
-  `is_checkin` TINYINT DEFAULT 0 COMMENT '是否为活动打卡',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_user` (`user_id`),
@@ -80,8 +79,8 @@ CREATE TABLE `tb_activity` (
   `current_participants` INT DEFAULT 0,
   `status` TINYINT DEFAULT 1 COMMENT '1-招募中 2-进行中 3-已结束',
   `labels` JSON COMMENT '活动标签数组',
-  `checkin_enabled` TINYINT DEFAULT 1 COMMENT '是否开启打卡',
-  `checkin_count` INT DEFAULT 0 COMMENT '打卡人数',
+  `check_in_enabled` TINYINT DEFAULT 1 COMMENT '是否开启打卡',
+  `check_in_count` INT DEFAULT 0 COMMENT '打卡人数',
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_user` (`user_id`),

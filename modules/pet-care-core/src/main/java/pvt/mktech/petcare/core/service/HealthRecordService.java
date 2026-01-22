@@ -13,5 +13,5 @@ import pvt.mktech.petcare.core.entity.HealthRecord;
  */
 public interface HealthRecordService extends IService<HealthRecord> {
 
-    Page<HealthRecord> findPageByQueryRequest(HealthRecordQueryRequest request);
+    Page<HealthRecord> findPageByQueryRequest(Long pageNumber, Long pageSize, HealthRecordQueryRequest request);
 }

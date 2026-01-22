@@ -6,17 +6,16 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.club.dto.request.ActivityQueryRequest;
+import pvt.mktech.petcare.club.dto.request.PostQueryRequest;
 import pvt.mktech.petcare.club.entity.Activity;
 import pvt.mktech.petcare.club.entity.Post;
 import pvt.mktech.petcare.club.service.ActivityService;
+import pvt.mktech.petcare.club.service.PostService;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.usercache.UserContext;
 
 import java.util.List;
 
-/**
- * 活动 控制层。
- */
 @Tag(name = "活动管理", description = "活动发布、报名、打卡相关接口")
 @RestController
 @RequestMapping("/activity")
@@ -24,6 +23,7 @@ import java.util.List;
 public class ActivityController {
 
     private final ActivityService activityService;
+    private final PostService postService;
 
     @PostMapping
     @Operation(summary = "创建活动")
@@ -32,35 +32,49 @@ public class ActivityController {
         return Result.success(activityService.createActivity(activity));
     }
 
-    @GetMapping
+    @PostMapping("/page")
     @Operation(summary = "活动列表")
-    public Result<Page<Activity>> getActivityList(ActivityQueryRequest request) {
-        return Result.success(activityService.getActivityList(request));
+    public Result<Page<Activity>> pageActivity(@RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
+                                               @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize,
+                                               @RequestBody ActivityQueryRequest request) {
+        return Result.success(activityService.getActivityList(pageNumber, pageSize, request));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "活动详情")
-    public Result<Activity> getActivityDetail(@PathVariable Long id) {
+    public Result<Activity> getActivityDetail(@PathVariable("id") Long id) {
         return Result.success(activityService.getActivityDetail(id));
+    }
+
+    @PostMapping("/{id}/checkedIn/page")
+    @Operation(summary = "获取打卡动态")
+    public Result<Page<Post>> pageActivityCheckedIn(@PathVariable("id") Long id,
+                                                    @RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
+                                                    @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize) {
+        PostQueryRequest postQueryRequest = new PostQueryRequest();
+        postQueryRequest.setActivityId(id); // 活动ID
+        postQueryRequest.setPostType(5); // 查询打卡信息
+        Page<Post> pageByQueryRequest = postService.findPageByQueryRequest(pageNumber, pageSize, postQueryRequest);
+        return Result.success(pageByQueryRequest);
+    }
+
+    @PostMapping("/{id}/checkIn")
+    @Operation(summary = "打卡活动")
+    public Result<Post> checkInActivity(@PathVariable("id") Long id, @RequestBody Post post) {
+        Long userId = UserContext.getUserId();
+        return Result.success(activityService.checkInActivity(userId, id, post));
     }
 
     @PostMapping("/{id}/join")
     @Operation(summary = "报名活动")
-    public Result<Boolean> joinActivity(@PathVariable Long id) {
+    public Result<Boolean> joinActivity(@PathVariable("id") Long id) {
         Long userId = UserContext.getUserId();
         return Result.success(activityService.joinActivity(userId, id));
     }
 
-    @GetMapping("/{id}/checkins")
-    @Operation(summary = "获取打卡动态")
-    public Result<List<Post>> getActivityCheckins(@PathVariable Long id) {
-        return Result.success(activityService.getActivityCheckins(id));
-    }
-
-    @PostMapping("/{id}/checkin")
-    @Operation(summary = "活动打卡")
-    public Result<Post> checkinActivity(@PathVariable Long id, @RequestBody Post post) {
-        Long userId = UserContext.getUserId();
-        return Result.success(activityService.checkinActivity(userId, id, post));
+    @GetMapping("/{id}/participants")
+    @Operation(summary = "获取活动的参与者")
+    public Result<List<Post>> listParticipants(@PathVariable("id") Long id) {
+        return Result.success(postService.listParticipantsByActivityId(id));
     }
 }

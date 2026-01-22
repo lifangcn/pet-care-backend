@@ -97,12 +97,12 @@ public class Activity implements Serializable {
     /**
      * 是否开启打卡 0-否 1-是
      */
-    private Integer checkinEnabled;
+    private Integer checkInEnabled;
 
     /**
      * 打卡人数
      */
-    private Integer checkinCount;
+    private Integer checkInCount;
 
     /**
      * 创建时间

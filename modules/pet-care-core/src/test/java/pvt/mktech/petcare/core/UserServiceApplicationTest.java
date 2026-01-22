@@ -24,7 +24,7 @@ public class UserServiceApplicationTest {
         long start = System.currentTimeMillis();
 
         for (int i = 0; i < 100; i++) {
-            coreThreadPool.submit(() -> {
+            coreThreadPoolExecutor.submit(() -> {
                 for (int j = 0; j < 100; j++) {
                     Long id = distributedIdGenerator.generateId("test");
                     ids.put(id, true);

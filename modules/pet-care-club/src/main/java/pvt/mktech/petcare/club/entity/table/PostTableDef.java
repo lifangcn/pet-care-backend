@@ -22,11 +22,10 @@ public class PostTableDef extends TableDef {
     public final QueryColumn VIEW_COUNT = new QueryColumn(this, "view_count");
     public final QueryColumn STATUS = new QueryColumn(this, "status");
     public final QueryColumn ACTIVITY_ID = new QueryColumn(this, "activity_id");
-    public final QueryColumn IS_CHECKIN = new QueryColumn(this, "is_checkin");
     public final QueryColumn CREATED_AT = new QueryColumn(this, "created_at");
     public final QueryColumn UPDATED_AT = new QueryColumn(this, "updated_at");
     public final QueryColumn ALL_COLUMNS = new QueryColumn(this, "*");
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, CONTENT, POST_TYPE, MEDIA_URLS, EXTERNAL_LINK, LOCATION_INFO, PRICE_RANGE, LIKE_COUNT, RATING_COUNT, RATING_TOTAL, RATING_AVG, VIEW_COUNT, STATUS, ACTIVITY_ID, IS_CHECKIN};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, CONTENT, POST_TYPE, MEDIA_URLS, EXTERNAL_LINK, LOCATION_INFO, PRICE_RANGE, LIKE_COUNT, RATING_COUNT, RATING_TOTAL, RATING_AVG, VIEW_COUNT, STATUS, ACTIVITY_ID};
 
     public PostTableDef() {
         super("", "tb_post");

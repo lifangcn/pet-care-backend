@@ -1,5 +1,6 @@
 package pvt.mktech.petcare.core.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,11 +25,9 @@ public class HealthRecordQueryRequest {
     @Schema(description = "记录类型")
     private String recordType;
     @Schema(description = "查询开始时间")
-    private LocalDateTime startDate;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime startTime;
     @Schema(description = "查询结束时间")
-    private LocalDateTime endDate;
-    @Schema(description = "页码")
-    private Long pageNumber = 1L;
-    @Schema(description = "每页数量")
-    private Long pageSize;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime endTime;
 }

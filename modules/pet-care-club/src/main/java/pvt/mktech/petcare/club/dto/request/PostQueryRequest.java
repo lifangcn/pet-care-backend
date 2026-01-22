@@ -27,4 +27,7 @@ public class PostQueryRequest {
 
     @Schema(description = "排序方式 latest-最新 hottest-最热 rating-评分最高", example = "latest")
     private String sortBy = "latest";
+
+    @Schema(description = "活动ID")
+    private Long activityId;
 }

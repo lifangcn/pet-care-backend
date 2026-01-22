@@ -52,7 +52,8 @@ public class MediaUrlListTypeHandler extends BaseTypeHandler<List<MediaUrl>> {
             return null;
         }
         try {
-            return objectMapper.readValue(json, new TypeReference<List<MediaUrl>>() {});
+            return objectMapper.readValue(json, new TypeReference<>() {
+            });
         } catch (JsonProcessingException e) {
             throw new SQLException("Error parsing JSON to List<MediaUrl>", e);
         }

@@ -1,6 +1,8 @@
 ### CUSTOM ###
 application-local.yml
 application-prod.yml
+.lingma
+
 
 target/
 !.mvn/wrapper/maven-wrapper.jar

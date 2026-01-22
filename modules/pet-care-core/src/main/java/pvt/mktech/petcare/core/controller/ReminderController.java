@@ -3,7 +3,7 @@ package pvt.mktech.petcare.core.controller;
 import cn.hutool.core.bean.BeanUtil;
 import com.mybatisflex.core.paginate.Page;
 import io.swagger.v3.oas.annotations.Operation;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -31,13 +31,16 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/reminder")
 @Slf4j
-@RequiredArgsConstructor
 public class ReminderController {
 
-    private final ReminderService reminderService;
-    private final ReminderExecutionService reminderExecutionService;
-    private final SseConnectionManager sseConnectionManager;
-    private final ScheduledThreadPoolExecutor sseHeartbeatThreadPoolExecutor;
+    @Resource
+    private ReminderService reminderService;
+    @Resource
+    private ReminderExecutionService reminderExecutionService;
+    @Resource
+    private SseConnectionManager sseConnectionManager;
+    @Resource
+    private ScheduledThreadPoolExecutor sseHeartbeatThreadPoolExecutor;
 
     /**
      * 新增提醒事件表。
@@ -145,8 +148,8 @@ public class ReminderController {
         // TODO 生成的提醒项会存入Redis中，再通过接口访问，返回到前端进行展示
         Long userId = UserContext.getUserId();
 
-        // 3. 创建 SSE Emitter（超时时间 24 小时）
-        SseEmitter emitter = new SseEmitter(24 * 60 * 60 * 1000L);
+        // 3. 创建 SSE Emitter（超时时间 1 小时）
+        SseEmitter emitter = new SseEmitter(60 * 60 * 1000L);
 
         // 4. 注册连接
         sseConnectionManager.addConnection(userId, emitter);
@@ -170,20 +173,35 @@ public class ReminderController {
     }
 
     private void startHeartbeat(SseEmitter emitter) {
+        // 检查线程池状态
+        if (sseHeartbeatThreadPoolExecutor.isShutdown() || sseHeartbeatThreadPoolExecutor.isTerminated()) {
+            log.warn("SSE 心跳线程池已关闭，无法启动心跳任务");
+            return;
+        }
 
-        ScheduledFuture<?> heartbeatTask = sseHeartbeatThreadPoolExecutor.scheduleAtFixedRate(() -> {
+        final ScheduledFuture<?>[] heartbeatTaskRef = new ScheduledFuture[1];
+        heartbeatTaskRef[0] = sseHeartbeatThreadPoolExecutor.scheduleAtFixedRate(() -> {
             try {
                 emitter.send(SseEmitter.event().comment("heartbeat"));
-            } catch (Exception e) {
-                // 心跳失败，取消任务
-                throw new RuntimeException(e);
+            } catch (Throwable e) {
+                // 心跳失败，连接可能已断开，取消任务
+                // 使用 debug 级别，避免客户端断开时打印 ERROR 日志
+                if (e instanceof java.io.IOException && "Broken pipe".equals(e.getMessage())) {
+                    log.info("SSE 客户端已断开: {}", e.getMessage());
+                } else {
+                    log.info("SSE 心跳发送失败: {}", e.getMessage());
+                }
+                if (heartbeatTaskRef[0] != null) {
+                    heartbeatTaskRef[0].cancel(false);
+                }
             }
         }, 30, 30, TimeUnit.SECONDS);
 
-        // 当连接完成/超时/出错时，清理专用线程池
+        // 当连接完成/超时/出错时，清理心跳任务
         Runnable cleanup = () -> {
-            heartbeatTask.cancel(false);
-            sseHeartbeatThreadPoolExecutor.shutdownNow();
+            if (heartbeatTaskRef[0] != null && !heartbeatTaskRef[0].isDone()) {
+                heartbeatTaskRef[0].cancel(false);
+            }
         };
         emitter.onCompletion(cleanup);
         emitter.onTimeout(cleanup);

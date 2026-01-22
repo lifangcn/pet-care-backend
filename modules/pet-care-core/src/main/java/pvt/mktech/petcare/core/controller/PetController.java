@@ -153,21 +153,17 @@ public class PetController {
      * 分页查询健康记录表。
      *
      * @param petId      宠物ID
-     * @param recordType 记录类型
-     * @param startDate  开始时间
-     * @param endDate    结束时间
      * @param pageNumber 页码
      * @param pageSize   页大小
+     * @param request    查询请求
      * @return 分页查询结果
      */
-    @GetMapping("/{petId}/health-record/page")
-    public Page<HealthRecord> pageHealthRecord(@PathVariable("petId") Long petId,
-                                               @RequestParam(value = "recordType", required = false) String recordType,
-                                               @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime startDate,
-                                               @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime endDate,
-                                               @RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
-                                               @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize) {
-        HealthRecordQueryRequest request = new HealthRecordQueryRequest(petId, recordType, startDate, endDate, pageNumber, pageSize);
-        return healthRecordService.findPageByQueryRequest(request);
+    @PostMapping("/{petId}/health-record/page")
+    public Result<Page<HealthRecord>> pageHealthRecord(@PathVariable("petId") Long petId,
+                                                       @RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
+                                                       @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize,
+                                                       @RequestBody HealthRecordQueryRequest request) {
+        request.setPetId(petId);
+        return Result.success(healthRecordService.findPageByQueryRequest(pageNumber, pageSize, request));
     }
 }

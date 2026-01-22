@@ -90,7 +90,7 @@ spring:
         - id: club-route
           uri: ${CLUB_SERVICE_URL:http://localhost:8082}
           predicates:
-            - Path=/api/activity/**, /api/post/**, /api/tag/**,
+            - Path=/api/activity/**, /api/post/**, /api/label/**,
           filters:
             - StripPrefix=1
             - name: JwtAuth

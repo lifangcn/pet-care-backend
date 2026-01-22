@@ -27,13 +27,13 @@ import static pvt.mktech.petcare.core.entity.table.HealthRecordTableDef.HEALTH_R
 public class HealthRecordServiceImpl extends ServiceImpl<HealthRecordMapper, HealthRecord> implements HealthRecordService {
 
     @Override
-    public Page<HealthRecord> findPageByQueryRequest(HealthRecordQueryRequest request) {
+    public Page<HealthRecord> findPageByQueryRequest(Long pageNumber, Long pageSize, HealthRecordQueryRequest request) {
         QueryWrapper queryWrapper = queryChain()
                 .select(HEALTH_RECORD.ALL_COLUMNS)
                 .where(HEALTH_RECORD.PET_ID.eq(request.getPetId()));
         if (StrUtil.isNotEmpty(request.getRecordType())) {
             queryWrapper.and(HEALTH_RECORD.RECORD_TYPE.eq(request.getRecordType()));
         }
-        return page(Page.of(request.getPageNumber(), request.getPageSize()), queryWrapper);
+        return page(Page.of(pageNumber, pageSize), queryWrapper);
     }
 }

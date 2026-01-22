@@ -14,7 +14,7 @@ import pvt.mktech.petcare.common.storage.OssTemplate;
 import pvt.mktech.petcare.common.usercache.UserContext;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.core.dto.request.UserUpdateRequest;
-import pvt.mktech.petcare.core.dto.response.CheckinStatsResponse;
+import pvt.mktech.petcare.core.dto.response.CheckInStatsResponse;
 import pvt.mktech.petcare.core.dto.response.UserResponse;
 import pvt.mktech.petcare.core.service.UserService;
 
@@ -81,18 +81,18 @@ public class UserController {
         return Result.success(avatarUrl);
     }
 
-    @PostMapping("/checkin")
+    @PostMapping("/checkIn")
     @Operation(summary = "用户签到")
-    public Result<Boolean> checkin() {
+    public Result<Boolean> checkIn() {
         Long userId = UserContext.getUserId();
-        return Result.success(userService.checkin(userId));
+        return Result.success(userService.checkIn(userId));
     }
 
-    @GetMapping("/checkin/stats")
+    @GetMapping("/checkIn/stats")
     @Operation(summary = "查询用户签到记录")
-    public Result<CheckinStatsResponse> checkinStats(@RequestParam("year") Long year,
+    public Result<CheckInStatsResponse> checkInStats(@RequestParam("year") Long year,
                                                      @RequestParam("month") Long month) {
         Long userId = UserContext.getUserId();
-        return Result.success(userService.getCheckinStats(userId, year, month));
+        return Result.success(userService.getCheckInStats(userId, year, month));
     }
 }

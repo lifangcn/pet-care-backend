@@ -11,6 +11,7 @@ import pvt.mktech.petcare.club.entity.Post;
 import pvt.mktech.petcare.club.mapper.ActivityMapper;
 import pvt.mktech.petcare.club.mapper.PostMapper;
 import pvt.mktech.petcare.club.service.ActivityService;
+import pvt.mktech.petcare.club.service.PostService;
 import pvt.mktech.petcare.common.exception.BusinessException;
 
 import java.util.List;
@@ -25,7 +26,7 @@ import static pvt.mktech.petcare.club.entity.table.PostTableDef.POST;
 @RequiredArgsConstructor
 public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> implements ActivityService {
 
-    private final PostMapper postMapper;
+    private final PostService postService;
 
     @Override
     public Activity createActivity(Activity activity) {
@@ -34,7 +35,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     }
 
     @Override
-    public Page<Activity> getActivityList(ActivityQueryRequest request) {
+    public Page<Activity> getActivityList(Long pageNumber, Long pageSize, ActivityQueryRequest request) {
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .orderBy(ACTIVITY.ACTIVITY_TIME.desc());
 
@@ -45,7 +46,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
             queryWrapper.and(ACTIVITY.ACTIVITY_TYPE.eq(request.getActivityType()));
         }
 
-        return page(Page.of(request.getPageNumber(), request.getPageSize()), queryWrapper);
+        return page(Page.of(pageNumber, pageSize), queryWrapper);
     }
 
     @Override
@@ -54,7 +55,7 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
     }
 
     @Override
-    public boolean joinActivity(Long userId, Long activityId) {
+    public Boolean joinActivity(Long userId, Long activityId) {
         Activity activity = getById(activityId);
         if (activity == null) {
             throw new BusinessException("404", "活动不存在");
@@ -65,38 +66,44 @@ public class ActivityServiceImpl extends ServiceImpl<ActivityMapper, Activity> i
         if (activity.getMaxParticipants() > 0 && activity.getCurrentParticipants() >= activity.getMaxParticipants()) {
             throw new BusinessException("400", "活动人数已满");
         }
+        // 是否已经报名
+        Boolean isJoined = postService.hasJoinActivity(userId, activityId);
+
+        if (isJoined) {
+            throw new BusinessException("400", "您已经报名");
+        }
+
+        // 生成报名动态 postType = 6
+        Post post = new Post();
+        post.setUserId(userId);
+        post.setPostType(6);
+        post.setActivityId(activityId);
+        post.setStatus(1);
+        postService.savePost(post);
 
         activity.setCurrentParticipants((activity.getCurrentParticipants() == null ? 0 : activity.getCurrentParticipants()) + 1);
         return updateById(activity);
     }
 
     @Override
-    public Post checkinActivity(Long userId, Long activityId, Post post) {
+    public Post checkInActivity(Long userId, Long activityId, Post post) {
         Activity activity = getById(activityId);
         if (activity == null) {
             throw new BusinessException("404", "活动不存在");
         }
-        if (activity.getCheckinEnabled() == null || activity.getCheckinEnabled() != 1) {
+        if (activity.getCheckInEnabled() == null || activity.getCheckInEnabled() != 1) {
             throw new BusinessException("400", "活动未开启打卡");
         }
-
+        // 创建打卡动态
         post.setUserId(userId);
         post.setPostType(5);
         post.setActivityId(activityId);
-        post.setIsCheckin(1);
-        postMapper.insert(post);
+        post.setStatus(1);
+        postService.savePost(post);
 
-        activity.setCheckinCount((activity.getCheckinCount() == null ? 0 : activity.getCheckinCount()) + 1);
+        activity.setCheckInCount((activity.getCheckInCount() == null ? 0 : activity.getCheckInCount()) + 1);
         updateById(activity);
 
         return post;
-    }
-
-    @Override
-    public List<Post> getActivityCheckins(Long activityId) {
-        return postMapper.selectListByQuery(QueryWrapper.create()
-                .where(POST.ACTIVITY_ID.eq(activityId))
-                .and(POST.IS_CHECKIN.eq(1))
-                .orderBy(POST.CREATED_AT.desc()));
     }
 }

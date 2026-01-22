@@ -36,13 +36,13 @@ public class LabelController {
 
     @GetMapping("/suggest")
     @Operation(summary = "标签建议")
-    public Result<List<Label>> suggestLabels(@RequestParam String keyword) {
+    public Result<List<Label>> suggestLabels(@RequestParam("keyword") String keyword) {
         return Result.success(labelService.suggestLabels(keyword));
     }
 
     @GetMapping("/posts/{labelId}")
     @Operation(summary = "按标签获取动态")
-    public Result<List<Post>> getPostsByLabel(@PathVariable Long labelId) {
+    public Result<List<Post>> getPostsByLabel(@PathVariable("labelId") Long labelId) {
         // TODO 扩展点：通过 tb_post_tag 关联查询
         // 这里简化实现，返回空列表
         return Result.success(List.of());

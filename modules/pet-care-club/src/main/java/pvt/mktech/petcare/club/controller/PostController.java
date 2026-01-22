@@ -6,17 +6,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.club.dto.request.PostQueryRequest;
+import pvt.mktech.petcare.club.dto.response.PostDetailResponse;
 import pvt.mktech.petcare.club.entity.Post;
-import pvt.mktech.petcare.club.service.InteractionService;
 import pvt.mktech.petcare.club.service.PostService;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.usercache.UserContext;
 
-import java.math.BigDecimal;
-
-/**
- * 动态 控制层。
- */
 @Tag(name = "动态管理", description = "动态发布、互动相关接口")
 @RestController
 @RequestMapping("/post")
@@ -24,7 +19,6 @@ import java.math.BigDecimal;
 public class PostController {
 
     private final PostService postService;
-    private final InteractionService interactionService;
 
     @PostMapping
     @Operation(summary = "发布动态")
@@ -33,15 +27,18 @@ public class PostController {
         return Result.success(postService.savePost(post));
     }
 
-    @GetMapping
-    @Operation(summary = "动态列表")
-    public Result<Page<Post>> getPostList(PostQueryRequest request) {
-        return Result.success(postService.getPostList(request));
+    @PostMapping("/page")
+    @Operation(summary = "内容广场分页查询动态")
+    public Result<Page<Post>> pagePost(@RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
+                                       @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize,
+                                       @RequestBody PostQueryRequest request) {
+        // 查询
+        return Result.success(postService.findPageByQueryRequest(pageNumber, pageSize, request));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "动态详情")
-    public Result<Post> getPostDetail(@PathVariable("id") Long id) {
+    public Result<PostDetailResponse> getPostDetail(@PathVariable("id") Long id) {
         return Result.success(postService.getPostDetail(id));
     }
 
@@ -60,23 +57,15 @@ public class PostController {
     @PostMapping("/{id}/like")
     @Operation(summary = "点赞/取消点赞")
     public Result<Boolean> toggleLike(@PathVariable("id") Long id) {
-        Long userId = UserContext.getUserId();
-        return Result.success(interactionService.toggleLike(userId, id));
+        return Result.success(postService.toggleLike(id));
     }
 
     @PostMapping("/{id}/rate")
     @Operation(summary = "评分")
-    public Result<Boolean> rate(@PathVariable("id") Long id, @RequestParam Integer rating) {
-        Long userId = UserContext.getUserId();
-        if (rating < 1 || rating > 5) {
+    public Result<Boolean> rate(@PathVariable("id") Long id, @RequestParam("ratingValue") Integer ratingValue) {
+        if (ratingValue < 1 || ratingValue > 5) {
             return Result.error("400", "评分必须在1-5之间");
         }
-        return Result.success(interactionService.rate(userId, id, rating));
-    }
-
-    @GetMapping("/{id}/ratings")
-    @Operation(summary = "评分详情")
-    public Result<BigDecimal> getRatingDetail(@PathVariable("id") Long id) {
-        return Result.success(interactionService.getRatingAvg(id));
+        return Result.success(postService.rate(id, ratingValue));
     }
 }

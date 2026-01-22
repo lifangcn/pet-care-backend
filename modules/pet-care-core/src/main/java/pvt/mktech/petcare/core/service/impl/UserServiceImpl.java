@@ -5,7 +5,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBitSet;
 import org.redisson.api.RedissonClient;
@@ -17,33 +17,36 @@ import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.common.storage.OssTemplate;
 import pvt.mktech.petcare.core.dto.request.UserUpdateRequest;
-import pvt.mktech.petcare.core.dto.response.CheckinStatsResponse;
+import pvt.mktech.petcare.core.dto.response.CheckInStatsResponse;
 import pvt.mktech.petcare.core.dto.response.UserResponse;
 import pvt.mktech.petcare.core.entity.User;
 import pvt.mktech.petcare.core.mapper.UserMapper;
 import pvt.mktech.petcare.core.service.UserService;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import static pvt.mktech.petcare.core.constant.CoreConstant.CORE_USER_CHECKIN_KEY;
+import static pvt.mktech.petcare.core.constant.CoreConstant.CORE_USER_CHECK_IN_KEY;
 import static pvt.mktech.petcare.core.entity.table.UserTableDef.USER;
 
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
-    private final UserMapper userMapper;
-    private final OssTemplate ossTemplate;
-    private final ThreadPoolExecutor coreThreadPoolExecutor;
-    private final RedisUtil redisUtil;
-    private final RedissonClient redissonClient;
+    @Resource
+    private UserMapper userMapper;
+    @Resource
+    private OssTemplate ossTemplate;
+    @Resource
+    private ThreadPoolExecutor coreThreadPoolExecutor;
+    @Resource
+    private RedisUtil redisUtil;
+    @Resource
+    private RedissonClient redissonClient;
 
     @Override
     public UserResponse getUserById(Long userId) {
@@ -123,9 +126,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public Boolean checkin(Long userId) {
+    public Boolean checkIn(Long userId) {
         String key = String.format("%s%d:%d%02d",
-                CORE_USER_CHECKIN_KEY, userId, DateUtil.thisYear(), DateUtil.thisMonth() + 1);
+                CORE_USER_CHECK_IN_KEY, userId, DateUtil.thisYear(), DateUtil.thisMonth() + 1);
         int offset = DateUtil.thisDayOfMonth() - 1;
         // 校验今天是否已经打卡
         if (redisUtil.getBit(key, offset)) {
@@ -138,62 +141,64 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public CheckinStatsResponse getCheckinStats(Long userId, Long year, Long month) {
-        CheckinStatsResponse checkinStatsResponse = new CheckinStatsResponse();
+    public CheckInStatsResponse getCheckInStats(Long userId, Long year, Long month) {
+        CheckInStatsResponse checkInStatsResponse = new CheckInStatsResponse();
         String key = String.format("%s%d:%d%02d",
-                CORE_USER_CHECKIN_KEY, userId, year, month);
+                CORE_USER_CHECK_IN_KEY, userId, year, month);
 
         RBitSet bitSet = redisUtil.getBitSet(key);
         if (!bitSet.isExists()) {
-            return checkinStatsResponse;
+            return checkInStatsResponse;
         }
 
-        // 一次性获取所有位数据（使用GETRANGE命令获取整个BitMap）
-        byte[] data = redissonClient.<byte[]>getBucket(key, ByteArrayCodec.INSTANCE).get();
-        int todayIndex = DateUtil.thisDayOfMonth() - 1;
+        // 获取BitMap数据并转为二进制字符串（如"1000000100001000"）
+        byte[] data = bitSet.toByteArray();
+        StringBuilder binaryStr = new StringBuilder();
+        for (byte b : data) {
+            binaryStr.append(String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0'));
+        }
+        String bits = binaryStr.toString();
 
-        // 1.获取本月打卡次数
-        int monthCheckinCount = 0;
-        for (int i = 0; i <= todayIndex; i++) {
-            if (getBitFromBytes(data, i)) {
-                monthCheckinCount++;
+        int todayIndex = DateUtil.thisDayOfMonth();
+        // 二进制字符串索引从0开始，日期从1开始，需-1
+        int maxIndex = Math.min(todayIndex, bits.length()) - 1;
+
+        // 1.获取本月签到次数和签到记录
+        int monthCheckInCount = 0;
+        if (checkInStatsResponse.getCheckInDates() == null) {
+            checkInStatsResponse.setCheckInDates(new ArrayList<>());
+        }
+        for (int i = 0; i <= maxIndex; i++) {
+            if (bits.charAt(i) == '1') {
+                monthCheckInCount++;
+                checkInStatsResponse.getCheckInDates().add(String.format("%d-%02d-%02d", year, month, i + 1));
             }
         }
-        checkinStatsResponse.setMonthCheckinCount(monthCheckinCount);
+        checkInStatsResponse.setMonthCheckInCount(monthCheckInCount);
 
-        // 2.向前计算连续打卡天数
+        // 2.向前计算连续签到天数
         Integer continuousDays = 0;
-        for (int i = todayIndex; i >= 0; i--) {
-            if (getBitFromBytes(data, i)) {
+        for (int i = maxIndex; i >= 0; i--) {
+            if (bits.charAt(i) == '1') {
                 continuousDays++;
                 continue;
             }
-            if (i == todayIndex) {
+            if (i == maxIndex) {
                 continue;
             }
             break;
         }
-        checkinStatsResponse.setContinuousDays(continuousDays);
+        checkInStatsResponse.setContinuousDays(continuousDays);
 
-        // 3.获取最后一次打卡时间
-        for (int i = todayIndex; i >= 0; i--) {
-            if (getBitFromBytes(data, i)) {
-                checkinStatsResponse.setLastCheckinDate(String.format("%d-%02d-%02d", year, month, i + 1));
+        // 3.获取最后一次签到时间
+        for (int i = maxIndex; i >= 0; i--) {
+            if (bits.charAt(i) == '1') {
+                checkInStatsResponse.setLastCheckInDate(String.format("%d-%02d-%02d", year, month, i + 1));
                 break;
             }
         }
 
-        return checkinStatsResponse;
-    }
-
-    /**
-     * 从字节数组中获取指定位的值
-     */
-    private boolean getBitFromBytes(byte[] data, int bitIndex) {
-        if (data == null || bitIndex < 0 || bitIndex >>> 3 >= data.length) {
-            return false;
-        }
-        return ((data[bitIndex >>> 3] >>> bitIndex & 7) & 1) == 1;
+        return checkInStatsResponse;
     }
 
     private UserResponse convertToResponse(User user) {

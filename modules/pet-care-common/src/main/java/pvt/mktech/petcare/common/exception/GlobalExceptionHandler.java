@@ -84,6 +84,11 @@ public class GlobalExceptionHandler {
     // 处理所有其他异常
     @ExceptionHandler(Exception.class)
     public Result<String> handleException(Exception ex) {
+        // SSE 客户端断开时会产生 IOException: Broken pipe，这是正常现象，不需要处理
+        if (ex instanceof java.io.IOException && "Broken pipe".equals(ex.getMessage())) {
+            log.debug("SSE 客户端断开连接: {}", ex.getMessage());
+            return null;
+        }
         log.error("Unexpected exception occurred", ex);
         return Result.error(ErrorCode.SYSTEM_ERROR.getCode(), ErrorCode.SYSTEM_ERROR.getMessage());
     }

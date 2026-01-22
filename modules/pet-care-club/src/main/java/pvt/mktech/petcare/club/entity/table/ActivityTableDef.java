@@ -20,12 +20,12 @@ public class ActivityTableDef extends TableDef {
     public final QueryColumn CURRENT_PARTICIPANTS = new QueryColumn(this, "current_participants");
     public final QueryColumn STATUS = new QueryColumn(this, "status");
     public final QueryColumn LABELS = new QueryColumn(this, "labels");
-    public final QueryColumn CHECKIN_ENABLED = new QueryColumn(this, "checkin_enabled");
-    public final QueryColumn CHECKIN_COUNT = new QueryColumn(this, "checkin_count");
+    public final QueryColumn CHECK_IN_ENABLED = new QueryColumn(this, "check_in_enabled");
+    public final QueryColumn CHECK_IN_COUNT = new QueryColumn(this, "check_in_count");
     public final QueryColumn CREATED_AT = new QueryColumn(this, "created_at");
     public final QueryColumn UPDATED_AT = new QueryColumn(this, "updated_at");
     public final QueryColumn ALL_COLUMNS = new QueryColumn(this, "*");
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, DESCRIPTION, COVER_IMAGE, ACTIVITY_TYPE, ACTIVITY_TIME, END_TIME, ADDRESS, ONLINE_LINK, MAX_PARTICIPANTS, CURRENT_PARTICIPANTS, STATUS, LABELS, CHECKIN_ENABLED, CHECKIN_COUNT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, DESCRIPTION, COVER_IMAGE, ACTIVITY_TYPE, ACTIVITY_TIME, END_TIME, ADDRESS, ONLINE_LINK, MAX_PARTICIPANTS, CURRENT_PARTICIPANTS, STATUS, LABELS, CHECK_IN_ENABLED, CHECK_IN_COUNT};
 
     public ActivityTableDef() {
         super("", "tb_activity");
