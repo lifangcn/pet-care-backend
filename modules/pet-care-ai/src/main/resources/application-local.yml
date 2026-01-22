@@ -1,11 +1,12 @@
 server:
   port: 8081
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 spring:
   application:
     name: pet-care-ai
-  profiles:
-    active: local
   # MySQL 配置
   datasource:
     url: jdbc:mysql://localhost:3306/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
@@ -59,16 +60,16 @@ spring:
 
 aliyun:
   oss:
-    endpoint: ${OSS_ENDPOINT}
-    access-key-id: ${OSS_ACCESS_KEY_ID}
-    access-key-secret: ${OSS_ACCESS_KEY_SECRET}
-    bucket-name: ${OSS_BUCKET_NAME}
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    access-key-id: LTAI5tNmULRZpFZLtEE1xkUe
+    access-key-secret: gBTZHXlmcXPmh2Zw7tE7nrkPQOQBeJ
+    bucket-name: lifang-pet-care
     enabled: true
 
 # Core 服务地址（serverless 环境使用环境变量配置）
 core:
   service:
-    url: ${CORE_SERVICE_URL:http://localhost:8080}
+    url: http://localhost:8080
 
 # 暴露网关的 actuator 端点
 management:
@@ -126,6 +127,5 @@ logging:
     pvt.mktech.petcare.ai: INFO
     com.alibaba.nacos: WARN
     org.springframework.ai: INFO
-#    org.apache.dubbo: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"

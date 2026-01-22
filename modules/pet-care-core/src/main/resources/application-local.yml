@@ -1,9 +1,10 @@
 server:
   port: 8080
+  tomcat:
+    mbeanregistry:
+      enabled: true
 
 spring:
-  profiles:
-    active: local
   servlet:
     multipart:
       max-file-size: 10MB
@@ -36,25 +37,35 @@ spring:
           max-idle: 8
           min-idle: 0
 
+# 内部服务间调用配置（serverless 环境使用）
+internal:
+  api:
+    enabled: true
+
+# 文件存储 配置：MinIO
+#minio:
+#  enabled: true
+#  business-key: avatar
+#  endpoint: http://localhost:9000
+#  access-key: minio
+#  secret-key: "!QAZ2wsx"
+#  bucket-name: pet-care-core
+#  file-size-limit: 10485760 # 10MB
+#  expire-time: 3600 # 1小时
+
 # 文件存储 配置：Aliyun OSS
 aliyun:
   oss:
-    endpoint: ${OSS_ENDPOINT}
-    access-key-id: ${OSS_ACCESS_KEY_ID}
-    access-key-secret: ${OSS_ACCESS_KEY_SECRET}
-    bucket-name: ${OSS_BUCKET_NAME}
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    access-key-id: LTAI5tNmULRZpFZLtEE1xkUe
+    access-key-secret: gBTZHXlmcXPmh2Zw7tE7nrkPQOQBeJ
+    bucket-name: lifang-pet-care
     enabled: true
 
 # Kafka 配置
 kafka:
   bootstrap-servers: localhost:9092
 
-
-# 内部服务间调用配置（serverless 环境使用）
-internal:
-  api:
-    enabled: true
-# 定时任务开启
 scheduler:
   enabled: true
   reminder-scan:
@@ -66,10 +77,25 @@ scheduler:
     cron: 0/1 * * * * ?
     lock-wait-time: 1
     lock-lease-time: 10
+
+# 分布式定时任务 配置：XXL-JOB 配置 (调度中心在Docker中，执行器在宿主机运行)
+#xxl:
+#  job:
+#    admin:
+#      addresses: http://localhost:9999/xxl-job-admin
+#      accessToken: default_token  # 与调度中心的通信令牌（配置文件在xxl-job.application.yml有）
+#      # 注意：如果调度中心未配置 token，这里必须注释掉或留空，否则会导致注册失败
+#    executor:
+#      appname: reminder-executor  # 执行器名称，需要在调度中心手动创建同名执行器
+#      ip: host.docker.internal  # 执行器IP，Docker容器需要能访问此IP
+#      port: 9998 # 执行器端口号，确保宿主机防火墙允许此端口访问
+#      logpath: ./logs/xxl-job/  # 日志路径
+#      logretentiondays: 30  # 日志保留天数
+
 # JWT配置
 jwt:
   enabled: true
-  secret-key: ${JWT_SECRET_KEY}
+  secret-key: "M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="
   expire-time: 86400
   refresh-expire-time: 604800
 

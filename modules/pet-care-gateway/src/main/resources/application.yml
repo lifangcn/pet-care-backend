@@ -1,10 +1,11 @@
 server:
   port: 8888
-  shutdown: graceful
 
 spring:
   application:
     name: pet-care-gateway
+  profiles:
+    active: local
   # Redis 配置
   data:
     redis:
@@ -85,7 +86,7 @@ spring:
 # JWT配置
 jwt:
   enabled: true
-  secret-key: "M9Ttt6uwxsaq6PMmFBNQekNWjaFXy+WJSQVQB5IOzdQ="
+  secret-key: ${JWT_SECRET_KEY}
   expire-time: 86400
   refresh-expire-time: 604800
 

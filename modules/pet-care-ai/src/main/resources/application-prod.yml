@@ -4,12 +4,10 @@ server:
 spring:
   application:
     name: pet-care-ai
-  profiles:
-    active: local
   # MySQL 配置
   datasource:
-    url: jdbc:mysql://localhost:3306/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:pet_care_root}
     password: "!QAZ2wsx"
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
@@ -21,8 +19,8 @@ spring:
   # Redis 配置
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
       password: "!QAZ2wsx"
       database: 0
       timeout: 3000
@@ -36,7 +34,7 @@ spring:
     # 使用 PGVector，自定义配置PG数据源
     pgvector:
       datasource:
-        url: jdbc:postgresql://localhost:5432/pet_care_ai_vector?sslmode=disable&timezone=Asia/Shanghai
+        url: jdbc:postgresql://${PG_HOST:localhost}:5432/pet_care_ai_vector?sslmode=disable&timezone=Asia/Shanghai
         username: postgres_root
         password: "!QAZ2wsx"
         driver-class-name: org.postgresql.Driver
@@ -51,50 +49,24 @@ spring:
     chat:
       memory:
         redis:
-          host: localhost
-          port: 6379
+          host: ${REDIS_HOST:localhost}
+          port: ${REDIS_PORT:6379}
           password: "!QAZ2wsx"
           timeout: 5000
           max-messages: 10
 
 aliyun:
   oss:
-    endpoint: ${OSS_ENDPOINT}
-    access-key-id: ${OSS_ACCESS_KEY_ID}
-    access-key-secret: ${OSS_ACCESS_KEY_SECRET}
-    bucket-name: ${OSS_BUCKET_NAME}
+    endpoint: ${OSS_ENDPOINT:oss-cn-hangzhou.aliyuncs.com}
+    access-key-id: ${OSS_ACCESS_KEY_ID:LTAI5tNmULRZpFZLtEE1xkUe}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:gBTZHXlmcXPmh2Zw7tE7nrkPQOQBeJ}
+    bucket-name: ${OSS_BUCKET_NAME:lifang-pet-care}
     enabled: true
 
 # Core 服务地址（serverless 环境使用环境变量配置）
 core:
   service:
     url: ${CORE_SERVICE_URL:http://localhost:8080}
-
-# 暴露网关的 actuator 端点
-management:
-  server:
-    port: ${server.port}  # 与主应用同端口或独立端口
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,prometheus
-  endpoint:
-    prometheus:
-      enabled: true
-    health:
-      show-details: always
-  prometheus:
-    metrics:
-      export:
-        enabled: true
-  metrics:
-    tags:
-      application: ${spring.application.name}
-    enable:
-      tomcat: true
-      jvm: true
-      hikaricp: true
-      executor: true
 
 # Knife4j 配置
 knife4j:
@@ -126,6 +98,13 @@ logging:
     pvt.mktech.petcare.ai: INFO
     com.alibaba.nacos: WARN
     org.springframework.ai: INFO
-#    org.apache.dubbo: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: ./logs/pet-care-core.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 7
+      total-size-cap: 500MB

@@ -1,6 +1,6 @@
 ### CUSTOM ###
-modules/pet-care-core/src/main/resources/application-prod.yml
-modules/pet-care-gateway/src/main/resources/application-prod.yml
+application-prod.yml
+application-local.yml
 
 .lingma
 target/
