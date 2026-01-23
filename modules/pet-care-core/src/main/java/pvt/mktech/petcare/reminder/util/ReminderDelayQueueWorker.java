@@ -113,12 +113,12 @@ public class ReminderDelayQueueWorker {
         String key = execution.getId().toString();
         String value = JSONUtil.toJsonStr(messageDto);
         ProducerRecord<String, String> message = new ProducerRecord<>(CORE_REMINDER_DELAY_TOPIC_SEND, null, System.currentTimeMillis(), key, value);
+        // 3.先从 ZSet 队列中删除
+        redisUtil.removeFromZSet(CORE_REMINDER_SEND_QUEUE_KEY, key);
+        // 4.发送消息
         CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(message);
         future.thenAccept(result -> {
                     log.info("成功发送 提醒执行 消息，topic: {}, key: {}, offset: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, result.getRecordMetadata().offset());
-                    // 4. 处理成功后，从Sorted Set中移除该消息，防止重复消费
-                    redisUtil.removeFromZSet(CORE_REMINDER_SEND_QUEUE_KEY, key);
-                    log.info("成功处理并移除延时消息: executionId={}", key);
                 })
                 .exceptionally(throwable -> {
                     log.error("发送 提醒执行 到立即消费队列失败，topic: {}, key: {}, 异常: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, throwable.getMessage());
