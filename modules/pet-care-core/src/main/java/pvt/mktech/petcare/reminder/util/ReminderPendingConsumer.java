@@ -52,14 +52,9 @@ public class ReminderPendingConsumer {
     public void consume(@Payload String message,
                         @Header(KafkaHeaders.RECEIVED_KEY) String key,
                         Acknowledgment acknowledgment) {
-        try {
-            ReminderMessageDto messageDto = JSONUtil.toBean(message, ReminderMessageDto.class);
-            processMessage(messageDto);
-            acknowledgment.acknowledge();
-        } catch (Exception e) {
-            log.error("消费消息失败，key: {}", key, e);
-            // Kafka 会自动重试，或手动处理
-        }
+        ReminderMessageDto messageDto = JSONUtil.toBean(message, ReminderMessageDto.class);
+        processMessage(messageDto);
+        acknowledgment.acknowledge();
     }
 
     private void processMessage(ReminderMessageDto messageDto) {
@@ -77,7 +72,7 @@ public class ReminderPendingConsumer {
 
         // 4.计算距离提醒时间，决定是否立即发送或者存到Redis队列中
         long delayMillis = Duration.between(LocalDateTime.now(), execution.getNotificationTime()).toMillis();
-        log.info("提醒时间：{}, 当前时间:{}, 时间差：{}ms", LocalDateTime.now(), execution.getNotificationTime(), delayMillis);
+        log.info("当前时间:{}, 提醒时间：{}, 时间差：{}ms", LocalDateTime.now(), execution.getNotificationTime(), delayMillis);
         // 4.1. 如果已经到期，转发到"发送"主题
         if (delayMillis <= 0) {
             ReminderExecutionMessageDto forwardMessageDto = new ReminderExecutionMessageDto();
@@ -98,8 +93,7 @@ public class ReminderPendingConsumer {
                 .thenAccept(result -> log.info("发送 提醒执行 到立即消费队列，topic: {}, key: {}, body: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, messageDto))
                 .exceptionally(throwable -> {
                     log.error("发送消息到发送队列失败", throwable);
-                    // TODO 死信队列+告警
-                    return null;
+                    throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, throwable);
         });
     }
 
