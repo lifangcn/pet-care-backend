@@ -3,6 +3,7 @@ package pvt.mktech.petcare.common.storage;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.io.FileTypeUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
 import com.aliyun.oss.OSS;
@@ -13,13 +14,11 @@ import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
-import pvt.mktech.petcare.common.snowflake.SnowflakeIdGenerator;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,14 +33,11 @@ public class OssTemplate {
 
     private final OssProperties ossProperties;
     private final OSS ossClient;
-    private final SnowflakeIdGenerator snowflakeIdGenerator;
 
     public OssTemplate(OSS ossClient,
-                       OssProperties ossProperties,
-                       SnowflakeIdGenerator snowflakeIdGenerator) {
+                       OssProperties ossProperties) {
         this.ossClient = ossClient;
         this.ossProperties = ossProperties;
-        this.snowflakeIdGenerator = snowflakeIdGenerator;
     }
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
@@ -167,7 +163,7 @@ public class OssTemplate {
 
     private String generateObjectName(String businessKey, MultipartFile file, Long id) {
         String extension = getFileExtension(file.getOriginalFilename());
-        long fileId = snowflakeIdGenerator.nextId();
+        long fileId = IdUtil.getSnowflakeNextId();
         String datePath = LocalDateTime.now().format(DATE_TIME_FORMATTER);
         if (id != null) {
             return String.format("%s/%d/%s/%s.%s", businessKey, id, datePath, fileId, extension);

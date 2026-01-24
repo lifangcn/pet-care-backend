@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import pvt.mktech.petcare.common.snowflake.SnowflakeIdGenerator;
 
 /**
  * {@code @description} : MinIO自动配置类
@@ -34,10 +33,9 @@ public class FileStorageAutoConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "minio", name = "enabled", havingValue = "true")
     public MinioTemplate minioTemplate(MinioClient minioClient,
-                                       MinioProperties minioProperties,
-                                       SnowflakeIdGenerator snowflakeIdGenerator) {
+                                       MinioProperties minioProperties) {
         log.info("初始化 MinIO Template");
-        return new MinioTemplate(minioClient, minioProperties, snowflakeIdGenerator);
+        return new MinioTemplate(minioClient, minioProperties);
     }
 
     @Bean
@@ -51,8 +49,8 @@ public class FileStorageAutoConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "aliyun.oss", name = "enabled", havingValue = "true")
-    public OssTemplate ossTemplate(OSS oss, OssProperties ossProperties, SnowflakeIdGenerator snowflakeIdGenerator) {
+    public OssTemplate ossTemplate(OSS oss, OssProperties ossProperties) {
         log.info("初始化 Aliyun OSS Template, endpoint: {}", ossProperties.getEndpoint());
-        return new OssTemplate(oss, ossProperties, snowflakeIdGenerator);
+        return new OssTemplate(oss, ossProperties);
     }
 }

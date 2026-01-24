@@ -1,6 +1,7 @@
 package pvt.mktech.petcare.common.storage;
 
 import cn.hutool.core.io.FileTypeUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
 import io.minio.*;
@@ -10,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
-import pvt.mktech.petcare.common.snowflake.SnowflakeIdGenerator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,14 +31,11 @@ public class MinioTemplate {
 
     private final MinioProperties minioProperties;
     private final MinioClient minioClient;
-    private final SnowflakeIdGenerator snowflakeIdGenerator;
 
     public MinioTemplate(MinioClient minioClient,
-                         MinioProperties minioProperties,
-                         SnowflakeIdGenerator snowflakeIdGenerator) {
+                         MinioProperties minioProperties) {
         this.minioClient = minioClient;
         this.minioProperties = minioProperties;
-        this.snowflakeIdGenerator = snowflakeIdGenerator;
     }
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
@@ -203,7 +200,7 @@ public class MinioTemplate {
 
     private String generateObjectName(String businessKey, MultipartFile file, Long id) {
         String extension = getFileExtension(file.getOriginalFilename());
-        long fileId = snowflakeIdGenerator.nextId();
+        long fileId = IdUtil.getSnowflakeNextId();
         String datePath = LocalDateTime.now().format(DATE_TIME_FORMATTER);
         if (id != null) {
             return String.format("%s/%d/%s/%s.%s", businessKey, id, datePath, fileId, extension);
