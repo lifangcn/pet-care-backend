@@ -131,7 +131,7 @@ Post 向量生成:
 ### 2.3 混合检索算法
 
 #### 2.3.1 打分公式
-```yaml
+```text
 Final_Score =
   α * BM25_Score +                    # 关键词匹配
   β * Vector_Similarity +             # 向量相似度
@@ -214,14 +214,14 @@ Engagement_Score =
 ```
 
 ### 3.2 技术选型
-| 组件 | 选型 | 版本 | 说明 |
-|------|------|------|------|
-| 搜索引擎 | Elasticsearch | 8.11+ | 支持 KNN 向量检索 |
-| 分词器 | IK Analysis | 8.11+ | 中文分词 |
-| 同步中间件 | Kafka | 3.x | CDC 事件流 |
-| CDC 连接器 | Debezium | 2.5+ | MySQL Binlog 捕获 |
-| 向量模型 | DashScope | text-embedding-v3 | 阿里云 1024维 |
-| Spring AI | spring-ai-elasticsearch | 1.0+ | 向量存储抽象 |
+| 组件 | 选型                      | 版本                | 说明 |
+|------|-------------------------|-------------------|------|
+| 搜索引擎 | Elasticsearch           | 8.17              | 支持 KNN 向量检索 |
+| 分词器 | IK Analysis             | 8.17              | 中文分词 |
+| 同步中间件 | Kafka                   | 3.x               | CDC 事件流 |
+| CDC 连接器 | Canal                   | 1.1.7             | MySQL Binlog 捕获 |
+| 向量模型 | DashScope               | text-embedding-v3 | 阿里云 1024维 |
+| Spring AI | spring-ai-elasticsearch | 1.0.1             | 向量存储抽象 |
 
 ---
 
@@ -233,7 +233,7 @@ Engagement_Score =
   1. 部署 Elasticsearch 集群
   2. 安装 KNN Plugin、IK Analysis
   3. 配置 Kafka Topic
-  4. 部署 Debezium Connector
+  4. 部署 Canal
 
 验收:
   - ES 集群健康状态 green
@@ -270,7 +270,7 @@ Engagement_Score =
 ```yaml
 任务:
   1. 全量数据迁移（MySQL → ES）
-  2. 增量 CDC 同步（Debezium）
+  2. 增量 CDC 同步（Canal）
   3. 异步向量化服务
   4. 数据一致性校验
 
@@ -383,7 +383,7 @@ DashScope text-embedding-v3:
 ```
 
 ### 7.2 回滚步骤
-```yaml
+```text
 1. 切换读流量: ES → PgVector
 2. 停止 CDC 同步
 3. 保留 ES 数据（用于问题分析）
