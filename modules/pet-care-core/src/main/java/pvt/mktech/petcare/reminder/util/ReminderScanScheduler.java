@@ -1,12 +1,11 @@
-package pvt.mktech.petcare.reminder.notification;
+package pvt.mktech.petcare.reminder.util;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.common.message.Message;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.exception.ErrorCode;
@@ -17,12 +16,11 @@ import pvt.mktech.petcare.reminder.dto.message.ReminderMessageDto;
 import pvt.mktech.petcare.reminder.entity.Reminder;
 import pvt.mktech.petcare.reminder.service.ReminderService;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMINDER_PENDING_TOPIC;
+import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMINDER_TOPIC_PENDING;
 
 /**
  * {@code @description}: 定时任务类，找出所有激活的、且计划时间在未来一段时间内的提醒
@@ -36,7 +34,7 @@ import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMIN
 public class ReminderScanScheduler {
     private final ReminderService reminderService;
     private final RedissonLockUtil redissonLockUtil;
-    private final DefaultMQProducer defaultMQProducer;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Value("${scheduler.reminder-scan.look-ahead-minutes:30}")
     private Long lookAheadMinutes;
@@ -62,14 +60,6 @@ public class ReminderScanScheduler {
      * 2. 范围查询：rangeByScoreWithScores(0, now) 高效获取到期记录
      * 3. 时间复杂度：增删查都是 O(log N)，适合频繁操作
      * 4. 轻量级: 比引入 RabbitMQ 延迟插件、Quartz 等更轻量（RocketMQ延迟等级不精确，不做讨论）
-     *
-     * -----
-     * 引入 RocketMQ 延迟消息(5.x+)，简化延迟消息逻辑不再需要 Redis ZSet作为计时器
-     * 修正上述逻辑：
-     * 2.4 未到期，发送延迟消息到 send queue；
-     * 3.依据 RocketMQ 的延迟消息特性，已到期、未到期消息均由 ReminderSendConsumer消费。
-     *
-     *
      */
     @Scheduled(cron = "${scheduler.reminder-scan.cron:0 */1 * * * ?}")  // 默认每1分钟执行一次
     public void reminderScanJob() {
@@ -122,10 +112,9 @@ public class ReminderScanScheduler {
         try {
             String key = reminder.getId().toString();
             String value = JSONUtil.toJsonStr(messageDto);
-            Message message = new Message(CORE_REMINDER_PENDING_TOPIC, null, key, value.getBytes(StandardCharsets.UTF_8));
-            defaultMQProducer.send(message);
+            kafkaTemplate.send(CORE_REMINDER_TOPIC_PENDING, key, value).get();
             log.info("发送 提醒项 到延迟消费队列 成功，topic: {}, key: {}, body: {}",
-                    CORE_REMINDER_PENDING_TOPIC, key, messageDto);
+                    CORE_REMINDER_TOPIC_PENDING, key, messageDto);
         } catch (Exception e) {
             log.error("发送 提醒项 到延迟消费队列 失败，reminder.id: {}", reminder.getId(), e);
             throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);
