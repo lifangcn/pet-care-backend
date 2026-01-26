@@ -11,7 +11,6 @@ import pvt.mktech.petcare.social.dto.response.PostDetailResponse;
 import pvt.mktech.petcare.social.entity.Post;
 import pvt.mktech.petcare.social.service.PostService;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.usercache.UserContext;
 
 @Tag(name = "动态管理", description = "动态发布、互动相关接口")
 @RestController

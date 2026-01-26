@@ -70,6 +70,19 @@ core:
   service:
     url: ${CORE_SERVICE_URL:http://localhost:8080}
 
+# JWT配置
+jwt:
+  enabled: true
+  secret-key: ${JWT_SECRET_KEY}
+  expire-time: 86400
+  refresh-expire-time: 604800
+
+# Web MVC 拦截器配置
+web:
+  mvc:
+    jwt-include-paths:
+      - /ai/document/**
+
 # 暴露网关的 actuator 端点
 management:
   server:

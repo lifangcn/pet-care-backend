@@ -27,16 +27,11 @@ public class ReminderSendConsumer {
     private final ReminderExecutionService reminderExecutionService;
     private final SseConnectionManager sseConnectionManager;
 
-    @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_SEND, groupId = CORE_REMINDER_SEND_CONSUMER,
+    @KafkaListener(topics = CORE_REMINDER_TOPIC_SEND, groupId = CORE_REMINDER_SEND_CONSUMER,
             containerFactory = "kafkaListenerContainerFactory")
     public void consume(@Payload String message, @Header(KafkaHeaders.RECEIVED_KEY) String key, Acknowledgment acknowledgment) {
-        try {
-            processMessage(message);
-            acknowledgment.acknowledge();
-        } catch (Exception e) {
-            log.error("消费消息失败，key: {}", key, e);
-            // Kafka 会自动重试，或手动处理
-        }
+        processMessage(message);
+        acknowledgment.acknowledge();
     }
 
     private void processMessage(String jsonString) {

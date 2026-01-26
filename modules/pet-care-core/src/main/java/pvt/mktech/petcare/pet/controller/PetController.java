@@ -6,12 +6,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.storage.OssTemplate;
-import pvt.mktech.petcare.common.usercache.UserContext;
+import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.health.dto.request.HealthRecordQueryRequest;
 import pvt.mktech.petcare.health.dto.request.HealthRecordSaveRequest;
 import pvt.mktech.petcare.health.entity.HealthRecord;
@@ -19,7 +18,6 @@ import pvt.mktech.petcare.pet.entity.Pet;
 import pvt.mktech.petcare.health.service.HealthRecordService;
 import pvt.mktech.petcare.pet.service.PetService;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**

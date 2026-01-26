@@ -73,6 +73,17 @@ jwt:
   expire-time: 86400
   refresh-expire-time: 604800
 
+# Web MVC 拦截器配置
+web:
+  mvc:
+    jwt-include-paths:
+      - /user/**
+      - /pet/**
+      - /reminder/**
+      - /activity/**
+      - /post/**
+      - /label/**
+
 # 暴露网关的 actuator 端点
 management:
   server:

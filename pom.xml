@@ -12,7 +12,6 @@
         <module>modules/pet-care-common</module>
         <module>modules/pet-care-core</module>
         <module>modules/pet-care-ai</module>
-        <module>modules/pet-care-gateway</module>
     </modules>
 
 

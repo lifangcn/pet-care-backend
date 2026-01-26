@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.common.storage.OssTemplate;
-import pvt.mktech.petcare.common.usercache.UserContext;
+import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.user.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.shared.dto.CheckInStatsResponse;

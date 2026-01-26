@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMINDER_DELAY_TOPIC_PENDING;
+import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMINDER_TOPIC_PENDING;
 
 /**
  * {@code @description}: 定时任务类，找出所有激活的、且计划时间在未来一段时间内的提醒
@@ -80,13 +80,13 @@ public class ReminderScanScheduler {
                     // 1.1.如果是单次提醒，将下次触发事件设置为空
                     if (reminder.getRepeatType() == null || "NONE".equals(reminder.getRepeatType())) {
                         reminderService.updateNextTriggerTimeById(null, reminder.getId());
-                        continue;
+                    } else {
+                        // 1.2.如果是重复提醒，计算并更新"下一次触发时间"，而不改变 schedule_time
+                        LocalDateTime originalTime = reminder.getNextTriggerTime();
+                        updateNextTriggerTimeOnly(reminder);
+                        log.info("更新 Reminder.nextTriggerTime：[ID:{}], before:{}, after:{}",
+                                reminder.getId(), originalTime, reminder.getNextTriggerTime()); // 更新后的值
                     }
-                    // 1.2.如果是重复提醒，计算并更新"下一次触发时间"，而不改变 schedule_time
-                    LocalDateTime originalTime = reminder.getNextTriggerTime();
-                    updateNextTriggerTimeOnly(reminder);
-                    log.info("更新 Reminder.nextTriggerTime：[ID:{}], before:{}, after:{}",
-                            reminder.getId(), originalTime, reminder.getNextTriggerTime()); // 更新后的值
                     // 2.发送消息到延迟消费队列
                     forwardToPendingQueue(reminder);
                 }
@@ -112,9 +112,9 @@ public class ReminderScanScheduler {
         try {
             String key = reminder.getId().toString();
             String value = JSONUtil.toJsonStr(messageDto);
-            kafkaTemplate.send(CORE_REMINDER_DELAY_TOPIC_PENDING, key, value).get();
+            kafkaTemplate.send(CORE_REMINDER_TOPIC_PENDING, key, value).get();
             log.info("发送 提醒项 到延迟消费队列 成功，topic: {}, key: {}, body: {}",
-                    CORE_REMINDER_DELAY_TOPIC_PENDING, key, messageDto);
+                    CORE_REMINDER_TOPIC_PENDING, key, messageDto);
         } catch (Exception e) {
             log.error("发送 提醒项 到延迟消费队列 失败，reminder.id: {}", reminder.getId(), e);
             throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);

@@ -13,14 +13,13 @@ import pvt.mktech.petcare.common.thread.ThreadPoolManager;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
- * {@code @description}:
- * {@code @date}: 2026/1/15 15:04
- *
- * @author Michael
+ * {@code @description} 异步线程池配置
+ * {@code @date} 2026-01-25
+ * {@code @author} Michael
  */
 @Slf4j
 @Configuration
-public class WebMvcConfig implements WebMvcConfigurer {
+public class AsyncConfig implements WebMvcConfigurer {
 
     @Resource
     private MeterRegistry meterRegistry;
@@ -33,5 +32,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
         threadPoolExecutor.prestartAllCoreThreads();
         configurer.setTaskExecutor(new TaskExecutorAdapter(threadPoolExecutor));
         configurer.setDefaultTimeout(30000);
+        log.info("异步线程池配置成功");
     }
 }

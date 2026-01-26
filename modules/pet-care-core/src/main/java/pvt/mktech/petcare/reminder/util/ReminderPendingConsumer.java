@@ -10,7 +10,6 @@ import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.reminder.dto.message.ReminderExecutionMessageDto;
@@ -47,7 +46,7 @@ public class ReminderPendingConsumer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ReminderExecutionService reminderExecutionService;
 
-    @KafkaListener(topics = CORE_REMINDER_DELAY_TOPIC_PENDING, groupId = CORE_REMINDER_PENDING_CONSUMER,
+    @KafkaListener(topics = CORE_REMINDER_TOPIC_PENDING, groupId = CORE_REMINDER_PENDING_CONSUMER,
             containerFactory = "kafkaListenerContainerFactory")
     public void consume(@Payload String message,
                         @Header(KafkaHeaders.RECEIVED_KEY) String key,
@@ -77,24 +76,20 @@ public class ReminderPendingConsumer {
         if (delayMillis <= 0) {
             ReminderExecutionMessageDto forwardMessageDto = new ReminderExecutionMessageDto();
             BeanUtil.copyProperties(execution, forwardMessageDto);
-            sendToSendQueue(forwardMessageDto);
+            String key = forwardMessageDto.getId().toString();
+            String value = JSONUtil.toJsonStr(forwardMessageDto);
+            kafkaTemplate.send(CORE_REMINDER_TOPIC_SEND, key, value)
+                    .thenAccept(result -> log.info("发送 提醒执行 到立即消费队列，topic: {}, key: {}, body: {}", CORE_REMINDER_TOPIC_SEND, key, forwardMessageDto))
+                    .exceptionally(throwable -> {
+                        log.error("发送消息到发送队列失败", throwable);
+                        throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, throwable);
+            });
             return;
         }
         long timestamp = System.currentTimeMillis() + delayMillis;
         // 4.2.如果距离提醒时间还有一段时间，存入 Redis 延迟队列，后续每秒扫描，到期后再处理。
         redisUtil.addToZSet(CORE_REMINDER_SEND_QUEUE_KEY, execution.getId().toString(), timestamp);
         log.info("存入 Redis 延迟队列，execution.id: {}， 消费时间戳：{}", execution.getId(), timestamp);
-    }
-
-    private void sendToSendQueue(ReminderExecutionMessageDto messageDto) {
-        String key = messageDto.getId().toString();
-        String value = JSONUtil.toJsonStr(messageDto);
-        kafkaTemplate.send(CORE_REMINDER_DELAY_TOPIC_SEND, key, value)
-                .thenAccept(result -> log.info("发送 提醒执行 到立即消费队列，topic: {}, key: {}, body: {}", CORE_REMINDER_DELAY_TOPIC_SEND, key, messageDto))
-                .exceptionally(throwable -> {
-                    log.error("发送消息到发送队列失败", throwable);
-                    throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, throwable);
-        });
     }
 
     /**

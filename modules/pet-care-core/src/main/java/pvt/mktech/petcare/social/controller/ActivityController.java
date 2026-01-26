@@ -12,7 +12,7 @@ import pvt.mktech.petcare.social.entity.Post;
 import pvt.mktech.petcare.social.service.ActivityService;
 import pvt.mktech.petcare.social.service.PostService;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.usercache.UserContext;
+import pvt.mktech.petcare.common.web.UserContext;
 
 import java.util.List;
 

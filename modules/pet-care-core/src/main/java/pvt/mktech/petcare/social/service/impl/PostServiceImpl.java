@@ -17,7 +17,7 @@ import pvt.mktech.petcare.social.service.InteractionService;
 import pvt.mktech.petcare.social.service.LabelService;
 import pvt.mktech.petcare.social.service.PostLabelService;
 import pvt.mktech.petcare.social.service.PostService;
-import pvt.mktech.petcare.common.usercache.UserContext;
+import pvt.mktech.petcare.common.web.UserContext;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

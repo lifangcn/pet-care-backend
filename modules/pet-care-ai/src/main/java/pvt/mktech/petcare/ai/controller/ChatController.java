@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import pvt.mktech.petcare.ai.advisor.MyLoggerAdvisor;
 import pvt.mktech.petcare.ai.util.ConversationIdGenerator;
 import pvt.mktech.petcare.common.constant.CommonConstant;
-import pvt.mktech.petcare.common.usercache.UserContext;
+import pvt.mktech.petcare.common.web.UserContext;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
