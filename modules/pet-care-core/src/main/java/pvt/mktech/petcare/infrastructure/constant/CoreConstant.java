@@ -22,9 +22,8 @@ public class CoreConstant {
     public static final Long WECHAT_LOGIN_TTL = 300L;
 
     // 消息队列相关(组装消息体逻辑：Topic: CORE_REMINDER_PENDING/SEND, Tag: pending|send, Key: executionId, Body: ExecutionDto)
-    public static final String CORE_REMINDER_TOPIC_PENDING = "CORE_REMINDER_PENDING";
-    public static final String CORE_REMINDER_TOPIC_SEND = "CORE_REMINDER_SEND";
-    public static final String CORE_REMINDER_PRODUCER = "core-reminder-producer";
+    public static final String CORE_REMINDER_PENDING_TOPIC = "CORE_REMINDER_PENDING";
+    public static final String CORE_REMINDER_SEND_TOPIC = "CORE_REMINDER_SEND";
     public static final String CORE_REMINDER_PENDING_CONSUMER = "core-reminder-pending-consumer";
     public static final String CORE_REMINDER_SEND_CONSUMER = "core-reminder-send-consumer";
     // Redis 对于延迟消费的信息，进行缓存

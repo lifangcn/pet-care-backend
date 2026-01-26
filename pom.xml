@@ -31,6 +31,8 @@
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
         <!-- 任务调度：XXL-JOB 核心依赖 -->
         <xxl-job.version>3.2.0</xxl-job.version>
+        <!-- 消息队列：RocketMQ -->
+        <rocketmq.version>5.3.2</rocketmq.version>
         <!-- 文件存储：MinIO -->
         <minio.version>8.5.7</minio.version>
         <!-- 文件存储：Aliyun OSS -->
