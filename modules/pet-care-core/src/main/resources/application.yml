@@ -45,10 +45,16 @@ aliyun:
     bucket-name: ${OSS_BUCKET_NAME}
     enabled: true
 
-# Kafka 配置
-kafka:
-  bootstrap-servers: localhost:9092
-
+# RocketMQ 配置
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: core-reminder-producer
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
+  consumer:
+    consume-thread-min: 1
+    consume-thread-max: 1
 
 # 内部服务间调用配置（serverless 环境使用）
 internal:
@@ -62,16 +68,23 @@ scheduler:
     look-ahead-minutes: 720
     lock-wait-time: 3
     lock-lease-time: 30
-  delay-queue-scan:
-    cron: 0/1 * * * * ?
-    lock-wait-time: 1
-    lock-lease-time: 10
 # JWT配置
 jwt:
   enabled: true
   secret-key: ${JWT_SECRET_KEY}
   expire-time: 86400
   refresh-expire-time: 604800
+
+# Web MVC 拦截器配置
+web:
+  mvc:
+    jwt-include-paths:
+      - /user/**
+      - /pet/**
+      - /reminder/**
+      - /activity/**
+      - /post/**
+      - /label/**
 
 # 暴露网关的 actuator 端点
 management:
@@ -129,8 +142,7 @@ logging:
     pvt.mktech.petcare.club: INFO
     com.mybatisflex: INFO
     com.alibaba.nacos: WARN
-    org.apache.kafka: WARN
-    org.springframework.kafka: WARN
+    org.apache.rocketmq: WARN
     com.zaxxer.hikari: WARN
     com.xxl.job: WARN
     org.redisson.command: INFO

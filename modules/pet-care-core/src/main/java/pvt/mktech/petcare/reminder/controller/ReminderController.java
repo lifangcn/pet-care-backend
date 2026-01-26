@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import pvt.mktech.petcare.common.dto.response.Result;
-import pvt.mktech.petcare.common.usercache.UserContext;
+import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.reminder.dto.request.ReminderExecutionSaveRequest;
 import pvt.mktech.petcare.reminder.dto.request.ReminderQueryRequest;
 import pvt.mktech.petcare.reminder.dto.request.ReminderSaveRequest;

@@ -1,34 +1,35 @@
-package pvt.mktech.petcare.common.usercache;
+package pvt.mktech.petcare.common.web;
 
-import cn.hutool.core.util.StrUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import pvt.mktech.petcare.common.constant.CommonConstant;
-import pvt.mktech.petcare.common.dto.UserInfoDto;
 
 /**
- * {@code @description}: 获取用户信息拦截器
- * {@code @date}: 2025/12/17 08:46
- *
- * @author Michael
+ * {@code @description} 获取用户信息拦截器
+ * {@code @date} 2026-01-25
+ * {@code @author} Michael
  */
 @Slf4j
+@Component
 public class UserInfoInterceptor implements HandlerInterceptor {
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
                              Object handler) throws Exception {
-        String userId = request.getHeader(CommonConstant.HEADER_USER_ID);
-        if (StrUtil.isNotBlank(userId)) {
+        // 从 request attribute 中获取 JWT 拦截器解析出的 userId
+        Object userIdAttr = request.getAttribute(CommonConstant.HEADER_USER_ID);
+        if (userIdAttr != null) {
             try {
-                UserContext.setUserId(Long.parseLong(userId));
+                Long userId = (Long) userIdAttr;
+                UserContext.setUserId(userId);
                 if (log.isDebugEnabled()) {
                     log.debug("用户信息设置成功: userId={}", userId);
                 }
-            } catch (NumberFormatException e) {
-                // userId 格式错误，记录日志但不影响请求继续
-                log.warn("无效的 userId 格式: {}", userId);
+            } catch (Exception e) {
+                log.warn("设置 userId 失败", e);
             }
         }
         return true;

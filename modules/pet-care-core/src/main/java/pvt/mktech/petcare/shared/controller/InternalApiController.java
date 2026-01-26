@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.shared.controller.serverless;
+package pvt.mktech.petcare.shared.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import lombok.RequiredArgsConstructor;

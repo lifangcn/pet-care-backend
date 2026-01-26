@@ -5,7 +5,7 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import pvt.mktech.petcare.common.usercache.UserContext;
+import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.pet.entity.Pet;
 import pvt.mktech.petcare.pet.mapper.PetsMapper;
 import pvt.mktech.petcare.pet.service.PetService;
