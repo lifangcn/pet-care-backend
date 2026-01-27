@@ -6,15 +6,73 @@ spring:
     name: pet-care-ai
   profiles:
     active: local
-  # MySQL 配置
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: "!QAZ2wsx"
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  # Kafka 配置（CDC 消费）
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: es-sync-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 10
+    listener:
+      ack-mode: manual
+      concurrency: 3
+  # AI 配置
+  ai:
+    elasticsearch:
+      uris: http://localhost:9200
+    # 百炼
+    dashscope:
+      api-key: ${API_KEY}
+      embedding:
+        options:
+          model: text-embedding-v3
+
+    # 会话记忆 Redis 配置
+      chat:
+        memory:
+          redis:
+            host: localhost
+            port: 6379
+            password: "!QAZ2wsx"
+            timeout: 5000
+            max-messages: 10
+
+# Mybatis-Flex 多数据源配置
+mybatis-flex:
   datasource:
-    url: jdbc:mysql://localhost:3306/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: "!QAZ2wsx"
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
+    default:
+      url: jdbc:mysql://localhost:3306/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+      username: root
+      password: "!QAZ2wsx"
+      # Hikari 连接池配置
       maximum-pool-size: 20
       minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+    # Core 数据源：pet_care_core（用于 CDC 聚合查询）
+    core:
+      url: jdbc:mysql://localhost:3306/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+      username: root
+      password: "!QAZ2wsx"
+      maximum-pool-size: 10
+      minimum-idle: 2
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
@@ -31,15 +89,32 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+  # Kafka 配置（CDC 消费）
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: es-sync-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 10
+    listener:
+      ack-mode: manual
+      concurrency: 3
   # AI 配置
   ai:
-    # 使用 PGVector，自定义配置PG数据源
-    pgvector:
-      datasource:
-        url: jdbc:postgresql://localhost:5432/pet_care_ai_vector?sslmode=disable&timezone=Asia/Shanghai
-        username: postgres_root
-        password: "!QAZ2wsx"
-        driver-class-name: org.postgresql.Driver
+    elasticsearch:
+      uris: http://localhost:9200
+
+
+# 使用 PGVector，自定义配置PG数据源（已废弃）
+#    pgvector:
+#      datasource:
+#        url: jdbc:postgresql://localhost:5432/pet_care_ai_vector?sslmode=disable&timezone=Asia/Shanghai
+#        username: postgres_root
+#        password: "!QAZ2wsx"
+#        driver-class-name: org.postgresql.Driver
     # 百炼
     dashscope:
       api-key: ${API_KEY}
@@ -48,14 +123,14 @@ spring:
           model: text-embedding-v3
 
     # 会话记忆 Redis 配置
-    chat:
-      memory:
-        redis:
-          host: localhost
-          port: 6379
-          password: "!QAZ2wsx"
-          timeout: 5000
-          max-messages: 10
+      chat:
+        memory:
+          redis:
+            host: localhost
+            port: 6379
+            password: "!QAZ2wsx"
+            timeout: 5000
+            max-messages: 10
 
 aliyun:
   oss:
@@ -69,6 +144,11 @@ aliyun:
 core:
   service:
     url: ${CORE_SERVICE_URL:http://localhost:8080}
+
+# 是否自动创建索引
+es:
+  index:
+    auto-init: true
 
 # JWT配置
 jwt:

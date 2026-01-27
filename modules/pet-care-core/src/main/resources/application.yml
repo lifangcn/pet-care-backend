@@ -35,6 +35,19 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+  # Kafka 配置（CDC 消费）
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: cdc-consumer-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 10
+    listener:
+      ack-mode: manual
+      concurrency: 3
 
 # 文件存储 配置：Aliyun OSS
 aliyun:
@@ -44,11 +57,6 @@ aliyun:
     access-key-secret: ${OSS_ACCESS_KEY_SECRET}
     bucket-name: ${OSS_BUCKET_NAME}
     enabled: true
-
-# Kafka 配置
-kafka:
-  bootstrap-servers: localhost:9092
-
 
 # 内部服务间调用配置（serverless 环境使用）
 internal:

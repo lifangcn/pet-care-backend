@@ -11,7 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author Michael
  */
 @SpringBootApplication
-@MapperScan("pvt.mktech.petcare.ai.mapper")
+@MapperScan("pvt.mktech.petcare.ai.knowledgedocument.mapper")
 public class AiServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(AiServiceApplication.class, args);

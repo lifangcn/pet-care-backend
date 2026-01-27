@@ -27,7 +27,7 @@ public class ReminderSendConsumer {
     private final ReminderExecutionService reminderExecutionService;
     private final SseConnectionManager sseConnectionManager;
 
-    @KafkaListener(topics = CORE_REMINDER_TOPIC_SEND, groupId = CORE_REMINDER_SEND_CONSUMER,
+    @KafkaListener(topics = CORE_REMINDER_SEND_TOPIC, groupId = CORE_REMINDER_SEND_CONSUMER,
             containerFactory = "kafkaListenerContainerFactory")
     public void consume(@Payload String message, @Header(KafkaHeaders.RECEIVED_KEY) String key, Acknowledgment acknowledgment) {
         processMessage(message);

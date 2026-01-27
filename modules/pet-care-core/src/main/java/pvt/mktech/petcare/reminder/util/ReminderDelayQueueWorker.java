@@ -112,16 +112,16 @@ public class ReminderDelayQueueWorker {
         BeanUtil.copyProperties(execution, messageDto);
         String key = execution.getId().toString();
         String value = JSONUtil.toJsonStr(messageDto);
-        ProducerRecord<String, String> message = new ProducerRecord<>(CORE_REMINDER_TOPIC_SEND, null, System.currentTimeMillis(), key, value);
+        ProducerRecord<String, String> message = new ProducerRecord<>(CORE_REMINDER_SEND_TOPIC, null, System.currentTimeMillis(), key, value);
         // 3.先从 ZSet 队列中删除
         redisUtil.removeFromZSet(CORE_REMINDER_SEND_QUEUE_KEY, key);
         // 4.发送消息
         CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(message);
         future.thenAccept(result -> {
-                    log.info("成功发送 提醒执行 消息，topic: {}, key: {}, offset: {}", CORE_REMINDER_TOPIC_SEND, key, result.getRecordMetadata().offset());
+                    log.info("成功发送 提醒执行 消息，topic: {}, key: {}, offset: {}", CORE_REMINDER_SEND_TOPIC, key, result.getRecordMetadata().offset());
                 })
                 .exceptionally(throwable -> {
-                    log.error("发送 提醒执行 到立即消费队列失败，topic: {}, key: {}, 异常: {}", CORE_REMINDER_TOPIC_SEND, key, throwable.getMessage());
+                    log.error("发送 提醒执行 到立即消费队列失败，topic: {}, key: {}, 异常: {}", CORE_REMINDER_SEND_TOPIC, key, throwable.getMessage());
                     log.error("转发消息到发送队列失败，executionId={} 仍保留在延迟队列中", key);
                     throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, throwable);
                     // 可以实现重试逻辑或记录到失败队列

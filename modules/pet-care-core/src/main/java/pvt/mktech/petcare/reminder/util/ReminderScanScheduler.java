@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMINDER_TOPIC_PENDING;
+import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMINDER_PENDING_TOPIC;
 
 /**
  * {@code @description}: 定时任务类，找出所有激活的、且计划时间在未来一段时间内的提醒
@@ -112,9 +112,9 @@ public class ReminderScanScheduler {
         try {
             String key = reminder.getId().toString();
             String value = JSONUtil.toJsonStr(messageDto);
-            kafkaTemplate.send(CORE_REMINDER_TOPIC_PENDING, key, value).get();
+            kafkaTemplate.send(CORE_REMINDER_PENDING_TOPIC, key, value).get();
             log.info("发送 提醒项 到延迟消费队列 成功，topic: {}, key: {}, body: {}",
-                    CORE_REMINDER_TOPIC_PENDING, key, messageDto);
+                    CORE_REMINDER_PENDING_TOPIC, key, messageDto);
         } catch (Exception e) {
             log.error("发送 提醒项 到延迟消费队列 失败，reminder.id: {}", reminder.getId(), e);
             throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);

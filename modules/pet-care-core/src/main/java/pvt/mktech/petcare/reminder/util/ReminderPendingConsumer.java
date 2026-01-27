@@ -46,7 +46,7 @@ public class ReminderPendingConsumer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ReminderExecutionService reminderExecutionService;
 
-    @KafkaListener(topics = CORE_REMINDER_TOPIC_PENDING, groupId = CORE_REMINDER_PENDING_CONSUMER,
+    @KafkaListener(topics = CORE_REMINDER_PENDING_TOPIC, groupId = CORE_REMINDER_PENDING_CONSUMER,
             containerFactory = "kafkaListenerContainerFactory")
     public void consume(@Payload String message,
                         @Header(KafkaHeaders.RECEIVED_KEY) String key,
@@ -78,8 +78,8 @@ public class ReminderPendingConsumer {
             BeanUtil.copyProperties(execution, forwardMessageDto);
             String key = forwardMessageDto.getId().toString();
             String value = JSONUtil.toJsonStr(forwardMessageDto);
-            kafkaTemplate.send(CORE_REMINDER_TOPIC_SEND, key, value)
-                    .thenAccept(result -> log.info("发送 提醒执行 到立即消费队列，topic: {}, key: {}, body: {}", CORE_REMINDER_TOPIC_SEND, key, forwardMessageDto))
+            kafkaTemplate.send(CORE_REMINDER_SEND_TOPIC, key, value)
+                    .thenAccept(result -> log.info("发送 提醒执行 到立即消费队列，topic: {}, key: {}, body: {}", CORE_REMINDER_SEND_TOPIC, key, forwardMessageDto))
                     .exceptionally(throwable -> {
                         log.error("发送消息到发送队列失败", throwable);
                         throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, throwable);
