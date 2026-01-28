@@ -79,7 +79,7 @@ public class PetController {
      * @return {@code true} 删除成功，{@code false} 删除失败
      */
     @DeleteMapping("/remove/{id}")
-    public boolean remove(@PathVariable Long id) {
+    public boolean remove(@PathVariable("id") Long id) {
         return petService.removeById(id);
     }
 
