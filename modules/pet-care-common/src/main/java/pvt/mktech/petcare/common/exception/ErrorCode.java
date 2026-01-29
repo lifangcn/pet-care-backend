@@ -16,8 +16,9 @@ public enum ErrorCode {
     NETWORK_ERROR("00003", "网络异常"),
     LOCK_ACQUIRE_FAILED("00004", "获取分布式锁失败"),
     LOCK_INTERRUPTED("00005", "获取分布式锁被中断"),
-    MESSAGE_SEND_FAILED("00006", "消息发送失败"),
-    ID_GENERATOR_ERROR("00007", "ID生成器异常"),
+    LOCK_OPERATION_FAILED("00006", "持有分布式锁的操作失败"),
+    MESSAGE_SEND_FAILED("00007", "消息发送失败"),
+    ID_GENERATOR_ERROR("00008", "ID生成器异常"),
 
     // ========== 参数校验错误码 (01000-01999) ==========
     PARAM_ERROR("01001", "参数错误"),

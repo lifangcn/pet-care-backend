@@ -1,6 +1,5 @@
 package pvt.mktech.petcare.common.redis;
 
-import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBitSet;
 import org.redisson.api.RBucket;
 import org.redisson.api.RMap;
@@ -12,12 +11,12 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Redis缓存工具类
+ * {@code @description}: Redis缓存工具类
+ * {@code @date}: 2026/1/29 15:00
+ *
+ * @author Michael Li
  */
-@RequiredArgsConstructor
-public class RedisUtil {
-
-    private final RedissonClient redissonClient;
+public record RedisUtil(RedissonClient redissonClient) {
 
     /**
      * 设置缓存
@@ -113,6 +112,7 @@ public class RedisUtil {
 
 
     /* 扩展功能 BitMap */
+
     /**
      * 设置 BitMap 位
      *
@@ -139,7 +139,7 @@ public class RedisUtil {
     /**
      * 获取 BitMap 位
      *
-     * @param key    缓存键
+     * @param key 缓存键
      * @return BitMap，key不存在返回null
      */
     public RBitSet getBitSet(String key) {

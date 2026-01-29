@@ -10,13 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 @Slf4j
-public class RedissonLockUtil {
-
-    private final RedissonClient redissonClient;
-
-    public RedissonLockUtil(RedissonClient redissonClient) {
-        this.redissonClient = redissonClient;
-    }
+public record RedissonLockUtil(RedissonClient redissonClient) {
 
     /**
      * 可重入锁（公平锁）
@@ -64,13 +58,6 @@ public class RedissonLockUtil {
             log.error("获取锁失败，lockKey: {}", lockKey, e);
             return false;
         }
-    }
-
-    /**
-     * 尝试获取锁（默认配置）
-     */
-    public boolean tryLock(String lockKey) {
-        return tryLock(lockKey, 3, 30, TimeUnit.SECONDS);
     }
 
     /**

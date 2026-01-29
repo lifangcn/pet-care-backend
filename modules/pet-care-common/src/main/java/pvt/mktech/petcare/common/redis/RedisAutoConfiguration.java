@@ -7,6 +7,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 
+/**
+ * {@code @description}: Redis 缓存工具自动配置
+ * {@code @date}: 2026/1/29 15:00
+ *
+ * @author Michael Li
+ */
 @Slf4j
 @AutoConfiguration
 @ConditionalOnClass(RedissonClient.class)
@@ -19,15 +25,21 @@ public class RedisAutoConfiguration {
         return new RedisUtil(redissonClient);
     }
 
-    @Bean
-    public RedissonLockUtil redissonLockUtil(RedissonClient redissonClient) {
-        log.info("初始化 Redisson 分布式锁工具");
-        return new RedissonLockUtil(redissonClient);
-    }
+//    @Bean
+//    public RedissonLockUtil redissonLockUtil(RedissonClient redissonClient) {
+//        log.info("初始化 Redisson 分布式锁工具");
+//        return new RedissonLockUtil(redissonClient);
+//    }
 
     @Bean
     public DistributedIdGenerator distributedIdGenerator(RedissonClient redissonClient) {
         log.info("初始化分布式ID生成器");
         return new DistributedIdGenerator(redissonClient);
+    }
+
+    @Bean
+    public DistributedLockAspect distributedLockAspect(RedissonClient redissonClient) {
+        log.info("初始化分布式锁注解");
+        return new DistributedLockAspect(redissonClient);
     }
 }

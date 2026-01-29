@@ -1,6 +1,5 @@
 package pvt.mktech.petcare.common.redis;
 
-import lombok.RequiredArgsConstructor;
 import org.redisson.api.RedissonClient;
 
 import java.time.LocalDateTime;
@@ -9,10 +8,14 @@ import java.time.format.DateTimeFormatter;
 
 import static pvt.mktech.petcare.common.constant.CommonConstant.*;
 
-@RequiredArgsConstructor
-public class DistributedIdGenerator {
+/**
+ * {@code @description}: 自定义分布式ID生成器
+ * {@code @date}: 2026/1/29 15:00
+ *
+ * @author Michael Li
+ */
+public record DistributedIdGenerator(RedissonClient redissonClient) {
 
-    private final RedissonClient redissonClient;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy:MM:dd");
 
     /**

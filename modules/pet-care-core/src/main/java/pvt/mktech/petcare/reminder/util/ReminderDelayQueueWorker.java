@@ -7,15 +7,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.redisson.client.protocol.ScoredEntry;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
+import pvt.mktech.petcare.common.redis.DistributedLock;
 import pvt.mktech.petcare.common.redis.RedisUtil;
-import pvt.mktech.petcare.common.redis.RedissonLockUtil;
 import pvt.mktech.petcare.reminder.dto.message.ReminderExecutionMessageDto;
 import pvt.mktech.petcare.reminder.entity.ReminderExecution;
 import pvt.mktech.petcare.reminder.service.ReminderExecutionService;
@@ -25,7 +24,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.*;
 
@@ -43,53 +41,36 @@ public class ReminderDelayQueueWorker {
     private final RedisUtil redisUtil;
     private final ReminderExecutionService reminderExecutionService;
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final RedissonLockUtil redissonLockUtil;
-
-    @Value("${scheduler.delay-queue-scan.lock-wait-time:1}")
-    private Long lockWaitTime;
-    @Value("${scheduler.delay-queue-scan.lock-lease-time:10}")
-    private Long lockLeaseTime;
 
     /**
      * 扫描延迟队列并处理到期消息，使用分布式锁避免多实例重复处理
      */
-    @Scheduled(cron = "${scheduler.delay-queue-scan.cron:0/1 * * * * ?}")
+    @Scheduled(cron = "${scheduler.delay-queue-scan.cron:0/5 * * * * ?}")
+    @DistributedLock(lockKey = DELAY_QUEUE_SCAN_LOCK_KEY, waitTime = 1000, leaseTime = 4000)
     public void delayQueueScanJob() {
-        boolean locked = false;
-        try {
-            locked = redissonLockUtil.tryLock(DELAY_QUEUE_SCAN_LOCK_KEY,
-                    lockWaitTime, lockLeaseTime, TimeUnit.SECONDS);
-            if (!locked) {
-                return;
-            }
-            Collection<ScoredEntry<Object>> expiredMessages = redisUtil.rangeByScoreWithScores(
-                    CORE_REMINDER_SEND_QUEUE_KEY, 0, System.currentTimeMillis());
-            if (CollUtil.isEmpty(expiredMessages)) {
-                return;
-            }
+        Collection<ScoredEntry<Object>> expiredMessages = redisUtil.rangeByScoreWithScores(
+                CORE_REMINDER_SEND_QUEUE_KEY, 0, System.currentTimeMillis());
+        if (CollUtil.isEmpty(expiredMessages)) {
+            return;
+        }
 
-            log.info("处理 Redis 延迟提醒消息：{} 条", expiredMessages.size());
+        log.info("处理 Redis 延迟提醒消息：{} 条", expiredMessages.size());
 
-            for (ScoredEntry<Object> tuple : expiredMessages) {
-                String executionId = tuple.getValue().toString();
-                Double scheduleTime = tuple.getScore();
-                if (executionId == null || scheduleTime == null) {
-                    log.error("延迟消息格式错误，executionId={}, scheduleTime={}", executionId, scheduleTime);
-                    continue;
-                }
-                try {
-                    log.info("处理到期消息: executionId={}, 计划发送时间={}",
-                            executionId, LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduleTime.longValue()),
-                                    ZoneId.of("Asia/Shanghai")));
-
-                    this.forwardToSendQueue(Long.parseLong(executionId));
-                } catch (Exception e) {
-                    log.error("处理延时消息异常，executionId: {}", executionId, e);
-                }
+        for (ScoredEntry<Object> tuple : expiredMessages) {
+            String executionId = tuple.getValue().toString();
+            Double scheduleTime = tuple.getScore();
+            if (executionId == null || scheduleTime == null) {
+                log.error("延迟消息格式错误，executionId={}, scheduleTime={}", executionId, scheduleTime);
+                continue;
             }
-        } finally {
-            if (locked) {
-                redissonLockUtil.unlock(DELAY_QUEUE_SCAN_LOCK_KEY);
+            try {
+                log.info("处理到期消息: executionId={}, 计划发送时间={}",
+                        executionId, LocalDateTime.ofInstant(Instant.ofEpochMilli(scheduleTime.longValue()),
+                                ZoneId.of("Asia/Shanghai")));
+
+                this.forwardToSendQueue(Long.parseLong(executionId));
+            } catch (Exception e) {
+                log.error("处理延时消息异常，executionId: {}", executionId, e);
             }
         }
     }

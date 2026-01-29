@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
-import pvt.mktech.petcare.common.redis.RedissonLockUtil;
+import pvt.mktech.petcare.common.redis.DistributedLock;
 import pvt.mktech.petcare.infrastructure.constant.CoreConstant;
 import pvt.mktech.petcare.reminder.dto.message.ReminderMessageDto;
 import pvt.mktech.petcare.reminder.entity.Reminder;
@@ -18,7 +18,6 @@ import pvt.mktech.petcare.reminder.service.ReminderService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMINDER_TOPIC_PENDING;
 
@@ -33,15 +32,10 @@ import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_REMIN
 @RequiredArgsConstructor
 public class ReminderScanScheduler {
     private final ReminderService reminderService;
-    private final RedissonLockUtil redissonLockUtil;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Value("${scheduler.reminder-scan.look-ahead-minutes:30}")
     private Long lookAheadMinutes;
-    @Value("${scheduler.reminder-scan.lock-wait-time:3}")
-    private Long lockWaitTime;
-    @Value("${scheduler.reminder-scan.lock-lease-time:30}")
-    private Long lockLeaseTime;
     /**
      * 完整提醒逻辑：<br>
      * 1.ReminderScanScheduler:
@@ -62,42 +56,28 @@ public class ReminderScanScheduler {
      * 4. 轻量级: 比引入 RabbitMQ 延迟插件、Quartz 等更轻量（RocketMQ延迟等级不精确，不做讨论）
      */
     @Scheduled(cron = "${scheduler.reminder-scan.cron:0 */1 * * * ?}")  // 默认每1分钟执行一次
+    @DistributedLock(lockKey = CoreConstant.REMINDER_SCAN_LOCK_KEY)
     public void reminderScanJob() {
-        boolean locked = false;
-        try {
-            locked = redissonLockUtil.tryLock(CoreConstant.REMINDER_SCAN_LOCK_KEY,
-                    lockWaitTime, lockLeaseTime, TimeUnit.SECONDS);
-            if (locked) {
-                log.info("获取分布式锁成功，开始执行提醒扫描");
-                // 找出所有激活的、且计划时间在未来一段时间内的提醒
-                LocalDateTime now = LocalDateTime.now();
-                LocalDateTime endTime = now.plusMinutes(lookAheadMinutes);
-                List<Reminder> toTriggerReminderList = reminderService.selectRemindersByNextTriggerTime(Boolean.TRUE, now, endTime);
-                log.info("找到 {} 个提醒记录需要生成执行记录", toTriggerReminderList.size());
-                for (Reminder reminder : toTriggerReminderList) {
-                    // 更新下次提醒事件触发时间和发送消息，存在非原子性的问题
-                    // 1.更新下次提醒时间
-                    // 1.1.如果是单次提醒，将下次触发事件设置为空
-                    if (reminder.getRepeatType() == null || "NONE".equals(reminder.getRepeatType())) {
-                        reminderService.updateNextTriggerTimeById(null, reminder.getId());
-                    } else {
-                        // 1.2.如果是重复提醒，计算并更新"下一次触发时间"，而不改变 schedule_time
-                        LocalDateTime originalTime = reminder.getNextTriggerTime();
-                        updateNextTriggerTimeOnly(reminder);
-                        log.info("更新 Reminder.nextTriggerTime：[ID:{}], before:{}, after:{}",
-                                reminder.getId(), originalTime, reminder.getNextTriggerTime()); // 更新后的值
-                    }
-                    // 2.发送消息到延迟消费队列
-                    forwardToPendingQueue(reminder);
-                }
+        log.info("开始执行提醒扫描");
+        // 找出所有激活的、且计划时间在未来一段时间内的提醒
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endTime = now.plusMinutes(lookAheadMinutes);
+        List<Reminder> toTriggerReminderList = reminderService.selectRemindersByNextTriggerTime(Boolean.TRUE, now, endTime);
+        log.info("找到 {} 个提醒记录需要生成执行记录", toTriggerReminderList.size());
+        for (Reminder reminder : toTriggerReminderList) {
+            // 更新下次提醒事件触发时间和发送消息，存在非原子性的问题
+            // 1.更新下次提醒时间
+            // 1.1.如果是单次提醒，将下次触发事件设置为空
+            if (reminder.getRepeatType() == null || "NONE".equals(reminder.getRepeatType())) {
+                reminderService.updateNextTriggerTimeById(null, reminder.getId());
             } else {
-                log.info("未获取到分布式锁，跳过本次执行");
+                // 1.2.如果是重复提醒，计算并更新"下一次触发时间"，而不改变 schedule_time
+                LocalDateTime originalTime = reminder.getNextTriggerTime();
+                updateNextTriggerTimeOnly(reminder);
+                log.info("更新提醒事件的下次执行时间为：{}, [ID:{}, 原时间为:{}]", reminder.getNextTriggerTime(), reminder.getId(), originalTime); // 更新后的值
             }
-        } finally {
-            if (locked) {
-                redissonLockUtil.unlock(CoreConstant.REMINDER_SCAN_LOCK_KEY);
-                log.info("释放分布式锁");
-            }
+            // 2.发送消息到延迟消费队列
+            forwardToPendingQueue(reminder);
         }
     }
 
