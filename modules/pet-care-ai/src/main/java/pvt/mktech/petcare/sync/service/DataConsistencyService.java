@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static pvt.mktech.petcare.sync.constants.SyncConstants.ACTIVITY_INDEX;
+import static pvt.mktech.petcare.sync.constants.SyncConstants.POST_INDEX;
+
 
 /**
  * {@code @description}: 数据一致性校验服务
@@ -91,7 +94,7 @@ public class DataConsistencyService {
 
             // ES 数量
             CountRequest esRequest = CountRequest.of(c -> c
-                    .index(EsIndexConstants.POST_INDEX)
+                    .index(POST_INDEX)
                     .query(q -> q.term(t -> t.field("status").value(1)))
             );
             CountResponse esResponse = elasticsearchClient.count(esRequest);
@@ -120,7 +123,7 @@ public class DataConsistencyService {
 
             // ES 数量
             CountRequest esRequest = CountRequest.of(c -> c
-                    .index(EsIndexConstants.ACTIVITY_INDEX)
+                    .index(ACTIVITY_INDEX)
                     .query(q -> q.term(t -> t.field("status").value(1)))
             );
             CountResponse esResponse = elasticsearchClient.count(esRequest);

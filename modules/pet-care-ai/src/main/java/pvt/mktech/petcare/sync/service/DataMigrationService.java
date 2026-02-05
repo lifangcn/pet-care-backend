@@ -17,6 +17,9 @@ import pvt.mktech.petcare.sync.mapper.core.PostMapper;
 
 import java.util.List;
 
+import static pvt.mktech.petcare.sync.constants.SyncConstants.ACTIVITY_INDEX;
+import static pvt.mktech.petcare.sync.constants.SyncConstants.POST_INDEX;
+
 /**
  * {@code @description}: 数据迁移服务
  * <p>全量迁移 Post 和 Activity 数据到 ES</p>
@@ -56,7 +59,7 @@ public class DataMigrationService {
             for (PostEntity post : posts) {
                 try {
                     var document = postEntityConverter.convert(post);
-                    syncService.upsert(EsIndexConstants.POST_INDEX, String.valueOf(post.getId()), document);
+                    syncService.upsert(POST_INDEX, String.valueOf(post.getId()), document);
                     totalMigrated++;
                 } catch (Exception e) {
                     log.error("迁移 Post 失败: id={}", post.getId(), e);
@@ -95,7 +98,7 @@ public class DataMigrationService {
             for (ActivityEntity activity : activities) {
                 try {
                     var document = activityEntityConverter.convert(activity);
-                    syncService.upsert(EsIndexConstants.ACTIVITY_INDEX, String.valueOf(activity.getId()), document);
+                    syncService.upsert(ACTIVITY_INDEX, String.valueOf(activity.getId()), document);
                     totalMigrated++;
                 } catch (Exception e) {
                     log.error("迁移 Activity 失败: id={}", activity.getId(), e);

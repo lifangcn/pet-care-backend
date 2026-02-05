@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static pvt.mktech.petcare.sync.constants.SyncConstants.ACTIVITY_INDEX;
+import static pvt.mktech.petcare.sync.constants.SyncConstants.POST_INDEX;
+
 /**
  * {@code @description}: 全文检索服务（基于 BM25）
  * <p>Post/Activity 采用纯 BM25 检索，满足关键词匹配场景</p>
@@ -32,14 +35,14 @@ public class HybridSearchService {
      * 检索 Post（BM25）
      */
     public List<Map<String, Object>> hybridSearchPosts(String query, int size, double minScore) {
-        return bm25Search(EsIndexConstants.POST_INDEX, query, List.of("title^2", "content"), size, minScore);
+        return bm25Search(POST_INDEX, query, List.of("title^2", "content"), size, minScore);
     }
 
     /**
      * 检索 Activity（BM25）
      */
     public List<Map<String, Object>> hybridSearchActivities(String query, int size, double minScore) {
-        return bm25Search(EsIndexConstants.ACTIVITY_INDEX, query, List.of("title^2", "description", "address"), size, minScore);
+        return bm25Search(ACTIVITY_INDEX, query, List.of("title^2", "description", "address"), size, minScore);
     }
 
     /**

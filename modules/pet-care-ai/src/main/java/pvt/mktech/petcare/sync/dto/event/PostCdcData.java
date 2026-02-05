@@ -57,5 +57,20 @@ public class PostCdcData implements CdcData {
     private Long activityId;
 
     @JsonProperty("created_at")
-    private Long createdAt;
+    private String createdAt;
+
+    @JsonProperty("updated_at")
+    private String updatedAt;
+
+    @JsonProperty("is_deleted")
+    private Integer isDeleted;
+
+    @JsonProperty("deleted_at")
+    private String deletedAt;
+
+    @JsonProperty("rating_count")
+    private Integer ratingCount;
+
+    @JsonProperty("rating_total")
+    private Integer ratingTotal;
 }
