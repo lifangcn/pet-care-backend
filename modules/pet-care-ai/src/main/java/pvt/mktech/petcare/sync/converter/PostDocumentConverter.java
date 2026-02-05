@@ -1,12 +1,12 @@
 package pvt.mktech.petcare.sync.converter;
 
-import cn.hutool.core.date.DateUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.sync.dto.EsPostDocument;
 import pvt.mktech.petcare.sync.dto.event.PostCdcData;
+import pvt.mktech.petcare.sync.util.DateTimeConverter;
 
 import java.time.Instant;
 import java.util.List;
@@ -41,7 +41,7 @@ public class PostDocumentConverter implements DocumentConverter<PostCdcData, EsP
         doc.setViewCount(cdcData.getViewCount());
         doc.setStatus(cdcData.getStatus());
         doc.setActivityId(cdcData.getActivityId());
-        doc.setCreatedAt(Instant.ofEpochMilli(cdcData.getCreatedAt()));
+        doc.setCreatedAt(DateTimeConverter.parseCanalDateTime(cdcData.getCreatedAt()));
         return doc;
     }
 

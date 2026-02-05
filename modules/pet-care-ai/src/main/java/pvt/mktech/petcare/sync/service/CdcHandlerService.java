@@ -1,7 +1,5 @@
 package pvt.mktech.petcare.sync.service;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,13 +7,16 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.sync.converter.DocumentConverter;
+import pvt.mktech.petcare.sync.dto.event.CanalEvent;
 import pvt.mktech.petcare.sync.dto.event.CdcData;
-import pvt.mktech.petcare.sync.dto.event.DebeziumEvent;
+
+import java.util.List;
 
 /**
  * {@code @description}: CDC处理核心服务
  * <p>提供通用的CDC事件处理逻辑，消除Listener中的重复代码</p>
  * {@code @date}: 2026-01-30
+ *
  * @author Michael
  */
 @Slf4j
@@ -27,7 +28,7 @@ public class CdcHandlerService {
     private final SyncService syncService;
 
     /**
-     * 处理CDC事件（通用模板方法）
+     * 处理 Canal CDC 事件（Canal Flat Message 格式）
      *
      * @param record      Kafka消息记录
      * @param cdcDataType CDC数据类型
@@ -37,7 +38,7 @@ public class CdcHandlerService {
      * @param <T>         CDC数据类型
      * @param <R>         ES文档类型
      */
-    public <T extends CdcData, R> void handleCdcEvent(
+    public <T extends CdcData, R> void handleCanalEvent(
             ConsumerRecord<String, String> record,
             Class<T> cdcDataType,
             DocumentConverter<T, R> converter,
@@ -46,53 +47,53 @@ public class CdcHandlerService {
 
         try {
             String message = record.value();
-            log.info("收到 CDC 消息: message={}, topic={}, partition={}, offset={}",
+            log.info("收到 Canal CDC 消息: message={}, topic={}, partition={}, offset={}",
                     message, record.topic(), record.partition(), record.offset());
 
-            // 1. 解析 Debezium 消息
-            DebeziumEvent<T> event = parseEvent(message, cdcDataType);
+            // 1. 解析 Canal 消息
+            CanalEvent<T> event = parseCanalEvent(message, cdcDataType);
 
-            // 2. 判断操作类型并处理
-            String op = event.getOp();
-            T cdcData = event.getAfter();
-
-            if (cdcData == null) {
-                // delete 操作
-                T beforeData = event.getBefore();
-                if (beforeData != null && beforeData.getId() != null) {
-                    handleDelete(index, beforeData.getId());
-                } else {
-                    log.warn("Delete操作缺少before数据: {}", message);
+            // 2. Canal data 是数组，需要遍历处理（批量变更）
+            List<T> dataList = event.getData();
+            if (dataList == null || dataList.isEmpty()) {
+                log.warn("Canal 消息 data 为空: {}", message);
+                if (ack != null) {
+                    ack.acknowledge();
                 }
-            } else if ("c".equals(op) || "u".equals(op)) {
-                // create 或 update
-                handleUpsert(index, cdcData, converter);
-            } else if ("r".equals(op)) {
-                // read（快照读取）
-                handleUpsert(index, cdcData, converter);
-            } else {
-                log.info("忽略操作类型: op={}", op);
+                return;
             }
 
-            // 3. 手动提交 offset
+            // 3. 根据操作类型处理
+            String type = event.getType();
+            for (T cdcData : dataList) {
+                if ("DELETE".equals(type)) {
+                    handleDelete(index, cdcData.getId());
+                } else if ("INSERT".equals(type) || "UPDATE".equals(type)) {
+                    handleUpsert(index, cdcData, converter);
+                } else {
+                    log.info("忽略操作类型: type={}", type);
+                }
+            }
+
+            // 4. 手动提交 offset
             if (ack != null) {
                 ack.acknowledge();
             }
 
         } catch (Exception e) {
-            log.error("处理 CDC 消息失败: topic={}, partition={}, offset={}", 
+            log.error("处理 Canal CDC 消息失败: topic={}, partition={}, offset={}",
                     record.topic(), record.partition(), record.offset(), e);
             // 异常时不提交offset，等待下次重试
         }
     }
 
     /**
-     * 解析 Debezium 消息
+     * 解析 Canal 消息（Flat Message 格式）
      */
-    private <T> DebeziumEvent<T> parseEvent(String message, Class<T> dataType) throws Exception {
+    private <T> CanalEvent<T> parseCanalEvent(String message, Class<T> dataType) throws Exception {
         return objectMapper.readValue(
                 message,
-                objectMapper.getTypeFactory().constructParametricType(DebeziumEvent.class, dataType)
+                objectMapper.getTypeFactory().constructParametricType(CanalEvent.class, dataType)
         );
     }
 
@@ -107,10 +108,10 @@ public class CdcHandlerService {
         try {
             // 转换为ES文档
             R document = converter.convert(cdcData);
-            
+
             // 同步到ES
             syncService.upsert(index, String.valueOf(cdcData.getId()), document);
-            
+
             log.info("CDC upsert 成功: index={}, id={}", index, cdcData.getId());
         } catch (Exception e) {
             log.error("CDC upsert 失败: index={}, id={}", index, cdcData.getId(), e);

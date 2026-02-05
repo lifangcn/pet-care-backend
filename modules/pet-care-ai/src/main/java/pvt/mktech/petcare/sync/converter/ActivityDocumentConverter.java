@@ -28,8 +28,8 @@ public class ActivityDocumentConverter implements DocumentConverter<ActivityCdcD
         doc.setTitle(cdcData.getTitle());
         doc.setDescription(cdcData.getDescription());
         doc.setActivityType(cdcData.getActivityType());
-        doc.setActivityTime(Instant.ofEpochMilli(cdcData.getActivityTime()));
-        doc.setEndTime(Instant.ofEpochMilli(cdcData.getEndTime()));
+        doc.setActivityTime(DateTimeConverter.parseCanalDateTime(cdcData.getActivityTime()));
+        doc.setEndTime(DateTimeConverter.parseCanalDateTime(cdcData.getEndTime()));
         doc.setAddress(cdcData.getAddress());
         doc.setOnlineLink(cdcData.getOnlineLink());
         doc.setMaxParticipants(cdcData.getMaxParticipants());
@@ -37,7 +37,7 @@ public class ActivityDocumentConverter implements DocumentConverter<ActivityCdcD
         doc.setStatus(cdcData.getStatus());
         doc.setCheckInEnabled(cdcData.getCheckInEnabled());
         doc.setCheckInCount(cdcData.getCheckInCount());
-        doc.setCreatedAt(Instant.ofEpochMilli(cdcData.getCreatedAt()));
+        doc.setCreatedAt(DateTimeConverter.parseCanalDateTime(cdcData.getCreatedAt()));
         return doc;
     }
 }

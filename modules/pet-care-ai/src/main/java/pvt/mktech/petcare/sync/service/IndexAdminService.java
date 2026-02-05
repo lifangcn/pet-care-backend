@@ -12,6 +12,8 @@ import pvt.mktech.petcare.sync.constants.EsIndexMappings;
 
 import java.io.StringReader;
 
+import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
+
 /**
  * {@code @description}: Elasticsearch 索引管理服务
  * {@code @date}: 2026-01-30
@@ -40,21 +42,21 @@ public class IndexAdminService {
      * 创建知识库文档索引
      */
     public boolean createKnowledgeDocumentIndex() {
-        return createIndexFromMapping(EsIndexConstants.KNOWLEDGE_DOCUMENT_INDEX, EsIndexMappings.KNOWLEDGE_DOCUMENT_MAPPING);
+        return createIndexFromMapping(KNOWLEDGE_DOCUMENT_INDEX, EsIndexMappings.KNOWLEDGE_DOCUMENT_MAPPING);
     }
 
     /**
      * 创建动态(Post)索引
      */
     public boolean createPostIndex() {
-        return createIndexFromMapping(EsIndexConstants.POST_INDEX, EsIndexMappings.POST_MAPPING);
+        return createIndexFromMapping(POST_INDEX, EsIndexMappings.POST_MAPPING);
     }
 
     /**
      * 创建活动(Activity)索引
      */
     public boolean createActivityIndex() {
-        return createIndexFromMapping(EsIndexConstants.ACTIVITY_INDEX, EsIndexMappings.ACTIVITY_MAPPING);
+        return createIndexFromMapping(ACTIVITY_INDEX, EsIndexMappings.ACTIVITY_MAPPING);
     }
 
     /**

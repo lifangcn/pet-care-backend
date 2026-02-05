@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
+
 /**
  * {@code @description}: 多索引统一检索工具
  * 通过 Function Calling 让 AI 自主检索知识库、Post、Activity
@@ -46,7 +48,7 @@ public class MultiIndexSearchTool {
     public List<SearchResult> searchKnowledge(KnowledgeSearchRequest request) {
         log.info("AI 调用知识库检索: query={}, topK={}", request.query(), request.topK());
         int topK = request.topK() != null && request.topK() > 0 ? Math.min(request.topK(), 10) : 5;
-        return knnSearch(EsIndexConstants.KNOWLEDGE_DOCUMENT_INDEX, request.query(), topK);
+        return knnSearch(KNOWLEDGE_DOCUMENT_INDEX, request.query(), topK);
     }
 
     /**
@@ -57,7 +59,7 @@ public class MultiIndexSearchTool {
     public List<SearchResult> searchPosts(PostSearchRequest request) {
         log.info("AI 调用动态检索: query={}, topK={}", request.query(), request.topK());
         int topK = request.topK() != null && request.topK() > 0 ? Math.min(request.topK(), 10) : 5;
-        return bm25Search(EsIndexConstants.POST_INDEX, request.query(), List.of("title^2", "content"), topK, "post");
+        return bm25Search(POST_INDEX, request.query(), List.of("title^2", "content"), topK, "post");
     }
 
     /**
@@ -68,7 +70,7 @@ public class MultiIndexSearchTool {
     public List<SearchResult> searchActivities(ActivitySearchRequest request) {
         log.info("AI 调用活动检索: query={}, topK={}", request.query(), request.topK());
         int topK = request.topK() != null && request.topK() > 0 ? Math.min(request.topK(), 10) : 5;
-        return bm25Search(EsIndexConstants.ACTIVITY_INDEX, request.query(), List.of("title^2", "description", "address"), topK, "activity");
+        return bm25Search(ACTIVITY_INDEX, request.query(), List.of("title^2", "description", "address"), topK, "activity");
     }
 
     /**

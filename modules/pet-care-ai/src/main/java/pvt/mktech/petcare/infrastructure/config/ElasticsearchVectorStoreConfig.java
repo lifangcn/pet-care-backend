@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import pvt.mktech.petcare.sync.constants.EsIndexConstants;
 
+import static pvt.mktech.petcare.sync.constants.SyncConstants.KNOWLEDGE_DOCUMENT_INDEX;
+
 /**
  * {@code @description}: Elasticsearch 向量存储配置类
  * {@code @date}: 2026-01-30
@@ -29,7 +31,7 @@ public class ElasticsearchVectorStoreConfig {
     @Bean
     public VectorStore elasticsearchVectorStore(RestClient restClient, EmbeddingModel dashScopeEmbeddingModel) {
         ElasticsearchVectorStoreOptions options = new ElasticsearchVectorStoreOptions();
-        options.setIndexName(EsIndexConstants.KNOWLEDGE_DOCUMENT_INDEX);
+        options.setIndexName(KNOWLEDGE_DOCUMENT_INDEX);
         options.setDimensions(1024);  // DashScope text-embedding-v3 维度
 
         return ElasticsearchVectorStore.builder(restClient, dashScopeEmbeddingModel)

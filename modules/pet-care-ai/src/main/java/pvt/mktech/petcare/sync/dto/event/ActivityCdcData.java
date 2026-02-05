@@ -33,10 +33,10 @@ public class ActivityCdcData implements CdcData {
     private Integer activityType;
 
     @JsonProperty("activity_time")
-    private Long activityTime;
+    private String activityTime;
 
     @JsonProperty("end_time")
-    private Long endTime;
+    private String endTime;
 
     @JsonProperty("address")
     private String address;
@@ -60,5 +60,17 @@ public class ActivityCdcData implements CdcData {
     private Integer checkInCount;
 
     @JsonProperty("created_at")
-    private Long createdAt;
+    private String createdAt;
+
+    @JsonProperty("updated_at")
+    private String updatedAt;
+
+    @JsonProperty("is_deleted")
+    private Integer isDeleted;
+
+    @JsonProperty("deleted_at")
+    private String deletedAt;
+
+    @JsonProperty("labels")
+    private String labels;
 }
