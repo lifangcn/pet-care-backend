@@ -64,7 +64,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
         // 城市筛选
         if (StrUtil.isNotBlank(request.getCity())) {
-            queryWrapper.and(POST.LOCATION_INFO.like("%" + request.getCity() + "%"));
+            queryWrapper.and(POST.LOCATION_ADDRESS.like("%" + request.getCity() + "%"));
         }
 
         // 排序

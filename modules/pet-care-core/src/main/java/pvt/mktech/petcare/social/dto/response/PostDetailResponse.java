@@ -5,8 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import pvt.mktech.petcare.social.entity.Label;
-import pvt.mktech.petcare.social.entity.LocationInfo;
-import pvt.mktech.petcare.social.entity.MediaUrl;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -43,13 +41,13 @@ public class PostDetailResponse implements Serializable {
     private Integer postType;
 
     @Schema(description = "图片/视频URL数组")
-    private List<MediaUrl> mediaUrls;
+    private List<String> mediaUrls;
 
     @Schema(description = "外部链接（商品、服务、地图）")
     private String externalLink;
 
-    @Schema(description = "地点信息")
-    private LocationInfo locationInfo;
+    @Schema(description = "地点地址")
+    private String locationAddress;
 
     @Schema(description = "价格区间")
     private String priceRange;

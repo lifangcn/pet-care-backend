@@ -5,6 +5,7 @@ import com.mybatisflex.core.audit.AuditManager;
 import com.mybatisflex.core.mybatis.FlexConfiguration;
 import com.mybatisflex.spring.boot.ConfigurationCustomizer;
 import com.mybatisflex.spring.boot.MyBatisFlexCustomizer;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -16,10 +17,8 @@ public class MyBatisFlexConfig implements ConfigurationCustomizer, MyBatisFlexCu
 
     @Override
     public void customize(FlexConfiguration flexConfiguration) {
-//        flexConfiguration.setLogImpl(StdOutImpl.class);
         flexConfiguration.setMapUnderscoreToCamelCase(true);
         flexConfiguration.setCacheEnabled(true);
-        // 设置 SQL 审计收集器
         AuditManager.setAuditEnable(true);
         AuditManager.setMessageCollector(auditMessage ->
                 logger.info("SQL Audit: {} - {}ms", auditMessage.getFullSql(), auditMessage.getElapsedTime()));

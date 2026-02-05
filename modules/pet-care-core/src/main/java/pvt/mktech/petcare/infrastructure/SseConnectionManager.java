@@ -28,9 +28,7 @@ public class SseConnectionManager {
         List<SseEmitter> connections = userConnections.get(userId);
         if (connections != null) {
             connections.remove(emitter);
-            if (connections.isEmpty()) {
-                userConnections.remove(userId);
-            }
+            userConnections.compute(userId, (k, v) -> (v != null && v.isEmpty()) ? null : v);
         }
     }
 
@@ -44,8 +42,7 @@ public class SseConnectionManager {
         if (emitters.isEmpty()) {
             return;
         }
-        // 使用快照避免并发修改异常
-        for (SseEmitter emitter : new CopyOnWriteArrayList<>(emitters)) {
+        for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event().name("reminder").data(jsonString));
             } catch (IllegalStateException | IOException e) {

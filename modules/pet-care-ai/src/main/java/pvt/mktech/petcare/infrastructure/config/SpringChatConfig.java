@@ -12,11 +12,14 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
+import pvt.mktech.petcare.chat.tool.MultiIndexSearchTool;
 import pvt.mktech.petcare.chat.tool.ReminderTool;
 
 import java.nio.charset.StandardCharsets;
@@ -39,15 +42,24 @@ import java.nio.charset.StandardCharsets;
 public class SpringChatConfig {
 
     private final ReminderTool reminderTool; // 本地 Tools
+    private final MultiIndexSearchTool multiIndexSearchTool; // 多索引检索工具
+
+    /**
+     * 提供 ToolCallback 给 ChatClient 使用
+     */
+    @Bean
+    public ToolCallbackProvider toolCallbackProvider() {
+        return () -> ToolCallbacks.from(reminderTool, multiIndexSearchTool);
+    }
 
     @Bean
     public ChatClient chatClient(DashScopeChatModel dashScopeChatModel,
-                                 ChatMemory chatMemory/*,
-                                 ToolCallbackProvider toolCallbackProvider*/) {
-        ToolCallback[] localTools = ToolCallbacks.from(reminderTool); // 本地 Tools
+                                 ChatMemory chatMemory,
+                                 ToolCallbackProvider toolCallbackProvider) {
+//        ToolCallback[] localTools = ToolCallbacks.from(reminderTool, multiIndexSearchTool); // 本地 Tools
         return ChatClient.builder(dashScopeChatModel)
-                .defaultToolCallbacks(localTools)
-//                .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
+//                .defaultToolCallbacks(localTools)
+                .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
                 .defaultSystem(loadSystemPrompt())
                 .defaultAdvisors(
                         new SimpleLoggerAdvisor(),

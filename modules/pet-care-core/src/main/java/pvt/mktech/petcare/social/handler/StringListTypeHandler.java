@@ -18,7 +18,7 @@ import java.util.List;
 public class StringListTypeHandler extends BaseTypeHandler<List<String>> {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final TypeReference<List<String>> typeReference = new TypeReference<List<String>>() {};
+    private static final TypeReference<List<String>> typeReference = new TypeReference<>() {};
 
     @Override
     public void setNonNullParameter(PreparedStatement ps, int i, List<String> parameter, JdbcType jdbcType) throws SQLException {

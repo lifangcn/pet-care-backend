@@ -5,8 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
-import pvt.mktech.petcare.social.handler.LocationInfoTypeHandler;
-import pvt.mktech.petcare.social.handler.MediaUrlListTypeHandler;
+import pvt.mktech.petcare.social.handler.StringListTypeHandler;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -53,8 +52,8 @@ public class Post implements Serializable {
     /**
      * 图片/视频URL数组
      */
-    @Column(typeHandler = MediaUrlListTypeHandler.class)
-    private List<MediaUrl> mediaUrls;
+    @Column(typeHandler = StringListTypeHandler.class)
+    private List<String> mediaUrls;
 
     /**
      * 外部链接（商品、服务、地图）
@@ -62,10 +61,9 @@ public class Post implements Serializable {
     private String externalLink;
 
     /**
-     * 地点信息
+     * 地点地址
      */
-    @Column(typeHandler = LocationInfoTypeHandler.class)
-    private LocationInfo locationInfo;
+    private String locationAddress;
 
     /**
      * 价格区间（如：100-200元）

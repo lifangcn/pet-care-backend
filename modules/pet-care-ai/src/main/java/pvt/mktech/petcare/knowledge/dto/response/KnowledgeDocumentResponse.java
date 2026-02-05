@@ -1,0 +1,24 @@
+package pvt.mktech.petcare.knowledge.dto.response;
+
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+/**
+ * {@code @description}: 知识库文档响应 DTO
+ * {@code @date}: 2026-01-30
+ * @author Michael
+ */
+@Data
+public class KnowledgeDocumentResponse {
+    private Long id;
+    private String name;
+    private String fileUrl;
+    private String fileType;
+    private Long fileSize;
+    private Integer version;
+    private Integer status;
+    private Integer chunkCount;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}

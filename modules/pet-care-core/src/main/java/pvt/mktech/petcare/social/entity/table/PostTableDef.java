@@ -48,7 +48,7 @@ public class PostTableDef extends TableDef {
     /**
      * 地点信息
      */
-    public final QueryColumn LOCATION_INFO = new QueryColumn(this, "location_info");
+    public final QueryColumn LOCATION_ADDRESS = new QueryColumn(this, "location_address");
 
     /**
      * 价格区间（如：100-200元）
@@ -118,7 +118,7 @@ public class PostTableDef extends TableDef {
     /**
      * 默认字段
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, CONTENT, POST_TYPE, MEDIA_URLS, EXTERNAL_LINK, LOCATION_INFO, PRICE_RANGE, LIKE_COUNT, RATING_COUNT, RATING_TOTAL, RATING_AVG, VIEW_COUNT, STATUS, ACTIVITY_ID};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, CONTENT, POST_TYPE, MEDIA_URLS, EXTERNAL_LINK, LOCATION_ADDRESS, PRICE_RANGE, LIKE_COUNT, RATING_COUNT, RATING_TOTAL, RATING_AVG, VIEW_COUNT, STATUS, ACTIVITY_ID};
 
     public PostTableDef() {
         super("", "tb_post");
