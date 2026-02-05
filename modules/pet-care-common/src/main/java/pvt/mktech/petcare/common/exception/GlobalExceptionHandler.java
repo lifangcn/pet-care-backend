@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.dto.response.ResultCode;
 
@@ -72,6 +73,13 @@ public class GlobalExceptionHandler {
     public Result<String> handleNullPointerException(NullPointerException ex) {
         log.error("Null pointer exception occurred", ex);
         return Result.error(ErrorCode.SYSTEM_ERROR.getCode(), ErrorCode.SYSTEM_ERROR.getMessage());
+    }
+
+    // 处理 SSE 异步请求超时异常 - 返回 null 避免 text/event-stream 类型冲突
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public Result<String> handleAsyncRequestTimeoutException(AsyncRequestTimeoutException ex) {
+        log.debug("SSE async request timeout: {}", ex.getMessage());
+        return null;
     }
 
     // 处理运行时异常

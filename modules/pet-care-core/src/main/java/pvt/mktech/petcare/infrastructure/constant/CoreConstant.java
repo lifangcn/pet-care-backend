@@ -22,11 +22,10 @@ public class CoreConstant {
     public static final Long WECHAT_LOGIN_TTL = 300L;
 
     // 消息队列相关(组装消息体逻辑：Topic: CORE_REMINDER_PENDING/SEND, Tag: pending|send, Key: executionId, Body: ExecutionDto)
-    public static final String CORE_REMINDER_TOPIC_PENDING = "CORE_REMINDER_PENDING";
-    public static final String CORE_REMINDER_TOPIC_SEND = "CORE_REMINDER_SEND";
-    public static final String CORE_REMINDER_PRODUCER = "core-reminder-producer";
-    public static final String CORE_REMINDER_PENDING_CONSUMER = "core-reminder-pending-consumer";
-    public static final String CORE_REMINDER_SEND_CONSUMER = "core-reminder-send-consumer";
+    public static final String CORE_REMINDER_PENDING_TOPIC = "core_reminder_pending";
+    public static final String CORE_REMINDER_SEND_TOPIC = "core_reminder_send";
+    public static final String CORE_REMINDER_PENDING_CONSUMER = "core_reminder_pending_consumer";
+    public static final String CORE_REMINDER_SEND_CONSUMER = "core_reminder_send_consumer";
     // Redis 对于延迟消费的信息，进行缓存
     public static final String CORE_REMINDER_SEND_QUEUE_KEY = "core:reminder:send_queue";
     // 用户签到
@@ -35,6 +34,4 @@ public class CoreConstant {
     public static final String REMINDER_SCAN_LOCK_KEY = "reminder:scan:lock";
     // 延迟队列扫描锁KEY
     public static final String DELAY_QUEUE_SCAN_LOCK_KEY = "reminder:delay_queue:scan:lock";
-
-
 }

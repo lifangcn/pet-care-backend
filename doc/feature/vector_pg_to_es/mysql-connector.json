@@ -1,0 +1,21 @@
+{
+  "name": "petcare-mysql-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "database.hostname": "mysql",
+    "database.port": "3306",
+    "database.user": "cdc",
+    "database.password": "123456",
+    "database.server.id": "184054",
+    "topic.prefix": "PET_CARE_CDC",
+    "database.include.list": "pet_care_core,pet_care_ai",
+    "table.include.list": "pet_care_core.tb_post,pet_care_core.tb_activity",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9093",
+    "schema.history.internal.kafka.topic": "__debezium_history",
+    "include.schema.changes": "false",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter.schemas.enable": "false"
+  }
+}

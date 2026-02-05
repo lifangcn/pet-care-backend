@@ -10,8 +10,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *
  * @author Michael
  */
-@SpringBootApplication
-@MapperScan("pvt.mktech.petcare.ai.mapper")
+@SpringBootApplication(scanBasePackages = {
+    "pvt.mktech.petcare.knowledge",
+    "pvt.mktech.petcare.infrastructure",
+    "pvt.mktech.petcare.shared",
+    "pvt.mktech.petcare.chat",
+    "pvt.mktech.petcare.sync",
+})
+@MapperScan({
+    "pvt.mktech.petcare.knowledge.mapper",
+    "pvt.mktech.petcare.sync.mapper"
+})
 public class AiServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(AiServiceApplication.class, args);
