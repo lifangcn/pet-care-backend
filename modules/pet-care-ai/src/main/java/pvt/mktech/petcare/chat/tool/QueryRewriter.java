@@ -18,8 +18,8 @@ public class QueryRewriter {
 
     private final QueryTransformer queryTransformer;
 
-    public QueryRewriter(ChatModel dashscopeChatModel) {
-        ChatClient.Builder builder = ChatClient.builder(dashscopeChatModel);
+    public QueryRewriter(ChatModel zhiPuAiChatModel) {
+        ChatClient.Builder builder = ChatClient.builder(zhiPuAiChatModel);
         queryTransformer = RewriteQueryTransformer.builder()
                 .chatClientBuilder(builder)
                 .build();

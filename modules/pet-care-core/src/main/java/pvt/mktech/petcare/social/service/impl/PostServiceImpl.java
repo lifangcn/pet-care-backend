@@ -6,7 +6,10 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.event.PointsEarnEvent;
 import pvt.mktech.petcare.social.dto.request.PostQueryRequest;
 import pvt.mktech.petcare.social.dto.request.PostSaveRequest;
 import pvt.mktech.petcare.social.dto.response.PostDetailResponse;
@@ -34,8 +37,8 @@ import static pvt.mktech.petcare.social.entity.table.PostTableDef.POST;
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
 
     private final InteractionService interactionService;
-    private final LabelService labelService;
     private final PostLabelService postLabelService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public Post savePost(PostSaveRequest request) {
@@ -46,6 +49,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (request.getLabelIds() != null && !request.getLabelIds().isEmpty()) {
             postLabelService.savePostLabels(post.getId(), request.getLabelIds());
         }
+        // 积分变更： 发布
+        applicationEventPublisher.publishEvent(new PointsEarnEvent(UserContext.getUserId(), PointsActionType.PUBLISH, post.getId()));
         return post;
     }
 

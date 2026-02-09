@@ -42,9 +42,13 @@
         <!-- Spring AI -->
         <!--百炼：必要的两个依赖：starter-web starter-oauth2-client 否则启动自动装配 ImageModel VideoModel Tools报错-->
         <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-zhipuai</artifactId>
+        </dependency>
+        <!--<dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
             <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
-        </dependency>
+        </dependency>-->
         <!-- Ollama  -->
         <!--<dependency>
             <groupId>org.springframework.ai</groupId>

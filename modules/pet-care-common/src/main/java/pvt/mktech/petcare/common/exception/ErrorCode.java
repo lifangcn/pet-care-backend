@@ -78,6 +78,8 @@ public enum ErrorCode {
     ORDER_STATUS_ERROR("50003", "订单状态错误"),
     APPOINTMENT_CONFLICT("50004", "预约时间冲突"),
     SERVICE_UNAVAILABLE("50005", "服务不可用"),
+    POINTS_NOT_ENOUGH("50006", "积分不足"),
+    POINTS_ACCOUNT_NOT_FOUND("50007", "积分账户不存在"),
     
     // ========== 第三方服务错误码 (60000-69999) ==========
     SMS_SEND_FAILED("60001", "短信发送失败"),

@@ -13,6 +13,7 @@ import org.springframework.ai.reader.markdown.MarkdownDocumentReader;
 import org.springframework.ai.reader.markdown.config.MarkdownDocumentReaderConfig;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.zhipuai.ZhiPuAiChatModel;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
 
     private final OssTemplate ossTemplate;
     private final VectorStore elasticsearchVectorStore;
-    private final ChatModel dashscopeChatModel;
+    private final ZhiPuAiChatModel zhiPuAiChatModel;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -67,7 +68,8 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         startTime = System.currentTimeMillis();
         Integer chunkCount = processDocumentToVectorStore(file);
         log.info("文档处理到向量库耗时: {}ms", System.currentTimeMillis() - startTime);
-
+        document.setChunkCount(chunkCount);
+        save(document);
         return convertToResponse(document);
     }
 
@@ -137,14 +139,15 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
             // 3.文档拆分
             TokenTextSplitter textSplitter = new TokenTextSplitter();
             List<Document> splitDocuments = textSplitter.apply(documents);
-            // 百炼API单批次添加上限为10
+            log.info("文档拆分后数量: {}", splitDocuments.size());
+
             int batchSize = 10;
             for (int i = 0; i < splitDocuments.size(); i += batchSize) {
                 int endIndex = Math.min(i + batchSize, splitDocuments.size());
                 List<Document> batch = splitDocuments.subList(i, endIndex);
 
                 // 4.补充关键词元信息
-                KeywordMetadataEnricher keywordMetadataEnricher = new KeywordMetadataEnricher(dashscopeChatModel, 5);
+                KeywordMetadataEnricher keywordMetadataEnricher = new KeywordMetadataEnricher(zhiPuAiChatModel, 5);
                 List<Document> enrichedBatch = keywordMetadataEnricher.apply(batch);
 
                 // 5.添加到向量存储

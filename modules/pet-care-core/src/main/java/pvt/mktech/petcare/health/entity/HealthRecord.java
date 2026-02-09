@@ -82,14 +82,12 @@ public class HealthRecord implements Serializable {
      * 创建时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonIgnore
     private LocalDateTime createdAt;
 
     /**
      * 更新时间
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonIgnore
     private LocalDateTime updatedAt;
 
 }

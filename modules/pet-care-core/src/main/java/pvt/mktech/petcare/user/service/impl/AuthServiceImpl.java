@@ -8,7 +8,9 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.common.dto.response.Result;
 
 import java.io.ByteArrayOutputStream;
@@ -17,6 +19,9 @@ import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.jwt.JwtUtil;
 import pvt.mktech.petcare.common.redis.RedisUtil;
+import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.event.PointsEarnEvent;
+import pvt.mktech.petcare.points.service.PointsService;
 import pvt.mktech.petcare.user.dto.LoginInfoDto;
 import pvt.mktech.petcare.user.dto.request.LoginRequest;
 import pvt.mktech.petcare.shared.dto.WechatQRCodeResponse;
@@ -44,6 +49,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
 
     private final JwtUtil jwtUtil;
     private final RedisUtil redisUtil;
+    private final PointsService pointsService;
 
     @Override
     public Result<String> sendCode(String phone, HttpSession httpSession) {
@@ -60,6 +66,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     }
 
 
+    @Transactional
     @Override
     public Result<LoginInfoDto> login(LoginRequest request) {
         String phone = request.getPhone();
@@ -69,7 +76,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
             throw new BusinessException(ErrorCode.PHONE_FORMAT_ERROR);
         }
         String cacheCode = redisUtil.get(LOGIN_CODE_KEY + phone);
-        // TODO cacheCode为空，可能验证码过期；request.code为空，可能请求错误。这里简单判断
+        // cacheCode为空，可能验证码过期；request.code为空，可能请求错误。这里简单判断
         if (!StrUtil.equals(code, cacheCode)) {
             throw new BusinessException(ErrorCode.VERIFICATION_CODE_ERROR);
         }
@@ -82,6 +89,8 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
             user.setPhone(phone);
             user.setUsername(USER_DEFAULT_NAME_PREFIX + RandomUtil.randomString(10));
             save(user);
+            // 创建积分账户并设置初始积分
+            pointsService.grantRegisterPoints(user.getId());
         }
         LoginInfoDto loginInfoDto = new LoginInfoDto();
         BeanUtil.copyProperties(user, loginInfoDto);
@@ -95,8 +104,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     /**
      * 生成双token，即access token和refresh token，并保存 refresh token 到 Redis中用于后续认证
      *
-     * @param user 数据库查询或新增的用户
-     * @return 登录信息Dto
+     * @param loginInfoDto
      */
     private void generateDoubleToken(LoginInfoDto loginInfoDto) {
         String accessToken = jwtUtil.generateAccessToken(loginInfoDto.getId());

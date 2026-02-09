@@ -1,6 +1,5 @@
 package pvt.mktech.petcare.infrastructure.config;
 
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.memory.redis.LettuceRedisChatMemoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,13 +10,12 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.support.ToolCallbacks;
-import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.zhipuai.ZhiPuAiChatModel;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StreamUtils;
 import pvt.mktech.petcare.chat.tool.MultiIndexSearchTool;
 import pvt.mktech.petcare.chat.tool.ReminderTool;
@@ -53,11 +51,11 @@ public class SpringChatConfig {
     }
 
     @Bean
-    public ChatClient chatClient(DashScopeChatModel dashScopeChatModel,
+    public ChatClient chatClient(ZhiPuAiChatModel zhiPuAiChatModel,
                                  ChatMemory chatMemory,
                                  ToolCallbackProvider toolCallbackProvider) {
 //        ToolCallback[] localTools = ToolCallbacks.from(reminderTool, multiIndexSearchTool); // 本地 Tools
-        return ChatClient.builder(dashScopeChatModel)
+        return ChatClient.builder(zhiPuAiChatModel)
 //                .defaultToolCallbacks(localTools)
                 .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
                 .defaultSystem(loadSystemPrompt())

@@ -1,5 +1,6 @@
 package pvt.mktech.petcare.chat.tool;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
@@ -37,17 +38,15 @@ public class ReminderTool {
             saveRequest.setRecordTime(LocalDateTime.now());
             saveRequest.setUserId(request.userId());
 
-            Boolean result = webClientBuilder.build()
+            String response = webClientBuilder.build()
                     .post()
                     .uri(coreServiceUrl + "/internal/reminder")
                     .bodyValue(saveRequest)
                     .retrieve()
-                    .bodyToMono(Boolean.class)
-                    .onErrorResume(e -> {
-                        log.error("调用提醒服务失败", e);
-                        return Mono.just(false);
-                    })
+                    .bodyToMono(String.class)
                     .block();
+            log.info("Core 服务响应: {}", response);
+            Boolean result = Boolean.TRUE.equals(response);
 
             if (Boolean.TRUE.equals(result)) {
                 return "提醒事项设置成功，已保存到数据库";
@@ -65,6 +64,7 @@ public class ReminderTool {
             @Description("用户ID") Long userId,
             @Description("标题") String title,
             @Description("描述") String description,
+            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
             @Description("预计执行时间，格式：yyyy-MM-dd HH:mm:ss") LocalDateTime scheduleTime,
             @Description("提前提醒时间(分钟)") Integer remindBeforeMinutes,
             @Description("重复类型：'none' | 'daily' | 'weekly' | 'monthly' | 'custom'") String repeatType

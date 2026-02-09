@@ -28,8 +28,25 @@ public class CoreConstant {
     public static final String CORE_REMINDER_SEND_CONSUMER = "core_reminder_send_consumer";
     // Redis 对于延迟消费的信息，进行缓存
     public static final String CORE_REMINDER_SEND_QUEUE_KEY = "core:reminder:send_queue";
-    // 用户签到
+    /** 用户行为 **/
+    /**
+     * 签到，13个月过期
+     */
     public static final String CORE_USER_CHECK_IN_KEY = "core:user:check_in:";
+    /**
+     * 当日行为记录， Hash 包含 publish, comment, like, share
+     */
+    public static final String CORE_USER_ACTION_KEY = "core:user:action:";
+
+    /** 积分系统 **/
+    /**
+     * 内容被点赞去重 Set，key格式: core:content:like:{contentId}:{date}
+     */
+    public static final String CORE_CONTENT_LIKE_KEY = "core:content:like:";
+    /**
+     * 内容被评论去重 Set，key格式: core:content:comment:{contentId}:{date}
+     */
+    public static final String CORE_CONTENT_COMMENT_KEY = "core:content:comment:";
     // 提醒扫描锁KEY
     public static final String REMINDER_SCAN_LOCK_KEY = "reminder:scan:lock";
     // 延迟队列扫描锁KEY

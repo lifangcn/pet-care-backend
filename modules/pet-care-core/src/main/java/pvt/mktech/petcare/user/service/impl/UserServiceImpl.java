@@ -16,6 +16,7 @@ import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.common.storage.OssTemplate;
+import pvt.mktech.petcare.points.service.PointsService;
 import pvt.mktech.petcare.user.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.shared.dto.CheckInStatsResponse;
 import pvt.mktech.petcare.user.dto.response.UserResponse;
@@ -46,7 +47,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Resource
     private RedisUtil redisUtil;
     @Resource
-    private RedissonClient redissonClient;
+    private PointsService pointsService;
 
     @Override
     public UserResponse getUserById(Long userId) {
@@ -137,6 +138,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 1号对应索引下标0，2号对应索引下标1， 3号对应索引下标2，以此类推
         boolean flag = redisUtil.setBit(key, offset, true);
         redisUtil.expire(key, Duration.ofDays(366));
+
         return flag;
     }
 

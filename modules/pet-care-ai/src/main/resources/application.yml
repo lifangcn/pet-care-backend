@@ -4,16 +4,8 @@ server:
 spring:
   application:
     name: pet-care-ai
-
-# 定时任务配置
-scheduler:
-  selective-vectorization:
-    enabled: false
-    cron: 0 0 2 * * ?
-
   # AI 配置
   ai:
-    # 大模型
     dashscope:
       api-key: ${API_KEY}
       embedding:
@@ -34,6 +26,12 @@ aliyun:
     access-key-secret: ${OSS_ACCESS_KEY_SECRET}
     bucket-name: ${OSS_BUCKET_NAME}
     enabled: true
+
+# 定时任务配置
+scheduler:
+  selective-vectorization:
+    enabled: false
+    cron: 0 0 2 * * ?
 
 # Core 服务地址
 core:

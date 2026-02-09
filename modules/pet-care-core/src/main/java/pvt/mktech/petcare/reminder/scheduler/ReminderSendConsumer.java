@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.reminder.util;
+package pvt.mktech.petcare.reminder.scheduler;
 
 import cn.hutool.json.JSONUtil;
 import lombok.RequiredArgsConstructor;

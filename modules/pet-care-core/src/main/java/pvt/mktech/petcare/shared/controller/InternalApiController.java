@@ -1,6 +1,7 @@
 package pvt.mktech.petcare.shared.controller;
 
 import cn.hutool.core.bean.BeanUtil;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -10,6 +11,9 @@ import pvt.mktech.petcare.pet.entity.Pet;
 import pvt.mktech.petcare.reminder.entity.Reminder;
 import pvt.mktech.petcare.pet.service.PetService;
 import pvt.mktech.petcare.reminder.service.ReminderService;
+import pvt.mktech.petcare.points.dto.request.PointsConsumeRequest;
+import pvt.mktech.petcare.points.service.PointsService;
+import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
 
 /**
  * 内部服务间调用 API
@@ -24,6 +28,7 @@ public class InternalApiController {
 
     private final ReminderService reminderService;
     private final PetService petService;
+    private final PointsService pointsService;
 
     /**
      * AI 服务调用：保存提醒事项
@@ -50,6 +55,41 @@ public class InternalApiController {
             reminder.setNextTriggerTime(reminder.getScheduleTime());
         }
 
-        return reminderService.save(reminder);
+        boolean saved = reminderService.save(reminder);
+        log.info("提醒事项保存结果: {}", saved);
+        return saved;
+    }
+
+    /**
+     * AI 积分扣除请求
+     */
+    public record AiPointsConsumeRequest(Long userId, String conversationId) {}
+
+    /**
+     * AI 服务调用：扣除咨询积分
+     * AI 咨询成功后调用此接口扣除用户积分
+     */
+    @PostMapping("/points/consume-ai")
+    public Boolean consumeAiPoints(@RequestBody AiPointsConsumeRequest request) {
+        log.info("内部API调用: consumeAiPoints, userId: {}", request.userId());
+
+        PointsConsumeRequest consumeRequest = new PointsConsumeRequest();
+        consumeRequest.setUserId(request.userId());
+        consumeRequest.setActionType(PointsActionType.AI_CONSULT.getCode());
+        consumeRequest.setPoints(PointsActionType.AI_CONSULT.getPoints());
+        consumeRequest.setBizType("AI_CONSULT");
+
+        try {
+            boolean result = pointsService.consume(consumeRequest);
+            if (result) {
+                log.info("AI咨询积分扣除成功, userId: {}, points: {}", request.userId(), PointsActionType.AI_CONSULT.getPoints());
+            } else {
+                log.warn("AI咨询积分扣除失败, userId: {}, points: {}", request.userId(), PointsActionType.AI_CONSULT.getPoints());
+            }
+            return result;
+        } catch (Exception e) {
+            log.error("AI咨询积分扣除失败, userId: {}", request.userId(), e);
+            return false;
+        }
     }
 }
