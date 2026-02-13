@@ -28,6 +28,11 @@ public class CoreConstant {
     public static final String CORE_REMINDER_SEND_CONSUMER = "core_reminder_send_consumer";
     // Redis 对于延迟消费的信息，进行缓存
     public static final String CORE_REMINDER_SEND_QUEUE_KEY = "core:reminder:send_queue";
+    // 提醒扫描锁KEY
+    public static final String REMINDER_SCAN_LOCK_KEY = "reminder:scan:lock";
+    // 延迟队列扫描锁KEY
+    public static final String DELAY_QUEUE_SCAN_LOCK_KEY = "reminder:delay_queue:scan:lock";
+
     /** 用户行为 **/
     /**
      * 签到，13个月过期
@@ -47,8 +52,18 @@ public class CoreConstant {
      * 内容被评论去重 Set，key格式: core:content:comment:{contentId}:{date}
      */
     public static final String CORE_CONTENT_COMMENT_KEY = "core:content:comment:";
-    // 提醒扫描锁KEY
-    public static final String REMINDER_SCAN_LOCK_KEY = "reminder:scan:lock";
-    // 延迟队列扫描锁KEY
-    public static final String DELAY_QUEUE_SCAN_LOCK_KEY = "reminder:delay_queue:scan:lock";
+
+    /**
+     * 积分锁，防止并发，key格式: core:points:lock:{userId}
+     */
+    public static final String CORE_POINTS_LOCK_KEY_PREFIX = "core:points:lock:";
+    /**
+     * 积分消费记录主题
+     */
+    public static final String CORE_POINTS_RECORD_SAVE_TOPIC = "core_point_record_save";
+    /**
+     * 积分消费记录消费组
+     */
+    public static final String CORE_POINTS_RECORD_SAVE_CONSUMER = "core_point_record_save_consumer";
+
 }

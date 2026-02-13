@@ -1,0 +1,25 @@
+========================================
+生成测试用户数据
+========================================
+
+生成单用户数据（userId ��独立于多用户场景）
+
+========================================
+已生成 ��1000 个用户）
+已生成 ��单用户测试，userId=��
+========================================
+
+下一步：初始化数据库
+
+方式一：使用 MySQL 客户端执行 SQL
+  mysql -u root -p petcare < init_test_data.sql
+
+方式二：使用 Docker
+  docker exec -i <mysql-container> mysql -u root -p petcare < init_test_data.sql
+
+方式三：直接复制 SQL 执行
+  查看文件内容：cat init_test_data.sql
+
+确认应用已启用测试模式:
+  java -Djwt.test.mode=true -jar pet-care-core.jar
+

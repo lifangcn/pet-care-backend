@@ -7,6 +7,7 @@ import pvt.mktech.petcare.points.dto.request.PointsRecordQueryRequest;
 import pvt.mktech.petcare.points.dto.response.PointsAccountResponse;
 import pvt.mktech.petcare.points.entity.PointsAccount;
 import pvt.mktech.petcare.points.entity.PointsRecord;
+import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
 
 /**
  * {@code @description}: 积分核心服务接口
@@ -26,9 +27,9 @@ public interface PointsService extends IService<PointsAccount> {
     /**
      * 主动行为获取积分
      *
-     * @param userId    用户ID
-     * @param action    行为类型
-     * @param bizId     关联业务ID
+     * @param userId 用户ID
+     * @param action 行为类型
+     * @param bizId  关联业务ID
      * @return 实际获取积分数
      */
     Integer earnByAction(Long userId, pvt.mktech.petcare.points.entity.codelist.PointsActionType action, Long bizId);
@@ -36,19 +37,19 @@ public interface PointsService extends IService<PointsAccount> {
     /**
      * 质量行为获取积分（被点赞/被评论）
      *
-     * @param authorId  内容作者ID
-     * @param action    行为类型
-     * @param contentId 内容ID
+     * @param authorId       内容作者ID
+     * @param action         行为类型
+     * @param contentId      内容ID
      * @param interactUserId 互动用户ID
      * @return 实际获取积分数（首次互动返回积分值，重复互动返回0）
      */
     Integer earnByQuality(Long authorId, pvt.mktech.petcare.points.entity.codelist.PointsActionType action,
-                         Long contentId, Long interactUserId);
+                          Long contentId, Long interactUserId);
 
     /**
      * 消耗积分
      *
-     * @param request  消耗请求
+     * @param request 消耗请求
      * @return true-成功，false-失败
      */
     boolean consume(PointsConsumeRequest request);
@@ -64,11 +65,21 @@ public interface PointsService extends IService<PointsAccount> {
     /**
      * 分页查询积分流水
      *
-     * @param userId 用户ID
+     * @param userId     用户ID
      * @param pageNumber 页码
-     * @param pageSize 页大小
-     * @param request 查询条件
+     * @param pageSize   页大小
+     * @param request    查询条件
      * @return 分页结果
      */
     Page<PointsRecord> pageRecords(Long userId, Long pageNumber, Long pageSize, PointsRecordQueryRequest request);
+
+    /**
+     * 保存积分账户操作记录的方法
+     *
+     * @param account 积分账户对象，包含用户积分相关信息
+     * @param points  积分数量，表示本次操作涉及的积分值
+     * @param action  积分操作类型，表示增加、减少、过期等操作行为
+     * @param bizId   业务ID，用于关联具体的业务场景，如订单ID、活动ID等
+     */
+    void saveRecord(PointsAccount account, Integer points, PointsActionType action, Long bizId);
 }

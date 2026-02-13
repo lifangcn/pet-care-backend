@@ -25,8 +25,25 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
 
+    /**
+     * 测试模式开关：通过配置或环境变量控制
+     * 生产环境必须为 false
+     */
+    private static final boolean TEST_MODE = Boolean.parseBoolean(
+            System.getProperty("jwt.test.mode", System.getenv().getOrDefault("JWT_TEST_MODE", "false"))
+    );
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // 测试模式：直接从 header 获取 userId，跳过 JWT 验证
+        if (TEST_MODE) {
+            String testUserId = request.getHeader("X-Test-User-Id");
+            if (StrUtil.isNotBlank(testUserId)) {
+                request.setAttribute(HEADER_USER_ID, Long.parseLong(testUserId));
+                return true;
+            }
+        }
+
         // 获取Token，优先从 Header中获取，其次从 URL 查询参数，用于 SSE 或 WebSocket
         String token = request.getHeader(TOKEN_HEADER);
         if (StrUtil.isNotBlank(token) && token.startsWith(TOKEN_PREFIX)) {

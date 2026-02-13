@@ -25,11 +25,11 @@ public class RedisAutoConfiguration {
         return new RedisUtil(redissonClient);
     }
 
-//    @Bean
-//    public RedissonLockUtil redissonLockUtil(RedissonClient redissonClient) {
-//        log.info("初始化 Redisson 分布式锁工具");
-//        return new RedissonLockUtil(redissonClient);
-//    }
+    @Bean
+    public RedissonLockUtil redissonLockUtil(RedissonClient redissonClient) {
+        log.info("初始化 Redisson 分布式锁工具");
+        return new RedissonLockUtil(redissonClient);
+    }
 
     @Bean
     public DistributedIdGenerator distributedIdGenerator(RedissonClient redissonClient) {

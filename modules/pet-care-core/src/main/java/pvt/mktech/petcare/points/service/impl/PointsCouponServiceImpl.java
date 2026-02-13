@@ -1,6 +1,5 @@
 package pvt.mktech.petcare.points.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -11,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.points.dto.request.PointsCouponQueryRequest;
-import pvt.mktech.petcare.points.dto.response.PointsCouponResponse;
 import pvt.mktech.petcare.points.entity.PointsCoupon;
 import pvt.mktech.petcare.points.entity.PointsCouponTemplate;
 import pvt.mktech.petcare.points.entity.codelist.StatusOfPointsCoupon;
@@ -22,7 +20,6 @@ import pvt.mktech.petcare.points.service.PointsCouponService;
 import java.time.LocalDateTime;
 
 import static pvt.mktech.petcare.points.entity.table.PointsCouponTableDef.POINTS_COUPON;
-import static pvt.mktech.petcare.points.entity.table.PointsCouponTemplateTableDef.POINTS_COUPON_TEMPLATE;
 
 /**
  * {@code @description}: 积分代金券服务实现
