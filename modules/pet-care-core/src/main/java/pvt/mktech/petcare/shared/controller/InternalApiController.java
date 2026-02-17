@@ -1,7 +1,6 @@
 package pvt.mktech.petcare.shared.controller;
 
 import cn.hutool.core.bean.BeanUtil;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -13,7 +12,8 @@ import pvt.mktech.petcare.pet.service.PetService;
 import pvt.mktech.petcare.reminder.service.ReminderService;
 import pvt.mktech.petcare.points.dto.request.PointsConsumeRequest;
 import pvt.mktech.petcare.points.service.PointsService;
-import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.service.PointsCouponService;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 
 /**
  * 内部服务间调用 API
@@ -29,6 +29,7 @@ public class InternalApiController {
     private final ReminderService reminderService;
     private final PetService petService;
     private final PointsService pointsService;
+    private final PointsCouponService pointsCouponService;
 
     /**
      * AI 服务调用：保存提醒事项
@@ -75,21 +76,30 @@ public class InternalApiController {
 
         PointsConsumeRequest consumeRequest = new PointsConsumeRequest();
         consumeRequest.setUserId(request.userId());
-        consumeRequest.setActionType(PointsActionType.AI_CONSULT.getCode());
-        consumeRequest.setPoints(PointsActionType.AI_CONSULT.getPoints());
+        consumeRequest.setActionType(ActionTypeOfPointsRecord.AI_CONSULT.getCode());
+        consumeRequest.setPoints(ActionTypeOfPointsRecord.AI_CONSULT.getPoints());
         consumeRequest.setBizType("AI_CONSULT");
 
         try {
             boolean result = pointsService.consume(consumeRequest);
             if (result) {
-                log.info("AI咨询积分扣除成功, userId: {}, points: {}", request.userId(), PointsActionType.AI_CONSULT.getPoints());
+                log.info("AI咨询积分扣除成功, userId: {}, points: {}", request.userId(), ActionTypeOfPointsRecord.AI_CONSULT.getPoints());
             } else {
-                log.warn("AI咨询积分扣除失败, userId: {}, points: {}", request.userId(), PointsActionType.AI_CONSULT.getPoints());
+                log.warn("AI咨询积分扣除失败, userId: {}, points: {}", request.userId(), ActionTypeOfPointsRecord.AI_CONSULT.getPoints());
             }
             return result;
         } catch (Exception e) {
             log.error("AI咨询积分扣除失败, userId: {}", request.userId(), e);
             return false;
         }
+    }
+
+    /**
+     * 运营调用：设置券库存
+     */
+    @PostMapping("/coupon/set-stock")
+    public void setCouponStock(@RequestParam("templateId") Long templateId, @RequestParam("stock") Integer stock) {
+        log.info("运营API调用: setCouponStock, templateId: {}, stock: {}", templateId, stock);
+        pointsCouponService.setCouponStock(templateId, stock);
     }
 }

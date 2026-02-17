@@ -52,9 +52,9 @@ public class Pet implements Serializable {
     private String breed;
 
     /**
-     * 性别
+     * 性别：MALE-公 FEMALE-母
      */
-    private Integer gender;
+    private String gender;
 
     /**
      * 出生日期
@@ -72,6 +72,11 @@ public class Pet implements Serializable {
     private String avatar;
 
     /**
+     * 健康备注
+     */
+    private String healthNotes;
+
+    /**
      * 创建时间
      */
     @Column(value = "created_at", onInsertValue = "CURRENT_TIMESTAMP")
@@ -82,4 +87,16 @@ public class Pet implements Serializable {
      */
     @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
+
+    /**
+     * 逻辑删除：0-正常，1-已删除
+     */
+    @Column(value = "is_deleted", onInsertValue = "0")
+    private Boolean isDeleted;
+
+    /**
+     * 删除时间
+     */
+    @Column(value = "deleted_at")
+    private LocalDateTime deletedAt;
 }

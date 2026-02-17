@@ -5,6 +5,8 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.social.entity.codelist.StatusOfActivity;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfActivity;
 import pvt.mktech.petcare.social.handler.StringListTypeHandler;
 
 import java.io.Serial;
@@ -49,9 +51,9 @@ public class Activity implements Serializable {
     private String coverImage;
 
     /**
-     * 1-线上活动 2-线下聚会
+     * 类型：ONLINE-线上活动 OFFLINE-线下聚会
      */
-    private Integer activityType;
+    private TypeOfActivity activityType;
 
     /**
      * 活动时间
@@ -84,9 +86,9 @@ public class Activity implements Serializable {
     private Integer currentParticipants;
 
     /**
-     * 1-招募中 2-进行中 3-已结束
+     * 状态：RECRUITING-招募中 ONGOING-进行中 ENDED-已结束
      */
-    private Integer status;
+    private StatusOfActivity status;
 
     /**
      * 活动标签数组
@@ -120,7 +122,7 @@ public class Activity implements Serializable {
      * 逻辑删除：0-正常，1-已删除
      */
     @Column(value = "is_deleted", onInsertValue = "0")
-    private Integer isDeleted;
+    private Boolean isDeleted;
 
     /**
      * 删除时间

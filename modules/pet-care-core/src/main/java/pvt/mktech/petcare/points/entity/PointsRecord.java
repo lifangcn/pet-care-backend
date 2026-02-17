@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -51,9 +52,10 @@ public class PointsRecord implements Serializable {
     private Integer pointsAfter;
 
     /**
-     * 行为类型：0-注册赠送 1-签到 2-发布内容 3-评论 4-点赞他人 5-被点赞 6-被评论 7-AI健康咨询
+     * 行为类型（使用枚举）
      */
-    private Integer actionType;
+    @Column(isLarge = true)
+    private ActionTypeOfPointsRecord actionType;
 
     /**
      * 关联业务类型

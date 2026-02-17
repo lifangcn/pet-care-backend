@@ -67,6 +67,6 @@ public class ReminderTool {
             @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
             @Description("预计执行时间，格式：yyyy-MM-dd HH:mm:ss") LocalDateTime scheduleTime,
             @Description("提前提醒时间(分钟)") Integer remindBeforeMinutes,
-            @Description("重复类型：'none' | 'daily' | 'weekly' | 'monthly' | 'custom'") String repeatType
+            @Description("重复类型：'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'") String repeatType
     ) {}
 }

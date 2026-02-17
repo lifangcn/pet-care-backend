@@ -43,7 +43,7 @@ public class ReminderSaveRequest {
     private LocalDateTime scheduleTime;
     @Schema(description = "提前提醒时间(分钟)")
     private Integer remindBeforeMinutes;
-    @Schema(description = "重复类型：'none' | 'daily' | 'weekly' | 'monthly' | 'custom'")
+    @Schema(description = "重复类型：'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'")
     private String repeatType;
     @Schema(description = "重复配置")
     private String repeatConfig;

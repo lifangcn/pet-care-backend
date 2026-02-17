@@ -12,8 +12,11 @@ import pvt.mktech.petcare.points.dto.request.PointsConsumeRequest;
 import pvt.mktech.petcare.points.dto.request.PointsCouponQueryRequest;
 import pvt.mktech.petcare.points.dto.request.PointsRecordQueryRequest;
 import pvt.mktech.petcare.points.dto.response.PointsAccountResponse;
+import pvt.mktech.petcare.points.dto.response.PointsCouponTemplateResponse;
 import pvt.mktech.petcare.points.entity.PointsCoupon;
 import pvt.mktech.petcare.points.entity.PointsRecord;
+
+import java.util.List;
 import pvt.mktech.petcare.points.service.PointsCouponService;
 import pvt.mktech.petcare.points.service.PointsService;
 
@@ -64,6 +67,28 @@ public class PointsController {
             request = new PointsCouponQueryRequest();
         }
         return Result.success(pointsCouponService.pageCoupons(userId, pageNumber, pageSize, request));
+    }
+
+    @Operation(summary = "领取代金券（充值积分）")
+    @PostMapping("/coupon/redeem")
+    public Result<Void> redeemCoupon(@RequestParam("couponId") Long couponId) {
+        Long userId = UserContext.getUserId();
+        pointsCouponService.redeemCoupon(userId, couponId);
+        return Result.success();
+    }
+
+    @Operation(summary = "抢劵")
+    @PostMapping("/coupon/grab")
+    public Result<Long> grabCoupon(@RequestParam("templateId") Long templateId) {
+        Long userId = UserContext.getUserId();
+        Long couponId = pointsCouponService.grabCoupon(userId, templateId);
+        return Result.success(couponId);
+    }
+
+    @Operation(summary = "查询可供抢券的模板列表")
+    @GetMapping("/coupon/templates")
+    public Result<List<PointsCouponTemplateResponse>> listActiveTemplates() {
+        return Result.success(pointsCouponService.listActiveTemplates());
     }
 
     @Operation(summary = "消耗积分（AI咨询）")

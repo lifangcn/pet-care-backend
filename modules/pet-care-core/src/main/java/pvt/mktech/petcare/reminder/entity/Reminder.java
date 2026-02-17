@@ -4,6 +4,8 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.reminder.entity.codelist.RepeatTypeOfReminder;
+import pvt.mktech.petcare.reminder.entity.codelist.SourceTypeOfReminder;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -40,9 +42,9 @@ public class Reminder implements Serializable {
     private Long userId;
 
     /**
-     * 记录来源：manual, health_record, system
+     * 记录来源：MANUAL, HEALTH_RECORD, SYSTEM
      */
-    private String sourceType;
+    private SourceTypeOfReminder sourceType;
 
     /**
      * 来源ID（如健康记录ID）
@@ -58,12 +60,6 @@ public class Reminder implements Serializable {
      * 描述
      */
     private String description;
-
-    /* 时间提醒需要满足的场景：
-    1.绝对时间：repeatType=none and scheduleTime
-    2.相对时间：根据设置时间，前端计算出具体时间
-    3.周期性: repeatType=daily and scheduleTime，之后根据scheduleTime计算出具体时间
-    * */
 
     /**
      * 记录时间
@@ -86,9 +82,9 @@ public class Reminder implements Serializable {
     private Integer remindBeforeMinutes;
 
     /**
-     * 重复类型: none(不重复), daily(每天), weekly(每周), monthly(每月), custom(自定义)
+     * 重复类型: NONE(不重复), DAILY(每天), WEEKLY(每周), MONTHLY(每月), CUSTOM(自定义)
      */
-    private String repeatType;
+    private RepeatTypeOfReminder repeatType;
 
     /**
      * 重复配置(自定义重复规则)
@@ -106,6 +102,21 @@ public class Reminder implements Serializable {
     private Long reminderExecutionId;
 
     /**
+     * 总执行次数
+     */
+    private Integer totalOccurrences;
+
+    /**
+     * 已完成次数
+     */
+    private Integer completedCount;
+
+    /**
+     * 完成时间
+     */
+    private LocalDateTime completedTime;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createdAt;
@@ -114,5 +125,15 @@ public class Reminder implements Serializable {
      * 更新时间
      */
     private LocalDateTime updatedAt;
+
+    /**
+     * 逻辑删除：0-正常，1-已删除
+     */
+    private Boolean isDeleted;
+
+    /**
+     * 删除时间
+     */
+    private LocalDateTime deletedAt;
 
 }

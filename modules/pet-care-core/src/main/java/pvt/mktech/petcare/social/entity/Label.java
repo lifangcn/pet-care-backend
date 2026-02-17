@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfLabel;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -32,9 +33,9 @@ public class Label implements Serializable {
     private String name;
 
     /**
-     * 1-通用标签 2-宠物品种 3-内容类型
+     * 类型：GENERAL-通用标签 BREED-宠物品种 CONTENT-内容类型
      */
-    private Integer type;
+    private TypeOfLabel type;
 
     /**
      * 标签图标
@@ -77,7 +78,7 @@ public class Label implements Serializable {
      * 逻辑删除：0-正常，1-已删除
      */
     @Column(value = "is_deleted", onInsertValue = "0")
-    private Integer isDeleted;
+    private Boolean isDeleted;
 
     /**
      * 删除时间

@@ -95,6 +95,21 @@ public record RedisUtil(RedissonClient redissonClient) {
     }
 
     /**
+     * 设置原子长整型值（用于配合 increment/decrement 操作）
+     */
+    public long getAtomicLong(String key) {
+        return redissonClient.getAtomicLong(key).get();
+    }
+
+
+    /**
+     * 设置原子长整型值（用于配合 increment/decrement 操作）
+     */
+    public void setAtomicLong(String key, long value) {
+        redissonClient.getAtomicLong(key).set(value);
+    }
+
+    /**
      * 设置缓存有效期
      */
     public boolean expire(String key, Duration duration) {

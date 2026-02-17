@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.points.entity.codelist.StatusOfPointsCoupon;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -48,7 +49,7 @@ public class PointsCoupon implements Serializable {
     /**
      * 状态：0-未使用 1-已使用 2-已过期
      */
-    private Integer status;
+    private StatusOfPointsCoupon status;
 
     /**
      * 生效时间
@@ -75,4 +76,16 @@ public class PointsCoupon implements Serializable {
      */
     @Column(value = "created_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
+
+    /**
+     * 逻辑删除：0-正常，1-已删除
+     */
+    @Column(value = "is_deleted", onInsertValue = "0")
+    private Boolean isDeleted;
+
+    /**
+     * 删除时间
+     */
+    @Column(value = "deleted_at")
+    private LocalDateTime deletedAt;
 }

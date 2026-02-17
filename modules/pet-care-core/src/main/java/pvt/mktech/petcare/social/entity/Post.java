@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfPost;
 import pvt.mktech.petcare.social.handler.StringListTypeHandler;
 
 import java.io.Serial;
@@ -45,9 +46,9 @@ public class Post implements Serializable {
     private String content;
 
     /**
-     * 1-好物分享 2-服务推荐 3-地点推荐 4-日常分享 5-活动打卡 6-活动报名
+     * 类型：PRODUCT-好物分享 SERVICE-服务推荐 LOCATION-地点推荐 DAILY-日常分享 ACTIVITY_CHECK-活动打卡 ACTIVITY_JOIN-活动报名
      */
-    private Integer postType;
+    private TypeOfPost postType;
 
     /**
      * 图片/视频URL数组
@@ -96,9 +97,9 @@ public class Post implements Serializable {
     private Integer viewCount;
 
     /**
-     * 1-正常 2-隐藏
+     * 是否启用：1-正常，0-隐藏
      */
-    private Integer status;
+    private Integer enabled;
 
     /**
      * 关联的活动ID
@@ -121,7 +122,7 @@ public class Post implements Serializable {
      * 逻辑删除：0-正常，1-已删除
      */
     @Column(value = "is_deleted", onInsertValue = "0")
-    private Integer isDeleted;
+    private Boolean isDeleted;
 
     /**
      * 删除时间

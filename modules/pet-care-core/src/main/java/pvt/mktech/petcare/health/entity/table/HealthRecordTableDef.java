@@ -62,7 +62,7 @@ public class HealthRecordTableDef extends TableDef {
     public final QueryColumn RECORD_TIME = new QueryColumn(this, "record_time");
 
     /**
-     * 记录类型: weight(体重), temperature(体温), medical(用药)
+     * 记录类型: WEIGHT(体重), TEMPERATURE(体温), MEDICAL(用药)
      */
     public final QueryColumn RECORD_TYPE = new QueryColumn(this, "record_type");
 

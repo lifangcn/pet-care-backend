@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import pvt.mktech.petcare.points.dto.request.PointsConsumeRequest;
-import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 import pvt.mktech.petcare.points.event.PointsConsumeEvent;
 import pvt.mktech.petcare.points.event.PointsEarnEvent;
 import pvt.mktech.petcare.points.service.PointsService;
@@ -26,15 +26,15 @@ public class PointsEventListener {
 
     /**
      * 处理积分获取事件
-     * 只有主业务事务提交后才会执行
+     * 事务提交前执行，确保积分变更与主业务在同一事务内
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handlePointsEarnEvent(PointsEarnEvent event) {
         try {
-            PointsActionType action = event.getActionType();
+            ActionTypeOfPointsRecord action = event.getActionType();
 
             // 质量类积分（被点赞、被评论）
-            if (action == PointsActionType.LIKED || action == PointsActionType.COMMENTED) {
+            if (action == ActionTypeOfPointsRecord.LIKED || action == ActionTypeOfPointsRecord.COMMENTED) {
                 pointsService.earnByQuality(
                         event.getUserId(),
                         action,
@@ -55,7 +55,7 @@ public class PointsEventListener {
         } catch (Exception e) {
             log.error("积分获取失败: userId={}, action={}, error={}",
                     event.getUserId(), event.getActionType(), e.getMessage(), e);
-            // TODO: 记录失败事件，后期补偿
+            throw e; // 事务内抛出异常，触发回滚
         }
     }
 

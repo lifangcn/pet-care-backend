@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfInteraction;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -37,9 +38,9 @@ public class Interaction implements Serializable {
     private Long postId;
 
     /**
-     * 1-点赞 2-评分
+     * 类型：LIKE-点赞 RATING-评分
      */
-    private Integer interactionType;
+    private TypeOfInteraction interactionType;
 
     /**
      * 评分值 1-5
@@ -51,4 +52,10 @@ public class Interaction implements Serializable {
      */
     @Column(value = "created_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
+
+    /**
+     * 更新时间
+     */
+    @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP", onUpdateValue = "CURRENT_TIMESTAMP")
+    private LocalDateTime updatedAt;
 }

@@ -7,7 +7,7 @@ import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.infrastructure.constant.CoreConstant;
-import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 import pvt.mktech.petcare.points.service.PointsCacheService;
 
 import java.time.Duration;
@@ -29,7 +29,7 @@ public class PointsCacheServiceImpl implements PointsCacheService {
     private final RedissonClient redissonClient;
 
     @Override
-    public Integer getActionCount(Long userId, PointsActionType action) {
+    public Integer getActionCount(Long userId, ActionTypeOfPointsRecord action) {
         String key = buildActionKey(userId);
         String field = getActionField(action);
         RMap<String, String> map = redissonClient.getMap(key);
@@ -38,7 +38,7 @@ public class PointsCacheServiceImpl implements PointsCacheService {
     }
 
     @Override
-    public Integer incrementActionCount(Long userId, PointsActionType action) {
+    public Integer incrementActionCount(Long userId, ActionTypeOfPointsRecord action) {
         String key = buildActionKey(userId);
         String field = getActionField(action);
         RMap<String, Integer> map = redissonClient.getMap(key);
@@ -47,7 +47,7 @@ public class PointsCacheServiceImpl implements PointsCacheService {
     }
 
     @Override
-    public boolean checkAndAddInteraction(Long contentId, Long userId, PointsActionType action) {
+    public boolean checkAndAddInteraction(Long contentId, Long userId, ActionTypeOfPointsRecord action) {
         String key = buildInteractionKey(contentId, action);
         RSet<String> set = redissonClient.getSet(key);
         // 设置过期时间为当日结束
@@ -57,7 +57,7 @@ public class PointsCacheServiceImpl implements PointsCacheService {
     }
 
     @Override
-    public Integer getInteractionUserCount(Long contentId, PointsActionType action) {
+    public Integer getInteractionUserCount(Long contentId, ActionTypeOfPointsRecord action) {
         String key = buildInteractionKey(contentId, action);
         RSet<String> set = redissonClient.getSet(key);
         return set.size();
@@ -76,9 +76,9 @@ public class PointsCacheServiceImpl implements PointsCacheService {
      * 构建内容互动去重 Key
      * 格式: core:content:like:{contentId}:{date} 或 core:content:comment:{contentId}:{date}
      */
-    private String buildInteractionKey(Long contentId, PointsActionType action) {
+    private String buildInteractionKey(Long contentId, ActionTypeOfPointsRecord action) {
         String date = LocalDate.now().toString().replace("-", "");
-        String prefix = action == PointsActionType.LIKED
+        String prefix = action == ActionTypeOfPointsRecord.LIKED
                 ? CoreConstant.CORE_CONTENT_LIKE_KEY
                 : CoreConstant.CORE_CONTENT_COMMENT_KEY;
         return prefix + contentId + ":" + date;
@@ -87,7 +87,7 @@ public class PointsCacheServiceImpl implements PointsCacheService {
     /**
      * 获取行为字段名
      */
-    private String getActionField(PointsActionType action) {
+    private String getActionField(ActionTypeOfPointsRecord action) {
         return switch (action) {
             case CHECK_IN -> "checkin";
             case PUBLISH -> "publish";

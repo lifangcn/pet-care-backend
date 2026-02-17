@@ -8,24 +8,23 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * {@code @description}: 健康记录类型枚举
- * {@code @date}: 2025/12/19 11:05
+ * {@code @description}: 提醒来源类型 枚举类: MANUAL(手动添加), SYSTEM(系统生成)
+ * {@code @date}: 2026/02/13
  *
- * @author Michael
+ * @author Michael Li
  */
 @Getter
 @AllArgsConstructor
-public enum StatusOfReminderExecution {
+public enum SourceTypeOfReminder {
 
-    PENDING("PENDING", "待处理"),
-    COMPLETED("COMPLETED", "已完成"),
-    OVERDUE("OVERDUE", "已过期");
+    MANUAL("MANUAL", "手动添加"),
+    SYSTEM("SYSTEM", "系统生成");
 
     @EnumValue
     private final String code;
     private final String description;
 
-    public static Optional<StatusOfReminderExecution> fromCode(String code) {
+    public static Optional<SourceTypeOfReminder> fromCode(String code) {
         if (code == null) return Optional.empty();
         return Arrays.stream(values())
                 .filter(e -> e.code.equals(code))

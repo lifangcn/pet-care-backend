@@ -4,6 +4,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.reminder.entity.codelist.StatusOfReminderExecution;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -54,9 +55,9 @@ public class ReminderExecution implements Serializable {
     private LocalDateTime actualTime;
 
     /**
-     * 执行状态
+     * 执行状态：PENDING-待处理 COMPLETED-已完成 OVERDUE-已过期
      */
-    private String status;
+    private StatusOfReminderExecution status;
 
     /**
      * 完成说明
@@ -92,5 +93,20 @@ public class ReminderExecution implements Serializable {
      * 创建时间
      */
     private LocalDateTime createdAt;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updatedAt;
+
+    /**
+     * 逻辑删除：0-正常，1-已删除
+     */
+    private Boolean isDeleted;
+
+    /**
+     * 删除时间
+     */
+    private LocalDateTime deletedAt;
 
 }

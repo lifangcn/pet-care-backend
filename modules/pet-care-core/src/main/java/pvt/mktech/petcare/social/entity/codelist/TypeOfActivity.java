@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.reminder.entity.codelist;
+package pvt.mktech.petcare.social.entity.codelist;
 
 import com.mybatisflex.annotation.EnumValue;
 import lombok.AllArgsConstructor;
@@ -8,24 +8,23 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * {@code @description}: 健康记录类型枚举
- * {@code @date}: 2025/12/19 11:05
+ * {@code @description}: 活动类型枚举
+ * {@code @date}: 2026/02/13
  *
  * @author Michael
  */
 @Getter
 @AllArgsConstructor
-public enum StatusOfReminderExecution {
+public enum TypeOfActivity {
 
-    PENDING("PENDING", "待处理"),
-    COMPLETED("COMPLETED", "已完成"),
-    OVERDUE("OVERDUE", "已过期");
+    ONLINE("ONLINE", "线上活动"),
+    OFFLINE("OFFLINE", "线下聚会");
 
     @EnumValue
     private final String code;
     private final String description;
 
-    public static Optional<StatusOfReminderExecution> fromCode(String code) {
+    public static Optional<TypeOfActivity> fromCode(String code) {
         if (code == null) return Optional.empty();
         return Arrays.stream(values())
                 .filter(e -> e.code.equals(code))

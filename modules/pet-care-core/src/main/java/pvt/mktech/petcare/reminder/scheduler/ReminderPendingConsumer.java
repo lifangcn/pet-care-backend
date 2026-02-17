@@ -18,6 +18,7 @@ import pvt.mktech.petcare.reminder.entity.Reminder;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.exception.SystemException;
 import pvt.mktech.petcare.reminder.entity.ReminderExecution;
+import pvt.mktech.petcare.reminder.entity.codelist.StatusOfReminderExecution;
 import pvt.mktech.petcare.reminder.service.ReminderExecutionService;
 import pvt.mktech.petcare.reminder.service.ReminderService;
 
@@ -102,7 +103,7 @@ public class ReminderPendingConsumer {
         execution.setReminderId(messageDto.getId());
         execution.setPetId(messageDto.getPetId());
         execution.setUserId(messageDto.getUserId());
-        execution.setStatus("PENDING");
+        execution.setStatus(StatusOfReminderExecution.PENDING);
         execution.setIsSent(Boolean.FALSE);
         execution.setIsRead(Boolean.FALSE);
         execution.setScheduleTime(messageDto.getScheduleTime());

@@ -8,7 +8,7 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 import pvt.mktech.petcare.points.event.PointsEarnEvent;
 import pvt.mktech.petcare.social.dto.request.PostQueryRequest;
 import pvt.mktech.petcare.social.dto.request.PostSaveRequest;
@@ -17,7 +17,6 @@ import pvt.mktech.petcare.social.entity.Interaction;
 import pvt.mktech.petcare.social.entity.Post;
 import pvt.mktech.petcare.social.mapper.PostMapper;
 import pvt.mktech.petcare.social.service.InteractionService;
-import pvt.mktech.petcare.social.service.LabelService;
 import pvt.mktech.petcare.social.service.PostLabelService;
 import pvt.mktech.petcare.social.service.PostService;
 import pvt.mktech.petcare.common.web.UserContext;
@@ -50,14 +49,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             postLabelService.savePostLabels(post.getId(), request.getLabelIds());
         }
         // 积分变更： 发布
-        applicationEventPublisher.publishEvent(new PointsEarnEvent(UserContext.getUserId(), PointsActionType.PUBLISH, post.getId()));
+        applicationEventPublisher.publishEvent(new PointsEarnEvent(UserContext.getUserId(), ActionTypeOfPointsRecord.PUBLISH, post.getId()));
         return post;
     }
 
     @Override
     public Page<Post> findPageByQueryRequest(Long pageNumber, Long pageSize, PostQueryRequest request) {
         QueryWrapper queryWrapper = QueryWrapper.create()
-                .where(POST.STATUS.eq(1))
+                .where(POST.ENABLED.eq(1))
                 .orderBy(POST.CREATED_AT.desc());
 
         if (request.getPostType() != null) {
@@ -111,7 +110,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public boolean deletePost(Long id) {
         Post post = new Post();
         post.setId(id);
-        post.setStatus(3);
+        post.setEnabled(0);
         return updateById(post);
     }
 
@@ -131,7 +130,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(POST.ACTIVITY_ID.eq(activityId))
                 .and(POST.POST_TYPE.eq(6))
-                .and(POST.STATUS.eq(1))
+                .and(POST.ENABLED.eq(1))
                 .orderBy(POST.CREATED_AT.desc());
         return list(queryWrapper);
     }

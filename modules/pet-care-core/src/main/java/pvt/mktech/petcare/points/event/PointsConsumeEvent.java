@@ -1,7 +1,7 @@
 package pvt.mktech.petcare.points.event;
 
 import lombok.Data;
-import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 
 /**
  * {@code @description}: 积分消耗事件
@@ -20,7 +20,7 @@ public class PointsConsumeEvent {
     /**
      * 行为类型
      */
-    private PointsActionType actionType;
+    private ActionTypeOfPointsRecord actionType;
 
     /**
      * 关联业务ID
@@ -51,7 +51,7 @@ public class PointsConsumeEvent {
         this.timestamp = java.time.LocalDateTime.now();
     }
 
-    public PointsConsumeEvent(Long userId, PointsActionType actionType, Integer points, Long bizId, Long couponId, String bizType) {
+    public PointsConsumeEvent(Long userId, ActionTypeOfPointsRecord actionType, Integer points, Long bizId, Long couponId, String bizType) {
         this.userId = userId;
         this.actionType = actionType;
         this.points = points;

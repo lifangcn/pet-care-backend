@@ -21,7 +21,7 @@ public class PointsConsumeRequest implements Serializable {
     /**
      * 行为类型
      */
-    private Integer actionType;
+    private String actionType;
 
     /**
      * 消耗积分数

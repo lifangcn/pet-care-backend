@@ -14,6 +14,7 @@ import pvt.mktech.petcare.common.redis.DistributedLock;
 import pvt.mktech.petcare.infrastructure.constant.CoreConstant;
 import pvt.mktech.petcare.reminder.dto.message.ReminderMessageDto;
 import pvt.mktech.petcare.reminder.entity.Reminder;
+import pvt.mktech.petcare.reminder.entity.codelist.RepeatTypeOfReminder;
 import pvt.mktech.petcare.reminder.service.ReminderService;
 
 import java.time.LocalDateTime;
@@ -108,7 +109,7 @@ public class ReminderScanScheduler {
         // 重复提醒：基于 schedule_time (基准时间) 和 repeat_type 计算下一次
         LocalDateTime baseTime = reminder.getScheduleTime(); // 用户设置的基准时间
         LocalDateTime lastTriggerTime = reminder.getNextTriggerTime(); // 本次触发的时间
-        String repeatType = reminder.getRepeatType();
+        RepeatTypeOfReminder repeatType = reminder.getRepeatType();
 
         LocalDateTime nextTime = calculateNextTime(baseTime, lastTriggerTime, repeatType);
 
@@ -127,7 +128,7 @@ public class ReminderScanScheduler {
      */
     private LocalDateTime calculateNextTime(LocalDateTime baseTime,
                                             LocalDateTime lastTriggerTime,
-                                            String repeatType) {
+                                            RepeatTypeOfReminder repeatType) {
         // 如果 lastTriggerTime 为空，说明是第一次，返回基准时间
         if (lastTriggerTime == null) {
             return baseTime;
@@ -136,9 +137,9 @@ public class ReminderScanScheduler {
         // 根据重复类型计算
         return switch (repeatType) {
             // 在最后一次触发的时间，根据重复规则进行累加
-            case "DAILY" -> lastTriggerTime.plusDays(1);
-            case "WEEKLY" -> lastTriggerTime.plusWeeks(1);
-            case "MONTHLY" -> lastTriggerTime.plusMonths(1);
+            case RepeatTypeOfReminder.DAILY -> lastTriggerTime.plusDays(1);
+            case RepeatTypeOfReminder.WEEKLY  -> lastTriggerTime.plusWeeks(1);
+            case RepeatTypeOfReminder.MONTHLY  -> lastTriggerTime.plusMonths(1);
             default -> {
                 log.warn("未知重复类型: {}", repeatType);
                 yield null;

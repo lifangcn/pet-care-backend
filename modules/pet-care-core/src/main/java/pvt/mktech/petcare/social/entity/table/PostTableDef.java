@@ -83,7 +83,7 @@ public class PostTableDef extends TableDef {
     /**
      * 1-正常 2-隐藏
      */
-    public final QueryColumn STATUS = new QueryColumn(this, "status");
+    public final QueryColumn ENABLED = new QueryColumn(this, "enabled");
 
     /**
      * 关联的活动ID
@@ -118,7 +118,7 @@ public class PostTableDef extends TableDef {
     /**
      * 默认字段
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, CONTENT, POST_TYPE, MEDIA_URLS, EXTERNAL_LINK, LOCATION_ADDRESS, PRICE_RANGE, LIKE_COUNT, RATING_COUNT, RATING_TOTAL, RATING_AVG, VIEW_COUNT, STATUS, ACTIVITY_ID};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, CONTENT, POST_TYPE, MEDIA_URLS, EXTERNAL_LINK, LOCATION_ADDRESS, PRICE_RANGE, LIKE_COUNT, RATING_COUNT, RATING_TOTAL, RATING_AVG, VIEW_COUNT, ENABLED, ACTIVITY_ID};
 
     public PostTableDef() {
         super("", "tb_post");

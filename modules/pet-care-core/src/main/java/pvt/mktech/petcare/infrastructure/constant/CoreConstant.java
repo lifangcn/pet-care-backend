@@ -66,4 +66,14 @@ public class CoreConstant {
      */
     public static final String CORE_POINTS_RECORD_SAVE_CONSUMER = "core_point_record_save_consumer";
 
+    /** 代金券系统 **/
+    /**
+     * 券库存Redis键前缀，key格式: core:coupon:stock:{templateId}
+     */
+    public static final String CORE_COUPON_STOCK_KEY_PREFIX = "core:coupon:stock:";
+    /**
+     * 抢劵分布式锁键前缀，key格式: core:coupon:grab:{templateId}:{userId}
+     */
+    public static final String CORE_COUPON_GRAB_LOCK_KEY_PREFIX = "core:coupon:grab:";
+
 }

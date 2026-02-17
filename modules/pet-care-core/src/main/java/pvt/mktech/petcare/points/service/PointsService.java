@@ -7,7 +7,7 @@ import pvt.mktech.petcare.points.dto.request.PointsRecordQueryRequest;
 import pvt.mktech.petcare.points.dto.response.PointsAccountResponse;
 import pvt.mktech.petcare.points.entity.PointsAccount;
 import pvt.mktech.petcare.points.entity.PointsRecord;
-import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 
 /**
  * {@code @description}: 积分核心服务接口
@@ -32,7 +32,7 @@ public interface PointsService extends IService<PointsAccount> {
      * @param bizId  关联业务ID
      * @return 实际获取积分数
      */
-    Integer earnByAction(Long userId, pvt.mktech.petcare.points.entity.codelist.PointsActionType action, Long bizId);
+    Integer earnByAction(Long userId, ActionTypeOfPointsRecord action, Long bizId);
 
     /**
      * 质量行为获取积分（被点赞/被评论）
@@ -43,8 +43,17 @@ public interface PointsService extends IService<PointsAccount> {
      * @param interactUserId 互动用户ID
      * @return 实际获取积分数（首次互动返回积分值，重复互动返回0）
      */
-    Integer earnByQuality(Long authorId, pvt.mktech.petcare.points.entity.codelist.PointsActionType action,
+    Integer earnByQuality(Long authorId, ActionTypeOfPointsRecord action,
                           Long contentId, Long interactUserId);
+
+    /**
+     * 券兑换获取积分
+     *
+     * @param userId   用户ID
+     * @param couponId 券ID
+     * @return 实际获取积分数
+     */
+    Integer earnByCoupon(Long userId, Long couponId);
 
     /**
      * 消耗积分
@@ -81,5 +90,5 @@ public interface PointsService extends IService<PointsAccount> {
      * @param action  积分操作类型，表示增加、减少、过期等操作行为
      * @param bizId   业务ID，用于关联具体的业务场景，如订单ID、活动ID等
      */
-    void saveRecord(PointsAccount account, Integer points, PointsActionType action, Long bizId);
+    void saveRecord(PointsAccount account, Integer points, ActionTypeOfPointsRecord action, Long bizId);
 }

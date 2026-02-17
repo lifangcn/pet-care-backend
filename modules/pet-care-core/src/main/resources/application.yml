@@ -113,7 +113,7 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
     filter: true
-  packages-to-scan: pvt.mktech.petcare.core.controller,pvt.mktech.petcare.club.controller
+  packages-to-scan: pvt.mktech.petcare.core.controller
   cache:
     disabled: true
 

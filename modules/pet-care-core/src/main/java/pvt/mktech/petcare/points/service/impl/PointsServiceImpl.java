@@ -18,16 +18,26 @@ import pvt.mktech.petcare.points.dto.request.PointsConsumeRequest;
 import pvt.mktech.petcare.points.dto.request.PointsRecordQueryRequest;
 import pvt.mktech.petcare.points.dto.response.PointsAccountResponse;
 import pvt.mktech.petcare.points.entity.PointsAccount;
+import pvt.mktech.petcare.points.entity.PointsCoupon;
+import pvt.mktech.petcare.points.entity.PointsCouponTemplate;
 import pvt.mktech.petcare.points.entity.PointsRecord;
-import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
+import pvt.mktech.petcare.points.entity.codelist.SourceTypeOfCouponTemplate;
+import pvt.mktech.petcare.points.entity.codelist.StatusOfPointsCoupon;
 import pvt.mktech.petcare.points.mapper.PointsAccountMapper;
+import pvt.mktech.petcare.points.mapper.PointsCouponMapper;
+import pvt.mktech.petcare.points.mapper.PointsCouponTemplateMapper;
 import pvt.mktech.petcare.points.mapper.PointsRecordMapper;
 import pvt.mktech.petcare.points.service.PointsCacheService;
+import pvt.mktech.petcare.points.service.PointsCouponService;
 import pvt.mktech.petcare.points.service.PointsService;
+
+import java.util.List;
 
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_POINTS_LOCK_KEY_PREFIX;
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_POINTS_RECORD_SAVE_TOPIC;
 import static pvt.mktech.petcare.points.entity.table.PointsAccountTableDef.POINTS_ACCOUNT;
+import static pvt.mktech.petcare.points.entity.table.PointsCouponTemplateTableDef.POINTS_COUPON_TEMPLATE;
 import static pvt.mktech.petcare.points.entity.table.PointsRecordTableDef.POINTS_RECORD;
 
 /**
@@ -46,13 +56,15 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
     private final RedissonLockUtil redissonLockUtil;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final TransactionTemplate transactionTemplate;
+    private final PointsCouponService pointsCouponService;
+    private final PointsCouponMapper pointsCouponMapper;
 
     @Override
     public void grantRegisterPoints(Long userId) {
         PointsRecord pointsRecord = transactionTemplate.execute(status ->
                 redissonLockUtil.executeWithLock(CORE_POINTS_LOCK_KEY_PREFIX + userId, () -> {
                     PointsAccount account = getOrCreateAccount(userId);
-                    int points = PointsActionType.REGISTER.getPoints();
+                    int points = ActionTypeOfPointsRecord.REGISTER.getPoints();
 
                     updateChain().set(POINTS_ACCOUNT.AVAILABLE_POINTS, account.getAvailablePoints() + points)
                             .set(POINTS_ACCOUNT.TOTAL_POINTS, account.getTotalPoints() + points)
@@ -64,17 +76,20 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
                     record.setPoints(points);
                     record.setPointsBefore(account.getAvailablePoints());
                     record.setPointsAfter(account.getAvailablePoints() + points);
-                    record.setActionType(PointsActionType.REGISTER.getCode());
+                    record.setActionType(ActionTypeOfPointsRecord.REGISTER);
                     record.setBizId(null);
                     return record;
                 }, 1, 10));
         if (pointsRecord != null) {
             sendMessageToPointsRecordSave(pointsRecord);
         }
+        // 发放新人劵
+        pointsCouponService.issueCouponForNewComer(userId);
+
     }
 
     @Override
-    public Integer earnByAction(Long userId, PointsActionType action, Long bizId) {
+    public Integer earnByAction(Long userId, ActionTypeOfPointsRecord action, Long bizId) {
         // 检查是否超限
         int count = pointsCacheService.getActionCount(userId, action);
         int limit = getDailyLimit(action);
@@ -105,7 +120,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
                     record.setPoints(points);
                     record.setPointsBefore(account.getAvailablePoints());
                     record.setPointsAfter(account.getAvailablePoints() + points);
-                    record.setActionType(action.getCode());
+                    record.setActionType(action);
                     record.setBizId(bizId);
                     return record;
                 }, 1, 10));
@@ -120,7 +135,43 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
     }
 
     @Override
-    public Integer earnByQuality(Long authorId, PointsActionType action, Long contentId, Long interactUserId) {
+    public Integer earnByCoupon(Long userId, Long couponId) {
+        PointsRecord pointsRecord = transactionTemplate.execute(status ->
+                redissonLockUtil.executeWithLock(CORE_POINTS_LOCK_KEY_PREFIX + userId, () -> {
+                    PointsAccount account = getOrCreateAccount(userId);
+
+                    // 从券表查询面值
+                    PointsCoupon coupon = pointsCouponMapper.selectOneById(couponId);
+                    if (coupon == null) {
+                        throw new BusinessException(ErrorCode.PARAM_ERROR, "券不存在");
+                    }
+
+                    Integer points = coupon.getFaceValue();
+
+                    updateChain()
+                            .set(POINTS_ACCOUNT.AVAILABLE_POINTS, account.getAvailablePoints() + points)
+                            .set(POINTS_ACCOUNT.TOTAL_POINTS, account.getTotalPoints() + points)
+                            .where(POINTS_ACCOUNT.USER_ID.eq(userId))
+                            .update();
+
+                    PointsRecord record = new PointsRecord();
+                    record.setUserId(account.getUserId());
+                    record.setPoints(points);
+                    record.setPointsBefore(account.getAvailablePoints());
+                    record.setPointsAfter(account.getAvailablePoints() + points);
+                    record.setActionType(ActionTypeOfPointsRecord.COUPON_REDEEM);
+                    record.setBizId(couponId);
+                    return record;
+                }, 1, 10));
+
+        if (pointsRecord != null) {
+            sendMessageToPointsRecordSave(pointsRecord);
+        }
+        return pointsRecord != null ? pointsRecord.getPoints() : 0;
+    }
+
+    @Override
+    public Integer earnByQuality(Long authorId, ActionTypeOfPointsRecord action, Long contentId, Long interactUserId) {
         // 检查是否首次互动
         boolean isFirst = pointsCacheService.checkAndAddInteraction(contentId, interactUserId, action);
         if (!isFirst) {
@@ -144,7 +195,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
                     record.setPoints(points);
                     record.setPointsBefore(account.getAvailablePoints());
                     record.setPointsAfter(account.getAvailablePoints() + points);
-                    record.setActionType(action.getCode());
+                    record.setActionType(action);
                     record.setBizId(contentId);
                     return record;
                 }, 1, 10));
@@ -191,7 +242,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
             toSave.setPoints(request.getPoints());
             toSave.setPointsBefore(pointsAfter - request.getPoints());
             toSave.setPointsAfter(pointsAfter);
-            toSave.setActionType(request.getActionType());
+            toSave.setActionType(ActionTypeOfPointsRecord.fromCode(request.getActionType()).get());
             toSave.setBizType(request.getBizType());
             toSave.setBizId(request.getBizId());
             toSave.setCouponId(request.getCouponId());
@@ -274,13 +325,13 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
     }
 
     @Override
-    public void saveRecord(PointsAccount account, Integer points, PointsActionType action, Long bizId) {
+    public void saveRecord(PointsAccount account, Integer points, ActionTypeOfPointsRecord action, Long bizId) {
         PointsRecord record = new PointsRecord();
         record.setUserId(account.getUserId());
         record.setPoints(points);
         record.setPointsBefore(account.getAvailablePoints() - points);
         record.setPointsAfter(account.getAvailablePoints());
-        record.setActionType(action.getCode());
+        record.setActionType(action);
         record.setBizId(bizId);
         pointsRecordMapper.insert(record);
     }
@@ -288,7 +339,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
     /**
      * 获取每日行为上限
      */
-    private int getDailyLimit(PointsActionType action) {
+    private int getDailyLimit(ActionTypeOfPointsRecord action) {
         return switch (action) {
             case CHECK_IN -> 1;
             case PUBLISH -> 5;

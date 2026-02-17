@@ -43,7 +43,7 @@ public class HealthRecord implements Serializable {
     private Long userId;
 
     /**
-     * 记录类型: weight(体重), temperature(体温), medical(用药)
+     * 记录类型: WEIGHT(体重), TEMPERATURE(体温), MEDICAL(用药)
      */
     private RecordTypeOfHealthRecord recordType;
 
@@ -89,5 +89,15 @@ public class HealthRecord implements Serializable {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    /**
+     * 逻辑删除：0-正常，1-已删除
+     */
+    private Boolean isDeleted;
+
+    /**
+     * 删除时间
+     */
+    private LocalDateTime deletedAt;
 
 }

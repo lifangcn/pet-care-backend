@@ -17,6 +17,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PointsCouponQueryRequest {
 
-    @Schema(description = "券状态：0-未使用 1-已使用 2-已过期")
-    private Integer status;
+    @Schema(description = "券状态：UNUSED-未使用 USED-已使用 EXPIRED-已过期")
+    private String status;
 }

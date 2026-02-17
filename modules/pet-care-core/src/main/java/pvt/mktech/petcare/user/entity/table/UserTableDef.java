@@ -31,7 +31,7 @@ public class UserTableDef extends TableDef {
     /**
      * 状态: 0-禁用 1-正常 2-未激活
      */
-    public final QueryColumn STATUS = new QueryColumn(this, "status");
+    public final QueryColumn ENABLED = new QueryColumn(this, "enabled");
 
     /**
      * 昵称
@@ -70,7 +70,7 @@ public class UserTableDef extends TableDef {
     /**
      * 默认字段，不包含逻辑删除或者 large 等字段。
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USERNAME, PHONE, NICKNAME, AVATAR, STATUS, ADDRESS, CREATED_AT, UPDATED_AT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USERNAME, PHONE, NICKNAME, AVATAR, ENABLED, ADDRESS, CREATED_AT, UPDATED_AT};
 
     public UserTableDef() {
         super("", "tb_user");

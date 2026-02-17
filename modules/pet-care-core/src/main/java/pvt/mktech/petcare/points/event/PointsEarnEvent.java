@@ -2,7 +2,7 @@ package pvt.mktech.petcare.points.event;
 
 import lombok.Getter;
 import lombok.Setter;
-import pvt.mktech.petcare.points.entity.codelist.PointsActionType;
+import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 
 import java.time.LocalDateTime;
 
@@ -24,7 +24,7 @@ public class PointsEarnEvent {
     /**
      * 行为类型
      */
-    private PointsActionType actionType;
+    private ActionTypeOfPointsRecord actionType;
 
     /**
      * 关联业务ID
@@ -57,14 +57,14 @@ public class PointsEarnEvent {
      * @param actionType 积分操作类型，定义了获取积分的具体行为
      * @param bizId      业务ID，关联具体的业务场景或订单等
      */
-    public PointsEarnEvent(Long userId, PointsActionType actionType, Long bizId) {
+    public PointsEarnEvent(Long userId, ActionTypeOfPointsRecord actionType, Long bizId) {
         this.userId = userId;
         this.actionType = actionType;
         this.bizId = bizId;
         this.timestamp = LocalDateTime.now();
     }
 
-    public PointsEarnEvent(Long userId, PointsActionType actionType, Long bizId, Long targetId, Long interactUserId) {
+    public PointsEarnEvent(Long userId, ActionTypeOfPointsRecord actionType, Long bizId, Long targetId, Long interactUserId) {
         this.userId = userId;
         this.actionType = actionType;
         this.bizId = bizId;

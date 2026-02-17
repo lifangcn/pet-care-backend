@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.points.entity.codelist.SourceTypeOfCouponTemplate;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -61,9 +62,9 @@ public class PointsCouponTemplate implements Serializable {
     private Integer perUserLimit;
 
     /**
-     * 来源类型：1-系统发放 2-活动发放 3-新人礼包
+     * 来源类型：SYSTEM-系统发放 ACTIVITY-活动发放 NEWCOMER-新人礼包
      */
-    private Integer sourceType;
+    private SourceTypeOfCouponTemplate sourceType;
 
     /**
      * 状态：0-停用 1-启用
@@ -81,4 +82,16 @@ public class PointsCouponTemplate implements Serializable {
      */
     @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP", onUpdateValue = "CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
+
+    /**
+     * 逻辑删除：0-正常，1-已删除
+     */
+    @Column(value = "is_deleted", onInsertValue = "0")
+    private Boolean isDeleted;
+
+    /**
+     * 删除时间
+     */
+    @Column(value = "deleted_at")
+    private LocalDateTime deletedAt;
 }

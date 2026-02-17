@@ -5,6 +5,7 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.social.entity.Interaction;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfInteraction;
 import pvt.mktech.petcare.social.mapper.InteractionMapper;
 import pvt.mktech.petcare.social.service.InteractionService;
 
@@ -34,7 +35,7 @@ public class InteractionServiceImpl extends ServiceImpl<InteractionMapper, Inter
             Interaction interaction = new Interaction();
             interaction.setUserId(userId);
             interaction.setPostId(postId);
-            interaction.setInteractionType(1);
+            interaction.setInteractionType(TypeOfInteraction.LIKE);
             save(interaction);
             return true;
         }
@@ -45,7 +46,7 @@ public class InteractionServiceImpl extends ServiceImpl<InteractionMapper, Inter
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(INTERACTION.USER_ID.eq(userId))
                 .and(INTERACTION.POST_ID.eq(postId))
-                .and(INTERACTION.INTERACTION_TYPE.eq(2));
+                .and(INTERACTION.INTERACTION_TYPE.eq(TypeOfInteraction.RATING));
         Interaction exist = getOne(queryWrapper);
 
         if (exist != null) {
@@ -55,7 +56,7 @@ public class InteractionServiceImpl extends ServiceImpl<InteractionMapper, Inter
             Interaction interaction = new Interaction();
             interaction.setUserId(userId);
             interaction.setPostId(postId);
-            interaction.setInteractionType(2);
+            interaction.setInteractionType(TypeOfInteraction.RATING);
             interaction.setRatingValue(rating);
             save(interaction);
         }
@@ -68,7 +69,7 @@ public class InteractionServiceImpl extends ServiceImpl<InteractionMapper, Inter
                 .select(INTERACTION.RATING_VALUE)
                 .where(INTERACTION.USER_ID.eq(userId))
                 .and(INTERACTION.POST_ID.eq(id))
-                .and(INTERACTION.INTERACTION_TYPE.eq(2)));
+                .and(INTERACTION.INTERACTION_TYPE.eq(TypeOfInteraction.RATING)));
         return interaction != null ? interaction.getRatingValue() : null;
     }
 }
