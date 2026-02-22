@@ -69,7 +69,7 @@ public class ReminderScanScheduler {
             // 更新下次提醒事件触发时间和发送消息，存在非原子性的问题
             // 1.更新下次提醒时间
             // 1.1.如果是单次提醒，将下次触发事件设置为空
-            if (reminder.getRepeatType() == null || "NONE".equals(reminder.getRepeatType())) {
+            if (reminder.getRepeatType() == null || RepeatTypeOfReminder.NONE.equals(reminder.getRepeatType())) {
                 reminderService.updateNextTriggerTimeById(null, reminder.getId());
             } else {
                 // 1.2.如果是重复提醒，计算并更新"下一次触发时间"，而不改变 schedule_time
@@ -93,6 +93,7 @@ public class ReminderScanScheduler {
         try {
             String key = reminder.getId().toString();
             String value = JSONUtil.toJsonStr(messageDto);
+
             kafkaTemplate.send(CORE_REMINDER_PENDING_TOPIC, key, value).get();
             log.info("发送 提醒项 到延迟消费队列 成功，topic: {}, key: {}, body: {}",
                     CORE_REMINDER_PENDING_TOPIC, key, messageDto);

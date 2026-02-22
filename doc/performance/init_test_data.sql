@@ -5,13 +5,12 @@
 
 -- 1. 创建 1001 个测试用户（tb_user）
 -- 注意：id 是自增的，先插入数据后再查询 id
-INSERT INTO tb_user (phone, username, nickname, avatar, status)
+INSERT INTO tb_user (phone, username, nickname, avatar, enabled)
 SELECT
     CONCAT('1380000', LPAD(seq, 4, '0')) AS phone,
     CONCAT('test_user_', seq) AS username,
     CONCAT('测试用户', seq) AS nickname,
-    'https://example.com/avatar/default.png' AS avatar,
-    1 AS status
+    'https://example.com/avatar/default.png' AS avatar, true
 FROM (
     SELECT @row := @row + 1 AS seq
     FROM (SELECT 0 UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) t1,

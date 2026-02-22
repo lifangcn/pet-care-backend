@@ -12,32 +12,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
-import pvt.mktech.petcare.common.exception.SystemException;
 import pvt.mktech.petcare.common.redis.RedissonLockUtil;
 import pvt.mktech.petcare.points.dto.request.PointsConsumeRequest;
 import pvt.mktech.petcare.points.dto.request.PointsRecordQueryRequest;
 import pvt.mktech.petcare.points.dto.response.PointsAccountResponse;
 import pvt.mktech.petcare.points.entity.PointsAccount;
 import pvt.mktech.petcare.points.entity.PointsCoupon;
-import pvt.mktech.petcare.points.entity.PointsCouponTemplate;
 import pvt.mktech.petcare.points.entity.PointsRecord;
 import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
-import pvt.mktech.petcare.points.entity.codelist.SourceTypeOfCouponTemplate;
-import pvt.mktech.petcare.points.entity.codelist.StatusOfPointsCoupon;
 import pvt.mktech.petcare.points.mapper.PointsAccountMapper;
 import pvt.mktech.petcare.points.mapper.PointsCouponMapper;
-import pvt.mktech.petcare.points.mapper.PointsCouponTemplateMapper;
 import pvt.mktech.petcare.points.mapper.PointsRecordMapper;
 import pvt.mktech.petcare.points.service.PointsCacheService;
 import pvt.mktech.petcare.points.service.PointsCouponService;
 import pvt.mktech.petcare.points.service.PointsService;
 
-import java.util.List;
-
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_POINTS_LOCK_KEY_PREFIX;
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_POINTS_RECORD_SAVE_TOPIC;
 import static pvt.mktech.petcare.points.entity.table.PointsAccountTableDef.POINTS_ACCOUNT;
-import static pvt.mktech.petcare.points.entity.table.PointsCouponTemplateTableDef.POINTS_COUPON_TEMPLATE;
 import static pvt.mktech.petcare.points.entity.table.PointsRecordTableDef.POINTS_RECORD;
 
 /**
@@ -134,19 +126,24 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
         return action.getPoints();
     }
 
+    /**
+     * {@code @description}: 券兑换获取积分（锁优化）
+     * {@code @date}: 2025-02-21
+     * {@code @author}: Michael Li
+     */
     @Override
     public Integer earnByCoupon(Long userId, Long couponId) {
+        // 锁外查询券表，减少锁持有时间
+        PointsCoupon coupon = pointsCouponMapper.selectOneById(couponId);
+        if (coupon == null) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "券不存在");
+        }
+
+        Integer points = coupon.getFaceValue();
+
         PointsRecord pointsRecord = transactionTemplate.execute(status ->
                 redissonLockUtil.executeWithLock(CORE_POINTS_LOCK_KEY_PREFIX + userId, () -> {
                     PointsAccount account = getOrCreateAccount(userId);
-
-                    // 从券表查询面值
-                    PointsCoupon coupon = pointsCouponMapper.selectOneById(couponId);
-                    if (coupon == null) {
-                        throw new BusinessException(ErrorCode.PARAM_ERROR, "券不存在");
-                    }
-
-                    Integer points = coupon.getFaceValue();
 
                     updateChain()
                             .set(POINTS_ACCOUNT.AVAILABLE_POINTS, account.getAvailablePoints() + points)
@@ -232,7 +229,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
                 throw new BusinessException(ErrorCode.POINTS_NOT_ENOUGH);
             }
 
-            // 查询扣减后的余额（此时已更新完成）
+            // 查询扣减后的余额（获取实际更新后的值）
             PointsAccount accountAfter = getOne(QueryWrapper.create().where(POINTS_ACCOUNT.USER_ID.eq(request.getUserId())));
 
             Integer pointsAfter = accountAfter.getAvailablePoints();
@@ -255,24 +252,23 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
     }
 
     /**
-     * {@code @description}: 发送积分记录流水处理队列
-     *
-     * @param record 积分记录
+     * {@code @description}: 发送积分记录流水处理队列（异步优化）
+     * {@code @date}: 2025-02-21
+     * {@code @author}: Michael Li
      */
     private void sendMessageToPointsRecordSave(PointsRecord record) {
-        // 准备Kafka消息
         String key = record.getBizId() != null ? record.getBizId().toString() : "0";
-        String value = JSONUtil.toJsonStr(record); // 将请求对象转换为JSON字符串
-        try {
-            // 发送消息到Kafka队列
-            kafkaTemplate.send(CORE_POINTS_RECORD_SAVE_TOPIC, key, value).get();
-            // 记录发送成功的日志
-            log.info("发送 积分记录流水处理队列 成功，topic: {}, key: {}, body: {}",
-                    CORE_POINTS_RECORD_SAVE_TOPIC, key, value);
-        } catch (Exception e) {
-            log.error("发送 积分记录流水处理队列 失败，topic: {}, key: {}, body: {}", CORE_POINTS_RECORD_SAVE_TOPIC, key, value, e);
-            throw new SystemException(ErrorCode.MESSAGE_SEND_FAILED, e);
-        }
+        String value = JSONUtil.toJsonStr(record);
+
+        // 异步发送，不阻塞主流程
+        kafkaTemplate.send(CORE_POINTS_RECORD_SAVE_TOPIC, key, value)
+                .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        log.debug("发送 积分记录流水处理队列 成功，topic: {}, key: {}", CORE_POINTS_RECORD_SAVE_TOPIC, key);
+                    } else {
+                        log.error("发送 积分记录流水处理队列 失败，topic: {}, key: {}", CORE_POINTS_RECORD_SAVE_TOPIC, key, ex);
+                    }
+                });
     }
 
 

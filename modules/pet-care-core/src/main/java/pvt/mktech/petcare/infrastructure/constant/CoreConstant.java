@@ -75,5 +75,9 @@ public class CoreConstant {
      * 抢劵分布式锁键前缀，key格式: core:coupon:grab:{templateId}:{userId}
      */
     public static final String CORE_COUPON_GRAB_LOCK_KEY_PREFIX = "core:coupon:grab:";
+    /**
+     * 积分消费记录主题
+     */
+    public static final String CORE_USER_REGISTER_TOPIC = "core_user_register";
 
 }

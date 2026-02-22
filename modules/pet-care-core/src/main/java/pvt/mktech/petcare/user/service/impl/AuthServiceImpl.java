@@ -4,12 +4,11 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.qrcode.QrCodeUtil;
-import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.common.dto.response.Result;
@@ -18,11 +17,6 @@ import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.jwt.JwtUtil;
 import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.infrastructure.ValidatorUtil;
-import pvt.mktech.petcare.points.entity.PointsCouponTemplate;
-import pvt.mktech.petcare.points.entity.codelist.SourceTypeOfCouponTemplate;
-import pvt.mktech.petcare.points.mapper.PointsCouponTemplateMapper;
-import pvt.mktech.petcare.points.service.PointsCouponService;
-import pvt.mktech.petcare.points.service.PointsService;
 import pvt.mktech.petcare.shared.dto.WechatQRCodeResponse;
 import pvt.mktech.petcare.shared.dto.WechatScanStatus;
 import pvt.mktech.petcare.user.dto.LoginInfoDto;
@@ -34,11 +28,8 @@ import pvt.mktech.petcare.user.service.AuthService;
 import java.io.ByteArrayOutputStream;
 import java.time.Duration;
 import java.util.Base64;
-import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.*;
-import static pvt.mktech.petcare.points.entity.table.PointsCouponTemplateTableDef.POINTS_COUPON_TEMPLATE;
 import static pvt.mktech.petcare.user.entity.table.UserTableDef.USER;
 
 /**
@@ -56,9 +47,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     @Resource
     private RedisUtil redisUtil;
     @Resource
-    private PointsService pointsService;
-    @Resource
-    private ThreadPoolExecutor coreThreadPoolExecutor;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
 
     @Override
@@ -100,11 +89,12 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
             user.setUsername(USER_DEFAULT_NAME_PREFIX + RandomUtil.randomString(10));
             save(user);
             Long userId = user.getId();
-            coreThreadPoolExecutor.execute(() -> {
-                // 创建积分账户并设置初始积分
-                pointsService.grantRegisterPoints(userId);
-
-            });
+            kafkaTemplate.send(CORE_USER_REGISTER_TOPIC, userId.toString())
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            log.error("发送 用户注册主题 失败，topic: {}, key: {}", CORE_USER_REGISTER_TOPIC, userId, ex);
+                        }
+                    });
         }
         LoginInfoDto loginInfoDto = new LoginInfoDto();
         BeanUtil.copyProperties(user, loginInfoDto);

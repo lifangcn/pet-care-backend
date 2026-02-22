@@ -1,0 +1,9 @@
+Running 1m test @ http://localhost:8080/points/consume
+  4 threads and 500 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   209.67ms   72.72ms   1.02s    79.90%
+    Req/Sec   298.96     82.53   585.00     69.71%
+  70665 requests in 1.00m, 13.29MB read
+  Socket errors: connect 253, read 0, write 0, timeout 0
+Requests/sec:   1176.76
+Transfer/sec:    226.55KB
