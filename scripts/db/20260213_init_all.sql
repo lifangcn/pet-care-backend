@@ -11,10 +11,7 @@
 -- =============================================================================
 
 DROP DATABASE IF EXISTS `pet_care_core`;
-DROP DATABASE IF EXISTS `pet_care_ai`;
 CREATE DATABASE IF NOT EXISTS `pet_care_core` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS `pet_care_ai` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 
 -- =============================================================================
 -- Core 数据库（用户、宠物、健康、提醒、社交）
@@ -357,8 +354,22 @@ CREATE TABLE `tb_points_coupon`
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户积分代金券表';
 
 -- =============================================================================
+-- 初始化数据: 插入新注册用户积分劵
+-- =============================================================================
+INSERT INTO `pet_care_core`.`tb_points_coupon_template` (`name`, `face_value`, `valid_days`, `total_count`,
+                                                         `issued_count`, `per_user_limit`, `source_type`, `status`)
+VALUES ('新人注册券', 1000, 365, 100000, 0, 1, 'NEWCOMER', 1)
+    ON DUPLICATE KEY UPDATE `name`           = VALUES(`name`),
+    `face_value`     = VALUES(`face_value`),
+                         `valid_days`     = VALUES(`valid_days`),
+                         `per_user_limit` = VALUES(`per_user_limit`);
+
+-- =============================================================================
 -- AI 数据库
 -- =============================================================================
+DROP DATABASE IF EXISTS `pet_care_ai`;
+CREATE DATABASE IF NOT EXISTS `pet_care_ai` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 USE `pet_care_ai`;
 
 -- RAG 知识库文档表
@@ -380,26 +391,4 @@ CREATE TABLE `tb_knowledge_document`
     INDEX `idx_deleted` (`is_deleted`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='RAG知识库文档表';
-
--- =============================================================================
--- 执行完成提示
--- =============================================================================
-SELECT '数据库建表完成！' AS message;
-SELECT 'Core 数据库表数量:' AS info, COUNT(*) AS count
-FROM information_schema.tables
-WHERE table_schema = 'pet_care_core';
-SELECT 'AI 数据库表数量:' AS info, COUNT(*) AS count
-FROM information_schema.tables
-WHERE table_schema = 'pet_care_ai';
-
--- =============================================================================
--- 初始化数据: 插入新注册用户积分劵
--- =============================================================================
-INSERT INTO `pet_care_core`.`tb_points_coupon_template` (`name`, `face_value`, `valid_days`, `total_count`,
-                                                         `issued_count`, `per_user_limit`, `source_type`, `status`)
-VALUES ('新人注册券', 1000, 365, 100000, 0, 1, 'NEWCOMER', 1)
-ON DUPLICATE KEY UPDATE `name`           = VALUES(`name`),
-                        `face_value`     = VALUES(`face_value`),
-                        `valid_days`     = VALUES(`valid_days`),
-                        `per_user_limit` = VALUES(`per_user_limit`);
 

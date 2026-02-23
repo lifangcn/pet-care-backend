@@ -76,8 +76,11 @@ public class CoreConstant {
      */
     public static final String CORE_COUPON_GRAB_LOCK_KEY_PREFIX = "core:coupon:grab:";
     /**
-     * 积分消费记录主题
+     * 用户注册主题
      */
     public static final String CORE_USER_REGISTER_TOPIC = "core_user_register";
-
+    /**
+     * 用户注册主题消费组
+     */
+    public static final String CORE_USER_REGISTER_CONSUMER = "core_user_register_consumer";
 }

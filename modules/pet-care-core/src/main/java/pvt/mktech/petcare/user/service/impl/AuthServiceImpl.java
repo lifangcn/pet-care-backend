@@ -89,7 +89,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
             user.setUsername(USER_DEFAULT_NAME_PREFIX + RandomUtil.randomString(10));
             save(user);
             Long userId = user.getId();
-            kafkaTemplate.send(CORE_USER_REGISTER_TOPIC, userId.toString())
+            kafkaTemplate.send(CORE_USER_REGISTER_TOPIC, userId.toString(), userId.toString())
                     .whenComplete((result, ex) -> {
                         if (ex != null) {
                             log.error("发送 用户注册主题 失败，topic: {}, key: {}", CORE_USER_REGISTER_TOPIC, userId, ex);
