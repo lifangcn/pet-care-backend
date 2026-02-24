@@ -6,6 +6,7 @@ import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import pvt.mktech.petcare.knowledge.entity.codelist.ProcessingStatusOfKnowledgeDocument;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -24,32 +25,38 @@ public class KnowledgeDocument implements Serializable {
 
     @Id(keyType = KeyType.Auto)
     private Long id;
-    
+
     @Schema(description = "文档名称")
     private String name;
-    
+
     @Schema(description = "文件Url")
     private String fileUrl;
-    
+
     @Schema(description = "文件类型")
     private String fileType;
-    
+
     @Schema(description = "文件大小")
     private Long fileSize;
-    
+
     @Schema(description = "版本号")
     private Integer version = 1;
-    
+
     @Schema(description = "状态：1-有效，0-禁用")
     private Integer status = 1;
-    
+
     @Schema(description = "分块数量")
     private Integer chunkCount = 0;
-    
+
+    @Schema(description = "处理状态")
+    private ProcessingStatusOfKnowledgeDocument processingStatus = ProcessingStatusOfKnowledgeDocument.PENDING;
+
+    @Schema(description = "处理失败原因")
+    private String processingError;
+
     @Schema(description = "创建时间")
     @Column(value = "created_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
-    
+
     @Schema(description = "更新时间")
     @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
@@ -77,6 +84,9 @@ public class KnowledgeDocument implements Serializable {
         this.status = 1;
         this.version = 1;
         this.isDeleted = 0;
+        this.processingStatus = ProcessingStatusOfKnowledgeDocument.PROCESSING;
+        this.chunkCount = 0;
+        this.processingError = null;
     }
 
     /**
@@ -107,5 +117,36 @@ public class KnowledgeDocument implements Serializable {
      */
     public void enable() {
         this.status = 1;
+    }
+
+    /**
+     * 更新向量处理成功
+     */
+    public void updateProcessSuccess(Integer chunkCount) {
+        this.processingStatus = ProcessingStatusOfKnowledgeDocument.COMPLETED;
+        this.chunkCount = chunkCount;
+        this.processingError = null;
+    }
+
+    /**
+     * 更新向量处理失败
+     */
+    public void updateProcessFailure(String error) {
+        this.processingStatus = ProcessingStatusOfKnowledgeDocument.FAILED;
+        this.processingError = error;
+    }
+
+    /**
+     * 判断是否处理完成
+     */
+    public boolean isProcessed() {
+        return ProcessingStatusOfKnowledgeDocument.COMPLETED.equals(processingStatus);
+    }
+
+    /**
+     * 判断是否处理中
+     */
+    public boolean isProcessing() {
+        return ProcessingStatusOfKnowledgeDocument.PROCESSING.equals(processingStatus);
     }
 }

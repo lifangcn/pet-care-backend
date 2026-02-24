@@ -20,6 +20,8 @@ public class KnowledgeDocumentResponse {
     private Integer version;
     private Integer status;
     private Integer chunkCount;
+    private String processingStatus;
+    private String processingError;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

@@ -4,19 +4,91 @@ server:
 spring:
   application:
     name: pet-care-ai
-  # AI 配置
+  # Elasticsearch 配置
+  elasticsearch:
+    uris: ${ES_URIS}
+  # Kafka 配置
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 2
+      properties:
+        enable.idempotence: true
+    consumer:
+      group-id: es-sync-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 3
+    listener:
+      ack-mode: manual
+      concurrency: 3
+
+# Mybatis-Flex 多数据源配置
+mybatis-flex:
+  datasource:
+    # 主数据源 (pet_care_ai) - 默认数据源
+    ai:
+      url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+      username: ${MYSQL_USER}
+      password: ${MYSQL_PASSWORD}
+      hikari:
+        maximum-pool-size: 20
+        minimum-idle: 5
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+    # Core 数据源（用于 CDC 聚合查询）
+    core:
+      url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:3306}/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+      username: ${MYSQL_USER_CORE}
+      password: ${MYSQL_PASSWORD}
+      type: hikari
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # Redis 配置
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  # AI 配置（智谱大模型）
   ai:
-    dashscope:
-      api-key: ${API_KEY}
+    zhipuai:
+      api-key: ${ZHIPUAI_API_KEY}
       embedding:
         options:
-          model: text-embedding-v3
-    # 会话记忆
+          model: embedding-2
+    # 会话记忆 Redis 配置
     chat:
       memory:
         redis:
           timeout: 5000
           max-messages: 10
+          host: ${REDIS_HOST}
+          port: ${REDIS_PORT:6379}
+          password: ${REDIS_PASSWORD}
+
+# 应用启动时自动创建所需的索引
+es:
+  index:
+    auto-init: true
 
 # Aliyun OSS 配置
 aliyun:
@@ -50,32 +122,8 @@ web:
   mvc:
     jwt-include-paths:
       - /ai/document/**
-
-# Actuator 配置
-#management:
-#  server:
-#    port: ${server.port}
-#  endpoints:
-#    web:
-#      exposure:
-#        include: health,metrics,prometheus
-#  endpoint:
-#    prometheus:
-#      enabled: true
-#    health:
-#      show-details: always
-#  prometheus:
-#    metrics:
-#      export:
-#        enabled: true
-#  metrics:
-#    tags:
-#      application: ${spring.application.name}
-#    enable:
-#      tomcat: true
-#      jvm: true
-#      hikaricp: true
-#      executor: true
+      - /ai/chat/**
+      - /ai/sync/**
 
 # Knife4j 配置
 knife4j:
@@ -107,5 +155,7 @@ logging:
     pvt.mktech.petcare.ai: INFO
     com.alibaba.nacos: WARN
     org.springframework.ai: INFO
+    org.apache.kafka: WARN
+    org.springframework.kafka: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"

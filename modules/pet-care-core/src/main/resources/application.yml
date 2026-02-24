@@ -8,29 +8,6 @@ spring:
       max-request-size: 10MB
   application:
     name: pet-care-core
-  # Kafka 配置（CDC 消费）
-  kafka:
-    bootstrap-servers: localhost:9092
-    # Producer 配置
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      acks: all
-      retries: 2
-      properties:
-        enable.idempotence: true
-    # Consumer 配置
-    consumer:
-      group-id: cdc-consumer-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      auto-offset-reset: earliest
-      enable-auto-commit: false
-      max-poll-records: 10
-    # Listener 配置
-    listener:
-      ack-mode: manual
-      concurrency: 3
 
 # 内部服务间调用配置
 internal:
@@ -49,10 +26,9 @@ scheduler:
     lock-wait-time: 1
     lock-lease-time: 5
 
-# JWT配置
+# JWT配置（过期时间配置，密钥在环境配置中）
 jwt:
   enabled: true
-  secret-key: ${JWT_SECRET_KEY}
   expire-time: 86400
   refresh-expire-time: 604800
 
@@ -66,32 +42,7 @@ web:
       - /activity/**
       - /post/**
       - /label/**
-
-# Actuator 配置
-#management:
-#  server:
-#    port: ${server.port}
-#  endpoints:
-#    web:
-#      exposure:
-#        include: health,metrics,prometheus
-#  endpoint:
-#    prometheus:
-#      enabled: true
-#    health:
-#      show-details: always
-#  prometheus:
-#    metrics:
-#      export:
-#        enabled: true
-#  metrics:
-#    tags:
-#      application: ${spring.application.name}
-#    enable:
-#      tomcat: true
-#      jvm: true
-#      hikaricp: true
-#      executor: true
+      - /points/**
 
 # Knife4j 配置
 knife4j:

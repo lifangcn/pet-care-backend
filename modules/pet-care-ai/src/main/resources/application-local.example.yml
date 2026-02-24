@@ -1,0 +1,150 @@
+# =============================================================================
+# Pet Care AI 本地开发环境配置示例
+# =============================================================================
+# 复制此文件为 application-local.yml 并填入实际配置值
+# =============================================================================
+
+server:
+  port: 8081
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+spring:
+  # -------------------------------------------------------------------------
+  # Elasticsearch 向量数据库配置
+  # -------------------------------------------------------------------------
+  elasticsearch:
+    uris: http://localhost:9200
+    # 如果 ES 需要认证，填写以下配置
+    # username: elastic
+    # password: your_es_password
+
+  # -------------------------------------------------------------------------
+  # Kafka 消息队列配置（CDC 数据同步生产）
+  # -------------------------------------------------------------------------
+  kafka:
+    bootstrap-servers: localhost:9092
+
+  # -------------------------------------------------------------------------
+  # MySQL 数据库配置（多数据源）
+  # -------------------------------------------------------------------------
+  datasource:
+    # 主数据源 - pet_care_ai 数据库
+    url: jdbc:mysql://localhost:3306/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: your_mysql_password
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+mybatis-flex:
+  datasource:
+    # 主数据源 (pet_care_ai) - 默认数据源
+    ai:
+      url: jdbc:mysql://localhost:3306/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+      username: root
+      password: your_mysql_password
+      hikari:
+        maximum-pool-size: 20
+        minimum-idle: 5
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+    # Core 数据源（用于 CDC 聚合查询）
+    core:
+      url: jdbc:mysql://localhost:3306/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+      username: root
+      password: your_mysql_password
+      type: hikari
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # -------------------------------------------------------------------------
+  # Redis 缓存配置
+  # -------------------------------------------------------------------------
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: your_redis_password
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  # -------------------------------------------------------------------------
+  # AI 大模型配置
+  # -------------------------------------------------------------------------
+  ai:
+    # 智谱 AI 配置（用于 embedding 和对话）
+    zhipuai:
+      api-key: your_zhipuai_api_key  # 获取地址: https://open.bigmodel.cn/
+      embedding:
+        options:
+          model: embedding-2
+    # 会话记忆 Redis 配置
+    chat:
+      memory:
+        redis:
+          timeout: 5000
+          max-messages: 10
+          host: localhost
+          port: 6379
+          password: your_redis_password
+
+# -------------------------------------------------------------------------
+# 阿里云 OSS 对象存储配置
+# -------------------------------------------------------------------------
+aliyun:
+  oss:
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    access-key-id: your_oss_access_key_id
+    access-key-secret: your_oss_access_key_secret
+    bucket-name: your_bucket_name
+    enabled: true
+
+# -------------------------------------------------------------------------
+# Core 服务地址
+# -------------------------------------------------------------------------
+core:
+  service:
+    url: http://localhost:8080
+
+# -------------------------------------------------------------------------
+# JWT 密钥配置（需与 pet-care-core 保持一致）
+# -------------------------------------------------------------------------
+jwt:
+  # 生成密钥: openssl rand -base64 32
+  secret-key: "your_jwt_secret_key_base64_encoded"
+
+# =============================================================================
+# 配置项说明
+# =============================================================================
+# 1. Elasticsearch: 向量数据库，用于存储文档向量和语义搜索
+#    - 本地开发可使用 Docker 启动: docker run -d -p 9200:9200 -e "discovery.type=single-node" elasticsearch:8.11.0
+#    - 阿里云 ES Serverless: https://www.aliyun.com/product/es-serverless
+#
+# 2. Kafka: CDC 数据同步生产者，将 core 数据变更同步到 ES
+#
+# 3. MySQL 多数据源:
+#    - ai: 主数据源，存储 AI 相关数据
+#    - core: 只读数据源，用于跨库查询
+#
+# 4. Redis: 缓存 + AI 会话记忆存储
+#
+# 5. 智谱 AI: 大模型服务，获取 API Key: https://open.bigmodel.cn/
+#    - embedding-2: 文本向量化模型
+#    - 也可用于对话，需额外配置 chat.options.model
+#
+# 6. JWT: 用户认证签名密钥，需与 pet-care-core 保持一致
+# =============================================================================
