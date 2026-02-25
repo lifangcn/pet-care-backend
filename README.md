@@ -1,6 +1,19 @@
 # Pet Care System
 
-基于 Spring Boot 的宠物关怀服务平台，提供宠物健康管理、提醒推送、社区互动等功能。
+[![Java Version](https://img.shields.io/badge/Java-21-orange)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen)](https://spring.io/projects/spring-boot)
+[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+
+基于 Spring Boot 的宠物关怀服务平台，提供宠物健康管理、提醒推送、社区互动、积分奖励等功能。
+
+## 功能特性
+
+- **用户认证**：JWT 令牌认证，支持手机号登录
+- **宠物管理**：宠物档案、健康记录、疫苗接种追踪
+- **提醒服务**：疫苗提醒、体检提醒、定时任务调度
+- **社区互动**：动态发布、点赞评论、标签分类
+- **积分系统**：签到奖励、积分兑换、积分劵管理
+- **AI 助手**：智能问答、宠物健康知识库
 
 ## 技术栈
 
@@ -50,7 +63,13 @@ cd modules/pet-care-core
 mvn spring-boot:run
 ```
 
-### 6. 访问
+### 6. 在线演示
+
+- 服务地址：https://michaelli.site
+- API 文档：https://michaelli.site/doc.html
+
+### 7. 本地访问
+
 - 服务地址：http://localhost:8080
 - API 文档：http://localhost:8080/doc.html
 
@@ -58,7 +77,33 @@ mvn spring-boot:run
 
 | 模块 | 说明 |
 |------|------|
-| pet-care-common | 公共组件 |
-| pet-care-core | 核心服务 |
-| pet-care-ai | AI 智能助手 |
-| pet-care-gateway | 网关服务 |
+| pet-care-common | 公共组件、工具类 |
+| pet-care-core | 核心服务（用户、宠物、提醒、社区、积分） |
+| pet-care-ai | AI 智能助手、知识库 |
+
+## 项目结构
+
+```
+petcare/
+├── doc/                    # 文档目录
+│   ├── feature/           # 功能设计文档
+│   ├── fix/               # 问题修复记录
+│   ├── performance/       # 性能测试报告
+│   └── refactor/          # 重构记录
+├── modules/
+│   ├── pet-care-common/   # 公共模块
+│   ├── pet-care-core/     # 核心服务
+│   └── pet-care-ai/       # AI 服务
+├── scripts/               # 脚本（数据库初始化等）
+├── LICENSE                # MIT 许可证
+├── CONTRIBUTING.md        # 贡献指南
+└── README.md
+```
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request，详见 [贡献指南](CONTRIBUTING.md)。
+
+## 许可证
+
+本项目基于 [MIT 许可证](LICENSE) 开源。
