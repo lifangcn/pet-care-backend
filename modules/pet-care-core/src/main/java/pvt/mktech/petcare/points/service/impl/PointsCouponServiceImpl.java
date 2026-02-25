@@ -135,6 +135,7 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
                 && coupon.getEndTime().isAfter(LocalDateTime.now());
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean issueCouponForNewComer(Long userId) {
         // 查询新人券模板并自动领取
@@ -145,8 +146,7 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
                         .limit(1)
         );
         if (!newcomerTemplates.isEmpty()) {
-            PointsCouponTemplate template = newcomerTemplates.get(0);
-            // TODO
+            PointsCouponTemplate template = newcomerTemplates.getFirst();
             // 发放新人券
             Long couponId = issueCoupon(userId, template.getId());
             // 立即领取

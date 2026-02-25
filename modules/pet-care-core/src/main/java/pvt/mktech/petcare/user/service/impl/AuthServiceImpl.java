@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
@@ -24,6 +26,7 @@ import pvt.mktech.petcare.user.dto.request.LoginRequest;
 import pvt.mktech.petcare.user.entity.User;
 import pvt.mktech.petcare.user.mapper.UserMapper;
 import pvt.mktech.petcare.user.service.AuthService;
+import pvt.mktech.petcare.points.service.PointsService;
 
 import java.io.ByteArrayOutputStream;
 import java.time.Duration;
@@ -48,6 +51,8 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     private RedisUtil redisUtil;
     @Resource
     private KafkaTemplate<String, String> kafkaTemplate;
+    @Resource
+    private PointsService pointsService;
 
 
     @Override
@@ -89,12 +94,21 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
             user.setUsername(USER_DEFAULT_NAME_PREFIX + RandomUtil.randomString(10));
             save(user);
             Long userId = user.getId();
-            kafkaTemplate.send(CORE_USER_REGISTER_TOPIC, userId.toString(), userId.toString())
-                    .whenComplete((result, ex) -> {
-                        if (ex != null) {
-                            log.error("发送 用户注册主题 失败，topic: {}, key: {}", CORE_USER_REGISTER_TOPIC, userId, ex);
-                        }
-                    });
+            // 同步创建积分账户
+            pointsService.createAccount(userId);
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    log.info("用户注册成功，topic: {}, key: {}", CORE_USER_REGISTER_TOPIC, userId);
+                    kafkaTemplate.send(CORE_USER_REGISTER_TOPIC, userId.toString(), userId.toString())
+                            .whenComplete((result, ex) -> {
+                                if (ex != null) {
+                                    log.error("发送 用户注册主题 失败，topic: {}, key: {}", CORE_USER_REGISTER_TOPIC, userId, ex);
+                                }
+                            });
+                }
+            });
+
         }
         LoginInfoDto loginInfoDto = new LoginInfoDto();
         BeanUtil.copyProperties(user, loginInfoDto);

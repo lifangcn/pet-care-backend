@@ -8,7 +8,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-import pvt.mktech.petcare.points.service.PointsService;
+import pvt.mktech.petcare.points.service.PointsCouponService;
 
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_USER_REGISTER_CONSUMER;
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_USER_REGISTER_TOPIC;
@@ -17,13 +17,13 @@ import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_USER_
 @RequiredArgsConstructor
 @Slf4j
 public class UserRegisterConsumer {
-    private final PointsService pointsService;
+    private final PointsCouponService pointsCouponService;
 
     @KafkaListener(topics = CORE_USER_REGISTER_TOPIC, groupId = CORE_USER_REGISTER_CONSUMER,
             containerFactory = "kafkaListenerContainerFactory")
     public void consume(@Payload String message, @Header(KafkaHeaders.RECEIVED_KEY) String key, Acknowledgment acknowledgment) {
         long userId = Long.parseLong(message);
-        pointsService.grantRegisterPoints(userId);
+        pointsCouponService.issueCouponForNewComer(userId);
         acknowledgment.acknowledge();
     }
 }

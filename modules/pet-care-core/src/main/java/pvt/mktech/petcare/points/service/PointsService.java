@@ -18,13 +18,6 @@ import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 public interface PointsService extends IService<PointsAccount> {
 
     /**
-     * 新用户注册赠送积分
-     *
-     * @param userId 用户ID
-     */
-    void grantRegisterPoints(Long userId);
-
-    /**
      * 主动行为获取积分
      *
      * @param userId 用户ID
@@ -62,6 +55,15 @@ public interface PointsService extends IService<PointsAccount> {
      * @return true-成功，false-失败
      */
     boolean consume(PointsConsumeRequest request);
+
+    /**
+     * 创建积分账户（用户注册时调用）
+     *
+     * @param userId 用户ID
+     * @date 2026-02-24
+     * @author Michael Li
+     */
+    void createAccount(Long userId);
 
     /**
      * 获取用户积分账户信息

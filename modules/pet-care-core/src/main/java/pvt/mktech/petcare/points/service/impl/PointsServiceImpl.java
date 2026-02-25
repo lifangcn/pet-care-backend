@@ -24,7 +24,6 @@ import pvt.mktech.petcare.points.mapper.PointsAccountMapper;
 import pvt.mktech.petcare.points.mapper.PointsCouponMapper;
 import pvt.mktech.petcare.points.mapper.PointsRecordMapper;
 import pvt.mktech.petcare.points.service.PointsCacheService;
-import pvt.mktech.petcare.points.service.PointsCouponService;
 import pvt.mktech.petcare.points.service.PointsService;
 
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_POINTS_LOCK_KEY_PREFIX;
@@ -48,37 +47,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
     private final RedissonLockUtil redissonLockUtil;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final TransactionTemplate transactionTemplate;
-    private final PointsCouponService pointsCouponService;
     private final PointsCouponMapper pointsCouponMapper;
-
-    @Override
-    public void grantRegisterPoints(Long userId) {
-        PointsRecord pointsRecord = transactionTemplate.execute(status ->
-                redissonLockUtil.executeWithLock(CORE_POINTS_LOCK_KEY_PREFIX + userId, () -> {
-                    PointsAccount account = getOrCreateAccount(userId);
-                    int points = ActionTypeOfPointsRecord.REGISTER.getPoints();
-
-                    updateChain().set(POINTS_ACCOUNT.AVAILABLE_POINTS, account.getAvailablePoints() + points)
-                            .set(POINTS_ACCOUNT.TOTAL_POINTS, account.getTotalPoints() + points)
-                            .where(POINTS_ACCOUNT.USER_ID.eq(userId))
-                            .update();
-
-                    PointsRecord record = new PointsRecord();
-                    record.setUserId(account.getUserId());
-                    record.setPoints(points);
-                    record.setPointsBefore(account.getAvailablePoints());
-                    record.setPointsAfter(account.getAvailablePoints() + points);
-                    record.setActionType(ActionTypeOfPointsRecord.REGISTER);
-                    record.setBizId(null);
-                    return record;
-                }, 1, 10));
-        if (pointsRecord != null) {
-            sendMessageToPointsRecordSave(pointsRecord);
-        }
-        // 发放新人劵
-        pointsCouponService.issueCouponForNewComer(userId);
-
-    }
 
     @Override
     public Integer earnByAction(Long userId, ActionTypeOfPointsRecord action, Long bizId) {
@@ -98,7 +67,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
 
         PointsRecord pointsRecord = transactionTemplate.execute(status ->
                 redissonLockUtil.executeWithLock(CORE_POINTS_LOCK_KEY_PREFIX + userId, () -> {
-                    PointsAccount account = getOrCreateAccount(userId);
+                    PointsAccount account = getAccountById(userId);
                     Integer points = action.getPoints();
 
                     updateChain()
@@ -143,7 +112,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
 
         PointsRecord pointsRecord = transactionTemplate.execute(status ->
                 redissonLockUtil.executeWithLock(CORE_POINTS_LOCK_KEY_PREFIX + userId, () -> {
-                    PointsAccount account = getOrCreateAccount(userId);
+                    PointsAccount account = getAccountById(userId);
 
                     updateChain()
                             .set(POINTS_ACCOUNT.AVAILABLE_POINTS, account.getAvailablePoints() + points)
@@ -178,7 +147,7 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
 
         PointsRecord pointsRecord = transactionTemplate.execute(status ->
                 redissonLockUtil.executeWithLock(CORE_POINTS_LOCK_KEY_PREFIX + authorId, () -> {
-                    PointsAccount account = getOrCreateAccount(authorId);
+                    PointsAccount account = getAccountById(authorId);
                     Integer points = action.getPoints();
 
                     updateChain()
@@ -272,9 +241,27 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
     }
 
 
+    /**
+     * {@code @description}: 创建积分账户（用户注册时调用）
+     * {@code @date}: 2026-02-24
+     * {@code @author}: Michael Li
+     */
+    @Override
+    public void createAccount(Long userId) {
+        PointsAccount account = new PointsAccount();
+        account.setUserId(userId);
+        account.setAvailablePoints(0);
+        account.setTotalPoints(0);
+        save(account);
+    }
+
     @Override
     public PointsAccountResponse getAccount(Long userId) {
-        PointsAccount account = getOrCreateAccount(userId);
+        PointsAccount account = getOne(QueryWrapper.create()
+                .where(POINTS_ACCOUNT.USER_ID.eq(userId)));
+        if (account == null) {
+            throw new BusinessException(ErrorCode.POINTS_ACCOUNT_NOT_FOUND);
+        }
         PointsAccountResponse response = new PointsAccountResponse();
         response.setAvailablePoints(account.getAvailablePoints());
         response.setTotalPoints(account.getTotalPoints());
@@ -305,17 +292,15 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
     }
 
     /**
-     * 获取或创建积分账户
+     * {@code @description}: 获取积分账户（写操作专用，账户应已存在）
+     * {@code @date}: 2026-02-24
+     * {@code @author}: Michael Li
      */
-    private PointsAccount getOrCreateAccount(Long userId) {
+    private PointsAccount getAccountById(Long userId) {
         PointsAccount account = getOne(QueryWrapper.create()
                 .where(POINTS_ACCOUNT.USER_ID.eq(userId)));
         if (account == null) {
-            account = new PointsAccount();
-            account.setUserId(userId);
-            account.setAvailablePoints(0);
-            account.setTotalPoints(0);
-            save(account);
+            throw new BusinessException(ErrorCode.POINTS_ACCOUNT_NOT_FOUND);
         }
         return account;
     }

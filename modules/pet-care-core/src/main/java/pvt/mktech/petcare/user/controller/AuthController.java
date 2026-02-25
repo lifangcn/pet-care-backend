@@ -60,7 +60,6 @@ public class AuthController {
             description = "用户登出，使Token失效"
     )
     public Result<String> logout(@RequestBody(required = false) LoginInfoDto dto) {
-        // TODO 退出登录报错
         authService.logout(dto);
         return Result.success("登出成功");
     }
