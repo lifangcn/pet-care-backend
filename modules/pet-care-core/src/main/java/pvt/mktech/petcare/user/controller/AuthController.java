@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.common.dto.response.Result;
+import pvt.mktech.petcare.common.redis.RateLimit;
 import pvt.mktech.petcare.user.dto.LoginInfoDto;
 import pvt.mktech.petcare.user.dto.request.LoginRequest;
 import pvt.mktech.petcare.shared.dto.WechatQRCodeResponse;
@@ -27,6 +28,7 @@ public class AuthController {
     @Operation(
             summary = "请求手机验证码"
     )
+    @RateLimit(interval = 60, maxRequests = 5, limitType = RateLimit.LimitType.IP)
     public Result<String> code(
             @Parameter(description = "手机号", required = true)
             @Valid @RequestParam("phone") String phone, HttpSession session) {
@@ -38,6 +40,7 @@ public class AuthController {
             summary = "用户登录，确认后发送验证码，填写所有信息完毕后，如果未注册自动注册",
             description = "支持用户名、邮箱、手机号登录"
     )
+    @RateLimit(interval = 60, maxRequests = 10, limitType = RateLimit.LimitType.IP)
     public Result<LoginInfoDto> login(
             @Parameter(description = "登录请求参数", required = true)
             @Valid @RequestBody LoginRequest request) {

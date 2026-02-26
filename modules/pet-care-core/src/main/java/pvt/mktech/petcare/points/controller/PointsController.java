@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.common.dto.response.Result;
+import pvt.mktech.petcare.common.redis.RateLimit;
 import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.points.dto.request.PointsConsumeRequest;
 import pvt.mktech.petcare.points.dto.request.PointsCouponQueryRequest;
@@ -71,6 +72,7 @@ public class PointsController {
 
     @Operation(summary = "领取代金券（充值积分）")
     @PostMapping("/coupon/redeem")
+    @RateLimit(interval = 60, maxRequests = 10, limitType = RateLimit.LimitType.USER)
     public Result<Void> redeemCoupon(@RequestParam("couponId") Long couponId) {
         Long userId = UserContext.getUserId();
         pointsCouponService.redeemCoupon(userId, couponId);
@@ -79,6 +81,7 @@ public class PointsController {
 
     @Operation(summary = "抢劵")
     @PostMapping("/coupon/grab")
+    @RateLimit(interval = 60, maxRequests = 20, limitType = RateLimit.LimitType.USER)
     public Result<Long> grabCoupon(@RequestParam("templateId") Long templateId) {
         Long userId = UserContext.getUserId();
         Long couponId = pointsCouponService.grabCoupon(userId, templateId);
@@ -93,6 +96,7 @@ public class PointsController {
 
     @Operation(summary = "消耗积分（AI咨询）")
     @PostMapping("/consume")
+    @RateLimit(interval = 60, maxRequests = 30, limitType = RateLimit.LimitType.USER)
     public Result<Void> consume(@RequestBody PointsConsumeRequest request) {
         request.setUserId(UserContext.getUserId());
         pointsService.consume(request);

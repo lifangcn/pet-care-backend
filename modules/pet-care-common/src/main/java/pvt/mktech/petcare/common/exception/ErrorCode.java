@@ -19,6 +19,7 @@ public enum ErrorCode {
     LOCK_OPERATION_FAILED("00006", "持有分布式锁的操作失败"),
     MESSAGE_SEND_FAILED("00007", "消息发送失败"),
     ID_GENERATOR_ERROR("00008", "ID生成器异常"),
+    RATE_LIMIT_EXCEEDED("00009", "操作过于频繁，请稍后再试"),
 
     // ========== 参数校验错误码 (01000-01999) ==========
     PARAM_ERROR("01001", "参数错误"),

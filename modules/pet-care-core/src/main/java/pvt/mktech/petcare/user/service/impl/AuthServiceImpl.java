@@ -8,6 +8,10 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RRateLimiter;
+import org.redisson.api.RateIntervalUnit;
+import org.redisson.api.RateType;
+import org.redisson.api.RedissonClient;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +57,8 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     private KafkaTemplate<String, String> kafkaTemplate;
     @Resource
     private PointsService pointsService;
+    @Resource
+    private RedissonClient redissonClient;
 
 
     @Override
@@ -61,6 +67,17 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         if (ValidatorUtil.isPhoneInvalid(phone)) {
             throw new BusinessException(ErrorCode.PHONE_FORMAT_ERROR);
         }
+
+        // 2.手机号级别限流（1分钟内最多3次）
+        String rateLimitKey = "rate_limit:sendCode:phone:" + phone;
+        RRateLimiter rateLimiter = redissonClient.getRateLimiter(rateLimitKey);
+        if (!rateLimiter.isExists()) {
+            rateLimiter.trySetRate(RateType.OVERALL, 3, 1, RateIntervalUnit.MINUTES);
+        }
+        if (!rateLimiter.tryAcquire(1)) {
+            throw new BusinessException(ErrorCode.RATE_LIMIT_EXCEEDED, "验证码发送过于频繁，请稍后再试");
+        }
+
         // 3.生成验证码
         String code = RandomUtil.randomNumbers(6);
         // 4.保存验证码到 redis
@@ -96,10 +113,10 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
             Long userId = user.getId();
             // 同步创建积分账户
             pointsService.createAccount(userId);
+            // 异步发放新人券（通过MQ解耦）
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    log.info("用户注册成功，topic: {}, key: {}", CORE_USER_REGISTER_TOPIC, userId);
                     kafkaTemplate.send(CORE_USER_REGISTER_TOPIC, userId.toString(), userId.toString())
                             .whenComplete((result, ex) -> {
                                 if (ex != null) {
@@ -108,7 +125,6 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
                             });
                 }
             });
-
         }
         LoginInfoDto loginInfoDto = new LoginInfoDto();
         BeanUtil.copyProperties(user, loginInfoDto);
