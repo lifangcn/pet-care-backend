@@ -37,6 +37,8 @@ public class PostDocumentConverter implements DocumentConverter<PostCdcData, EsP
         doc.setLocationAddress(cdcData.getLocationAddress());
         doc.setPriceRange(cdcData.getPriceRange());
         doc.setLikeCount(cdcData.getLikeCount());
+        doc.setRatingCount(cdcData.getRatingCount());
+        doc.setRatingTotal(cdcData.getRatingTotal());
         doc.setRatingAvg(cdcData.getRatingAvg());
         doc.setViewCount(cdcData.getViewCount());
         doc.setStatus(cdcData.getStatus());

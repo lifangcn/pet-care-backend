@@ -9,6 +9,7 @@ import pvt.mktech.petcare.reminder.dto.request.ReminderSaveRequest;
 import pvt.mktech.petcare.pet.entity.Pet;
 import pvt.mktech.petcare.reminder.entity.Reminder;
 import pvt.mktech.petcare.pet.service.PetService;
+import pvt.mktech.petcare.reminder.entity.codelist.SourceTypeOfReminder;
 import pvt.mktech.petcare.reminder.service.ReminderService;
 import pvt.mktech.petcare.points.dto.request.PointsConsumeRequest;
 import pvt.mktech.petcare.points.service.PointsService;
@@ -41,7 +42,7 @@ public class InternalApiController {
 
         Reminder reminder = new Reminder();
         BeanUtil.copyProperties(request, reminder);
-
+        reminder.setSourceType(SourceTypeOfReminder.SYSTEM);
         // 查询宠物名称转换为 petId
         if (request.getPetName() != null && reminder.getUserId() != null) {
             Pet pet = petService.findByUserIdAndPetName(reminder.getUserId(), request.getPetName());

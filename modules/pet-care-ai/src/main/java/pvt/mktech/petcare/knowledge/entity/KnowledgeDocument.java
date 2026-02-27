@@ -65,7 +65,7 @@ public class KnowledgeDocument implements Serializable {
      * 逻辑删除：0-正常，1-已删除
      */
     @Column(value = "is_deleted", onInsertValue = "0")
-    private Integer isDeleted;
+    private Boolean isDeleted;
 
     /**
      * 删除时间
@@ -83,7 +83,7 @@ public class KnowledgeDocument implements Serializable {
         this.fileSize = fileSize;
         this.status = 1;
         this.version = 1;
-        this.isDeleted = 0;
+        this.isDeleted = false;
         this.processingStatus = ProcessingStatusOfKnowledgeDocument.PROCESSING;
         this.chunkCount = 0;
         this.processingError = null;
@@ -94,7 +94,7 @@ public class KnowledgeDocument implements Serializable {
      */
     public void delete() {
         this.status = 0;
-        this.isDeleted = 1;
+        this.isDeleted = false;
         this.deletedAt = LocalDateTime.now();
     }
 
@@ -102,7 +102,7 @@ public class KnowledgeDocument implements Serializable {
      * 判断文档是否有效
      */
     public boolean isActive() {
-        return status != null && status == 1 && (isDeleted == null || isDeleted == 0);
+        return status != null && status == 1 && (isDeleted == null || !isDeleted);
     }
 
     /**

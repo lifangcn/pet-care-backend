@@ -30,7 +30,7 @@ public class ActivityCdcData implements CdcData {
     private String coverImage;
 
     @JsonProperty("activity_type")
-    private Integer activityType;
+    private String activityType;
 
     @JsonProperty("activity_time")
     private String activityTime;
@@ -51,7 +51,7 @@ public class ActivityCdcData implements CdcData {
     private Integer currentParticipants;
 
     @JsonProperty("status")
-    private Integer status;
+    private String status;
 
     @JsonProperty("check_in_enabled")
     private Integer checkInEnabled;

@@ -15,6 +15,8 @@ import pvt.mktech.petcare.social.dto.request.PostSaveRequest;
 import pvt.mktech.petcare.social.dto.response.PostDetailResponse;
 import pvt.mktech.petcare.social.entity.Interaction;
 import pvt.mktech.petcare.social.entity.Post;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfInteraction;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfPost;
 import pvt.mktech.petcare.social.mapper.PostMapper;
 import pvt.mktech.petcare.social.service.InteractionService;
 import pvt.mktech.petcare.social.service.PostLabelService;
@@ -62,8 +64,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (request.getPostType() != null) {
             queryWrapper.and(POST.POST_TYPE.eq(request.getPostType()));
         } else {
-            // 如果查询动态类型为空，默认为内容广场查询 1～4的分享内容
-            queryWrapper.and(POST.POST_TYPE.in(1, 2, 3, 4));
+            queryWrapper.and(POST.POST_TYPE.in(TypeOfPost.PRODUCT, TypeOfPost.SERVICE, TypeOfPost.LOCATION, TypeOfPost.DAILY));
         }
 
         // 城市筛选
@@ -129,7 +130,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public List<Post> listParticipantsByActivityId(Long activityId) {
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(POST.ACTIVITY_ID.eq(activityId))
-                .and(POST.POST_TYPE.eq(6))
+                .and(POST.POST_TYPE.eq(TypeOfPost.ACTIVITY_JOIN))
                 .and(POST.ENABLED.eq(1))
                 .orderBy(POST.CREATED_AT.desc());
         return list(queryWrapper);
@@ -140,7 +141,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return exists(QueryWrapper.create()
                 .where(POST.USER_ID.eq(userId))
                 .and(POST.ACTIVITY_ID.eq(activityId))
-                .and(POST.POST_TYPE.eq(6))
+                .and(POST.POST_TYPE.eq(TypeOfPost.ACTIVITY_JOIN))
         );
     }
 
@@ -183,7 +184,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<Interaction> ratings = interactionService.list(QueryWrapper.create()
                 .select(INTERACTION.RATING_VALUE)
                 .where(INTERACTION.POST_ID.eq(postId))
-                .and(INTERACTION.INTERACTION_TYPE.eq(2)));
+                .and(INTERACTION.INTERACTION_TYPE.eq(TypeOfInteraction.RATING)));
 
         if (!ratings.isEmpty()) {
             int sum = ratings.stream().mapToInt(r -> r.getRatingValue() == null ? 0 : r.getRatingValue()).sum();

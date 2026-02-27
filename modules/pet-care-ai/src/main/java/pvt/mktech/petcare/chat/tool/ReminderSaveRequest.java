@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import pvt.mktech.petcare.chat.dto.RepeatTypeOfReminder;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -12,12 +14,12 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReminderSaveRequest implements Serializable {
-    private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 523556646273809362L;
 
     private Long id;
     private String petName;
     private Long userId;
-    private String sourceType;
     private Long sourceId;
     private String title;
     private String description;
@@ -26,7 +28,7 @@ public class ReminderSaveRequest implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime scheduleTime;
     private Integer remindBeforeMinutes;
-    private String repeatType;
+    private RepeatTypeOfReminder repeatType;
     private String repeatConfig;
     private Boolean isActive = Boolean.TRUE;
     private Integer totalOccurrences;

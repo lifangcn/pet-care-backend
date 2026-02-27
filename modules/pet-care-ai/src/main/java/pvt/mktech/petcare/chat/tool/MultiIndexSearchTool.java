@@ -63,14 +63,17 @@ public class MultiIndexSearchTool {
     }
 
     /**
-     * 检索活动信息（BM25 全文检索）
+     * 检索活动信息（BM25 全文检索 + 时间范围过滤）
      */
     @Tool(name = "searchActivities",
-            description = "检索宠物活动，获取线上线下聚会、遛狗活动等信息")
+            description = "检索宠物活动，获取线上线下聚会、遛狗活动等信息。当用户提到'周末'、'下周'等时间概念时，必须转换为具体的日期范围传入startTime和endTime参数")
     public List<SearchResult> searchActivities(ActivitySearchRequest request) {
-        log.info("AI 调用活动检索: query={}, topK={}", request.query(), request.topK());
+        log.info("AI 调用活动检索: query={}, topK={}, startTime={}, endTime={}",
+                request.query(), request.topK(), request.startTime(), request.endTime());
         int topK = request.topK() != null && request.topK() > 0 ? Math.min(request.topK(), 10) : 5;
-        return bm25Search(ACTIVITY_INDEX, request.query(), List.of("title^2", "description", "address"), topK, "activity");
+        return bm25SearchWithTime(ACTIVITY_INDEX, request.query(),
+                List.of("title^2", "description", "address"), topK, "activity",
+                request.startTime(), request.endTime());
     }
 
     /**
@@ -93,8 +96,10 @@ public class MultiIndexSearchTool {
      * 活动检索请求参数
      */
     public record ActivitySearchRequest(
-            @Description("查询文本，例如：周末宠物活动、遛狗聚会") String query,
-            @Description("返回条数，默认5条，最多10条") Integer topK
+            @Description("查询文本，例如：宠物活动、遛狗聚会") String query,
+            @Description("返回条数，默认5条，最多10条") Integer topK,
+            @Description("活动开始时间过滤，ISO格式如2026-02-22T00:00:00Z，用户说'周末'时需计算并传入") String startTime,
+            @Description("活动结束时间过滤，ISO格式如2026-02-23T23:59:59Z，用户说'周末'时需计算并传入") String endTime
     ) {}
 
     /**
@@ -123,6 +128,17 @@ public class MultiIndexSearchTool {
      * BM25 全文检索（用于 Post/Activity）
      */
     private List<SearchResult> bm25Search(String index, String query, List<String> fields, int size, String source) {
+        return bm25SearchWithTime(index, query, fields, size, source, null, null);
+    }
+
+    /**
+     * BM25 全文检索 + 时间范围过滤（用于 Activity）
+     *
+     * @param startTime ISO格式开始时间，如 2026-02-22T00:00:00Z
+     * @param endTime ISO格式结束时间，如 2026-02-23T23:59:59Z
+     */
+    private List<SearchResult> bm25SearchWithTime(String index, String query, List<String> fields,
+                                                   int size, String source, String startTime, String endTime) {
         try {
             Query bm25Query = MultiMatchQuery.of(m -> m
                     .query(query)
@@ -130,7 +146,31 @@ public class MultiIndexSearchTool {
                     .type(TextQueryType.BestFields)
             )._toQuery();
 
-            return executeSearch(index, bm25Query, size, source, source, 0.2);
+            // 如果提供了时间范围，构建 bool 查询
+            Query finalQuery = bm25Query;
+            if (startTime != null || endTime != null) {
+                // 使用 DateRangeQuery 进行时间范围过滤
+                var rangeQuery = co.elastic.clients.elasticsearch._types.query_dsl.RangeQueryBuilders
+                        .date(dr -> {
+                            var builder = dr.field("activity_time");
+                            if (startTime != null) {
+                                builder.gte(startTime);
+                            }
+                            if (endTime != null) {
+                                builder.lte(endTime);
+                            }
+                            return builder;
+                        });
+
+                finalQuery = Query.of(q -> q
+                        .bool(b -> b
+                                .must(bm25Query)
+                                .filter(rangeQuery)
+                        )
+                );
+            }
+
+            return executeSearch(index, finalQuery, size, source, source, 0.2);
         } catch (Exception e) {
             log.error("BM25 检索失败: index={}, query={}", index, query, e);
             return List.of();

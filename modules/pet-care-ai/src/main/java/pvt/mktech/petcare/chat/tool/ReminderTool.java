@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import pvt.mktech.petcare.chat.dto.RepeatTypeOfReminder;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +34,6 @@ public class ReminderTool {
             saveRequest.setScheduleTime(request.scheduleTime());
             saveRequest.setRemindBeforeMinutes(request.remindBeforeMinutes());
             saveRequest.setRepeatType(request.repeatType());
-            saveRequest.setSourceType("ai-service");
             saveRequest.setRecordTime(LocalDateTime.now());
             saveRequest.setUserId(request.userId());
 
@@ -46,9 +45,8 @@ public class ReminderTool {
                     .bodyToMono(String.class)
                     .block();
             log.info("Core 服务响应: {}", response);
-            Boolean result = Boolean.TRUE.equals(response);
 
-            if (Boolean.TRUE.equals(result)) {
+            if (Boolean.parseBoolean(response)) {
                 return "提醒事项设置成功，已保存到数据库";
             } else {
                 return "提醒事项设置失败";
@@ -64,9 +62,9 @@ public class ReminderTool {
             @Description("用户ID") Long userId,
             @Description("标题") String title,
             @Description("描述") String description,
-            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-            @Description("预计执行时间，格式：yyyy-MM-dd HH:mm:ss") LocalDateTime scheduleTime,
+            @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss", timezone = "GMT+8")
+            @Description("预计执行时间，ISO 8601格式，例如：2026-02-27T09:00:00") LocalDateTime scheduleTime,
             @Description("提前提醒时间(分钟)") Integer remindBeforeMinutes,
-            @Description("重复类型：'NONE' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'CUSTOM'") String repeatType
+            @Description("重复类型使用枚举字符串：NONE-不重复(单次)，DAILY-每天，WEEKLY-每周，MONTHLY-每月，CUSTOM-自定义") RepeatTypeOfReminder repeatType
     ) {}
 }

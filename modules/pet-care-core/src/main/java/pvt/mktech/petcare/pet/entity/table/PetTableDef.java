@@ -37,7 +37,7 @@ public class PetTableDef extends TableDef {
     public final QueryColumn BREED = new QueryColumn(this, "breed");
 
     /**
-     * 性别: 0-未知 1-雄性 2-雌性
+     * 性别：MALE-公 FEMALE-母
      */
     public final QueryColumn GENDER = new QueryColumn(this, "gender");
 

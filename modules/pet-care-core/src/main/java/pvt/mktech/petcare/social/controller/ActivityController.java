@@ -9,6 +9,7 @@ import pvt.mktech.petcare.social.dto.request.ActivityQueryRequest;
 import pvt.mktech.petcare.social.dto.request.PostQueryRequest;
 import pvt.mktech.petcare.social.entity.Activity;
 import pvt.mktech.petcare.social.entity.Post;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfPost;
 import pvt.mktech.petcare.social.service.ActivityService;
 import pvt.mktech.petcare.social.service.PostService;
 import pvt.mktech.petcare.common.dto.response.Result;
@@ -53,7 +54,7 @@ public class ActivityController {
                                                     @RequestParam(value = "pageSize", defaultValue = "10") Long pageSize) {
         PostQueryRequest postQueryRequest = new PostQueryRequest();
         postQueryRequest.setActivityId(id); // 活动ID
-        postQueryRequest.setPostType(5); // 查询打卡信息
+        postQueryRequest.setPostType(TypeOfPost.ACTIVITY_CHECK.getCode()); // 查询打卡信息
         Page<Post> pageByQueryRequest = postService.findPageByQueryRequest(pageNumber, pageSize, postQueryRequest);
         return Result.success(pageByQueryRequest);
     }

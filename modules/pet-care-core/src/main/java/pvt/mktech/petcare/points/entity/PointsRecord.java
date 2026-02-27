@@ -54,7 +54,6 @@ public class PointsRecord implements Serializable {
     /**
      * 行为类型（使用枚举）
      */
-    @Column(isLarge = true)
     private ActionTypeOfPointsRecord actionType;
 
     /**

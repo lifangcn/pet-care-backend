@@ -4,6 +4,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -21,14 +22,14 @@ public class PostEntity {
     private Long userId;
     private String title;
     private String content;
-    private Integer postType;
+    private String postType;
     private String mediaUrls;
     private String externalLink;
     private String priceRange;
     private Integer likeCount;
-    private Float ratingAvg;
+    private BigDecimal ratingAvg;
     private Integer viewCount;
-    private Integer status;
+    private String status;
     private Long activityId;
     private LocalDateTime createdAt;
 }

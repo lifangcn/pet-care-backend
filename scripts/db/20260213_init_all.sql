@@ -5,13 +5,7 @@
 -- 说明：
 -- 1. 包含所有模块的表（core、ai）
 -- 2. 所有表统一使用 is_deleted 和 deleted_at 字段进行逻辑删除
-
--- =============================================================================
--- 创建数据库
--- =============================================================================
-
-DROP DATABASE IF EXISTS `pet_care_core`;
-CREATE DATABASE IF NOT EXISTS `pet_care_core` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- 3. 使用 DROP TABLE 而非 DROP DATABASE，保持 binlog 连续性，避免 Canal 同步中断
 
 -- =============================================================================
 -- Core 数据库（用户、宠物、健康、提醒、社交）
@@ -23,6 +17,7 @@ USE `pet_care_core`;
 -- -----------------------------------------------------------------------------
 
 -- 用户表
+DROP TABLE IF EXISTS `tb_user`;
 CREATE TABLE `tb_user`
 (
     `id`         BIGINT AUTO_INCREMENT COMMENT '用户ID',
@@ -49,6 +44,7 @@ CREATE TABLE `tb_user`
 -- -----------------------------------------------------------------------------
 
 -- 宠物表
+DROP TABLE IF EXISTS `tb_pet`;
 CREATE TABLE `tb_pet`
 (
     `id`           BIGINT AUTO_INCREMENT COMMENT '宠物ID',
@@ -73,6 +69,7 @@ CREATE TABLE `tb_pet`
   DEFAULT CHARSET = utf8mb4 COMMENT ='宠物表';
 
 -- 健康记录表
+DROP TABLE IF EXISTS `tb_health_record`;
 CREATE TABLE `tb_health_record`
 (
     `id`              BIGINT AUTO_INCREMENT COMMENT '主键ID',
@@ -102,19 +99,20 @@ CREATE TABLE `tb_health_record`
 -- -----------------------------------------------------------------------------
 
 -- 提醒事件表
+DROP TABLE IF EXISTS `tb_reminder`;
 CREATE TABLE `tb_reminder`
 (
     `id`                    BIGINT AUTO_INCREMENT COMMENT '主键ID',
     `pet_id`                BIGINT      NOT NULL COMMENT '宠物ID',
     `user_id`               BIGINT      NOT NULL COMMENT '用户ID',
-    `source_type`           VARCHAR(20) NOT NULL COMMENT '记录来源：manual, health_record, system',
+    `source_type`           VARCHAR(20) NOT NULL COMMENT '记录来源：MANUAL, HEALTH_RECORD, SYSTEM',
     `source_id`             BIGINT       DEFAULT NULL COMMENT '来源ID（如健康记录ID）',
     `title`                 VARCHAR(200) DEFAULT NULL COMMENT '标题',
     `description`           TEXT COMMENT '描述',
     `record_time`           DATETIME    NOT NULL COMMENT '记录时间',
     `schedule_time`         DATETIME     DEFAULT NULL COMMENT '计划时间(用于提醒)',
     `remind_before_minutes` INT          DEFAULT 0 COMMENT '提前提醒时间(分钟)',
-    `repeat_type`           VARCHAR(20)  DEFAULT 'none' COMMENT '重复类型: NONE(不重复), DAILY(每天), WEEKLY(每周), MONTHLY(每月), CUSTOM(自定义)',
+    `repeat_type`           VARCHAR(20)  DEFAULT 'NONE' COMMENT '重复类型: NONE(不重复), DAILY(每天), WEEKLY(每周), MONTHLY(每月), CUSTOM(自定义)',
     `repeat_config`         JSON         DEFAULT NULL COMMENT '重复配置(自定义重复规则)',
     `is_active`             TINYINT(1)   DEFAULT 1 COMMENT '是否激活',
     `total_occurrences`     INT          DEFAULT 0 COMMENT '总执行次数',
@@ -136,6 +134,7 @@ CREATE TABLE `tb_reminder`
   DEFAULT CHARSET = utf8mb4 COMMENT ='提醒事件表';
 
 -- 提醒执行记录表
+DROP TABLE IF EXISTS `tb_reminder_execution`;
 CREATE TABLE `tb_reminder_execution`
 (
     `id`                BIGINT AUTO_INCREMENT COMMENT '主键ID',
@@ -168,13 +167,14 @@ CREATE TABLE `tb_reminder_execution`
 -- -----------------------------------------------------------------------------
 
 -- 动态表
+DROP TABLE IF EXISTS `tb_post`;
 CREATE TABLE `tb_post`
 (
     `id`               BIGINT AUTO_INCREMENT COMMENT '动态ID',
     `user_id`          BIGINT      NOT NULL COMMENT '发布者ID',
     `title`            VARCHAR(200) COMMENT '标题',
     `content`          TEXT COMMENT '内容描述',
-    `post_type`        VARCHAR(16) NOT NULL COMMENT '类型：PRODUCT_SHARE-好物分享 SERVICE_RECO-服务推荐 LOCATION_RECO-地点推荐 DAILY-日常分享 ACTIVITY_CHECK-活动打卡',
+    `post_type`        VARCHAR(16) NOT NULL COMMENT '类型：PRODUCT-好物分享 SERVICE-服务推荐 LOCATION-地点推荐 DAILY-日常分享 ACTIVITY_CHECK-活动打卡 ACTIVITY_JOIN-活动报名',
     `media_urls`       JSON COMMENT '图片/视频URL数组',
     `external_link`    VARCHAR(500) COMMENT '外部链接（商品、服务、地图）',
     `location_address` VARCHAR(500) COMMENT '地点信息',
@@ -198,6 +198,7 @@ CREATE TABLE `tb_post`
   DEFAULT CHARSET = utf8mb4 COMMENT ='动态表';
 
 -- 标签表
+DROP TABLE IF EXISTS `tb_label`;
 CREATE TABLE `tb_label`
 (
     `id`             BIGINT AUTO_INCREMENT COMMENT '标签ID',
@@ -219,6 +220,7 @@ CREATE TABLE `tb_label`
   DEFAULT CHARSET = utf8mb4 COMMENT ='标签表';
 
 -- 动态标签关联表
+DROP TABLE IF EXISTS `tb_post_label`;
 CREATE TABLE `tb_post_label`
 (
     `id`         BIGINT AUTO_INCREMENT COMMENT '关联ID',
@@ -233,6 +235,7 @@ CREATE TABLE `tb_post_label`
   DEFAULT CHARSET = utf8mb4 COMMENT ='动态标签关联表';
 
 -- 互动表（点赞+评分）
+DROP TABLE IF EXISTS `tb_interaction`;
 CREATE TABLE `tb_interaction`
 (
     `id`               BIGINT AUTO_INCREMENT COMMENT '互动ID',
@@ -250,6 +253,7 @@ CREATE TABLE `tb_interaction`
   DEFAULT CHARSET = utf8mb4 COMMENT ='互动表（点赞/评分）';
 
 -- 活动表
+DROP TABLE IF EXISTS `tb_activity`;
 CREATE TABLE `tb_activity`
 (
     `id`                   BIGINT AUTO_INCREMENT COMMENT '活动ID',
@@ -280,6 +284,7 @@ CREATE TABLE `tb_activity`
   DEFAULT CHARSET = utf8mb4 COMMENT ='活动表';
 
 -- 用户积分账户表
+DROP TABLE IF EXISTS `tb_points_account`;
 CREATE TABLE `tb_points_account`
 (
     `id`               BIGINT UNSIGNED AUTO_INCREMENT COMMENT '主键ID',
@@ -296,6 +301,7 @@ CREATE TABLE `tb_points_account`
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户积分账户表';
 
 -- 积分流水记录表
+DROP TABLE IF EXISTS `tb_points_record`;
 CREATE TABLE `tb_points_record`
 (
     `id`            BIGINT UNSIGNED AUTO_INCREMENT COMMENT '主键ID',
@@ -315,6 +321,7 @@ CREATE TABLE `tb_points_record`
   DEFAULT CHARSET = utf8mb4 COMMENT ='积分流水记录表';
 
 -- 积分代金券模板表
+DROP TABLE IF EXISTS `tb_points_coupon_template`;
 CREATE TABLE `tb_points_coupon_template`
 (
     `id`             BIGINT UNSIGNED AUTO_INCREMENT COMMENT '主键ID',
@@ -324,7 +331,7 @@ CREATE TABLE `tb_points_coupon_template`
     `total_count`    INT UNSIGNED        NOT NULL DEFAULT 0 COMMENT '发放总量（0表示不限）',
     `issued_count`   INT UNSIGNED        NOT NULL DEFAULT 0 COMMENT '已发放数量',
     `per_user_limit` INT UNSIGNED        NOT NULL DEFAULT 1 COMMENT '每人限领数量',
-    `source_type`    VARCHAR(16) NOT NULL DEFAULT 'SYSTEM' COMMENT '来源类型：SYSTEM-系统发放 ACTIVITY-活动发放 NEWBIE-新人礼包',
+    `source_type`    VARCHAR(16) NOT NULL DEFAULT 'SYSTEM' COMMENT '来源类型：SYSTEM-系统发放 ACTIVITY-活动发放 NEWCOMER-新人礼包',
     `status`         TINYINT(1) UNSIGNED NOT NULL DEFAULT 1 COMMENT '状态：0-停用 1-启用',
     `created_at`     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`     DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -335,6 +342,7 @@ CREATE TABLE `tb_points_coupon_template`
   DEFAULT CHARSET = utf8mb4 COMMENT ='积分代金券模板表';
 
 -- 用户积分代金券表
+DROP TABLE IF EXISTS `tb_points_coupon`;
 CREATE TABLE `tb_points_coupon`
 (
     `id`             BIGINT UNSIGNED AUTO_INCREMENT COMMENT '主键ID',
@@ -368,12 +376,10 @@ VALUES (`per_user_limit`);
 -- =============================================================================
 -- AI 数据库
 -- =============================================================================
-DROP DATABASE IF EXISTS `pet_care_ai`;
-CREATE DATABASE IF NOT EXISTS `pet_care_ai` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 USE `pet_care_ai`;
 
 -- RAG 知识库文档表
+DROP TABLE IF EXISTS `tb_knowledge_document`;
 CREATE TABLE `tb_knowledge_document`
 (
     `id`                BIGINT AUTO_INCREMENT COMMENT '文档ID',
@@ -384,7 +390,7 @@ CREATE TABLE `tb_knowledge_document`
     `version`           INT          DEFAULT 1 COMMENT '文档版本号',
     `status`            TINYINT      DEFAULT 1 COMMENT '状态：1-有效，0-禁用',
     `chunk_count`       INT          DEFAULT 0 COMMENT '文档分块数量',
-    `processing_status` VARCHAR(20)  DEFAULT 0 COMMENT '处理状态：PENDING-待处理，PROCESSING-处理中，COMPLETED-处理完成，FAILED-处理失败',
+    `processing_status` VARCHAR(20)  DEFAULT 'PENDING' COMMENT '处理状态：PENDING-待处理，PROCESSING-处理中，COMPLETED-处理完成，FAILED-处理失败',
     `processing_error`  VARCHAR(500) DEFAULT NULL COMMENT '处理失败原因',
     `created_at`        DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`        DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

@@ -97,7 +97,7 @@ CREATE TABLE `tb_reminder` (
   `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
   `pet_id` BIGINT NOT NULL COMMENT '宠物ID',
   `user_id` BIGINT NOT NULL COMMENT '用户ID',
-  `source_type` VARCHAR(20) NOT NULL COMMENT '记录来源：manual, health_record, system',
+  `source_type` VARCHAR(20) NOT NULL COMMENT '记录来源：MANUAL, HEALTH_RECORD, SYSTEM',
   `source_id` BIGINT DEFAULT NULL COMMENT '来源ID（如健康记录ID）',
   `title` VARCHAR(200) DEFAULT NULL COMMENT '标题',
   `description` TEXT COMMENT '描述',

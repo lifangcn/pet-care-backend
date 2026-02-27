@@ -3,6 +3,7 @@ package pvt.mktech.petcare.sync.dto.event;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -27,7 +28,7 @@ public class PostCdcData implements CdcData {
     private String content;
 
     @JsonProperty("post_type")
-    private Integer postType;
+    private String postType;
 
     @JsonProperty("media_urls")
     private String mediaUrls;
@@ -45,13 +46,16 @@ public class PostCdcData implements CdcData {
     private Integer likeCount;
 
     @JsonProperty("rating_avg")
-    private Float ratingAvg;
+    private BigDecimal ratingAvg;
 
     @JsonProperty("view_count")
     private Integer viewCount;
 
+    @JsonProperty("enabled")
+    private Integer enabled;
+
     @JsonProperty("status")
-    private Integer status;
+    private String status;
 
     @JsonProperty("activity_id")
     private Long activityId;

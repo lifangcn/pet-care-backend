@@ -22,14 +22,14 @@ public class ActivityEntity {
     private String title;
     private String description;
     private String coverImage;
-    private Integer activityType;
+    private String activityType;
     private LocalDateTime activityTime;
     private LocalDateTime endTime;
     private String address;
     private String onlineLink;
     private Integer maxParticipants;
     private Integer currentParticipants;
-    private Integer status;
+    private String status;
     private Integer checkInEnabled;
     private Integer checkInCount;
     private LocalDateTime createdAt;

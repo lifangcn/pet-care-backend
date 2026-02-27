@@ -134,7 +134,7 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
                     .withIncludeBlockquote(false)
                     .withAdditionalMetadata("filename", fileName)
                     .withAdditionalMetadata("tag", tag)
-                    .withAdditionalMetadata("documentId", documentId.toString())
+                    .withAdditionalMetadata("document_id", documentId.toString())
                     .build();
             MarkdownDocumentReader reader = new MarkdownDocumentReader(
                     new InputStreamResource(inputStream), config);

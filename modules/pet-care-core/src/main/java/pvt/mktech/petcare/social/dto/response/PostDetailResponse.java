@@ -37,8 +37,8 @@ public class PostDetailResponse implements Serializable {
     @Schema(description = "内容描述")
     private String content;
 
-    @Schema(description = "动态类型 1-好物分享 2-服务推荐 3-地点推荐 4-日常分享 5-活动打卡 6-活动报名")
-    private Integer postType;
+    @Schema(description = "类型：PRODUCT-好物分享 SERVICE-服务推荐 LOCATION-地点推荐 DAILY-日常分享 ACTIVITY_CHECK-活动打卡 ACTIVITY_JOIN-活动报名")
+    private String postType;
 
     @Schema(description = "图片/视频URL数组")
     private List<String> mediaUrls;

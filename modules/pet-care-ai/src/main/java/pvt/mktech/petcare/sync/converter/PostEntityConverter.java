@@ -51,14 +51,14 @@ public class PostEntityConverter {
      */
     private List<String> parseMediaUrls(String json) {
         if (json == null || json.isEmpty()) {
-            return List.of();
+            return null;
         }
         try {
             return objectMapper.readValue(json,
                     objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
         } catch (Exception e) {
             log.warn("解析 media_urls 失败: {}", json, e);
-            return List.of();
+            return null;
         }
     }
 }

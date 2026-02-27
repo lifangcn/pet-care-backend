@@ -27,7 +27,7 @@ public class PointsCouponResponse implements Serializable {
     /**
      * 状态
      */
-    private Integer status;
+    private String status;
 
     /**
      * 失效时间

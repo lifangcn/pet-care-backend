@@ -17,7 +17,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum ActionTypeOfPointsRecord {
 
-    REGISTER("REGISTER", "注册赠送", 1000),
+    REGISTER("REGISTER", "注册赠送", 0),
     CHECK_IN("CHECK_IN", "签到", 10),
     PUBLISH("PUBLISH", "发布内容", 30),
     COMMENT("COMMENT", "发布评论", 5),

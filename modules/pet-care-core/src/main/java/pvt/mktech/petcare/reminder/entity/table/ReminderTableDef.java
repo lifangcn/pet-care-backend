@@ -72,7 +72,7 @@ public class ReminderTableDef extends TableDef {
     public final QueryColumn REPEAT_TYPE = new QueryColumn(this, "repeat_type");
 
     /**
-     * 记录来源：manual, health_record, system
+     * 记录来源：MANUAL, HEALTH_RECORD, SYSTEM
      */
     public final QueryColumn SOURCE_TYPE = new QueryColumn(this, "source_type");
 

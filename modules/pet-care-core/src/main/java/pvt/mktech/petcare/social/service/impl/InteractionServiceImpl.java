@@ -25,7 +25,7 @@ public class InteractionServiceImpl extends ServiceImpl<InteractionMapper, Inter
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(INTERACTION.USER_ID.eq(userId))
                 .and(INTERACTION.POST_ID.eq(postId))
-                .and(INTERACTION.INTERACTION_TYPE.eq(1));
+                .and(INTERACTION.INTERACTION_TYPE.eq(TypeOfInteraction.LIKE));
         Interaction exist = getOne(queryWrapper);
 
         if (exist != null) {
