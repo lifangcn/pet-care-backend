@@ -67,7 +67,6 @@ public final class EsIndexMappings {
                   "rating_total": {"type": "integer"},
                   "view_count": {"type": "integer"},
                   "enabled": {"type": "short"},
-                  "status": {"type": "text"},
                   "activity_id": {"type": "long"},
                   "created_at": {"type": "date"}
                 }

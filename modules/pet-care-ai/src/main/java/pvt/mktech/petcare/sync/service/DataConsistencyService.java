@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import pvt.mktech.petcare.sync.constants.EsIndexConstants;
 import pvt.mktech.petcare.sync.entity.core.ActivityEntity;
 import pvt.mktech.petcare.sync.entity.core.PostEntity;
 import pvt.mktech.petcare.sync.mapper.core.ActivityMapper;
@@ -38,7 +37,6 @@ public class DataConsistencyService {
     private final PostMapper postMapper;
     private final ActivityMapper activityMapper;
     private final ElasticsearchClient elasticsearchClient;
-    private final DataMigrationService dataMigrationService;
 
     /**
      * 实时校验：每小时对比 MySQL 和 ES 的条数
@@ -89,13 +87,13 @@ public class DataConsistencyService {
         try {
             // MySQL 数量（正常状态的 Post）
             QueryWrapper mysqlQuery = QueryWrapper.create()
-                    .where("status = ?", 1);
+                    .where("enabled = ?", 1);
             long mysqlCount = postMapper.selectCountByQuery(mysqlQuery);
 
             // ES 数量
             CountRequest esRequest = CountRequest.of(c -> c
                     .index(POST_INDEX)
-                    .query(q -> q.term(t -> t.field("status").value(1)))
+                    .query(q -> q.term(t -> t.field("enabled").value(1)))
             );
             CountResponse esResponse = elasticsearchClient.count(esRequest);
             long esCount = esResponse.count();
@@ -118,13 +116,13 @@ public class DataConsistencyService {
         try {
             // MySQL 数量（招募中的 Activity）
             QueryWrapper mysqlQuery = QueryWrapper.create()
-                    .where("status = ?", 1);
+                    .where("status = ?", "RECRUITING");
             long mysqlCount = activityMapper.selectCountByQuery(mysqlQuery);
 
             // ES 数量
             CountRequest esRequest = CountRequest.of(c -> c
                     .index(ACTIVITY_INDEX)
-                    .query(q -> q.term(t -> t.field("status").value(1)))
+                    .query(q -> q.term(t -> t.field("status").value("RECRUITING")))
             );
             CountResponse esResponse = elasticsearchClient.count(esRequest);
             long esCount = esResponse.count();
@@ -147,7 +145,7 @@ public class DataConsistencyService {
         try {
             // 1. 获取 MySQL 所有 Post ID
             List<PostEntity> mysqlPosts = postMapper.selectListByQuery(
-                    QueryWrapper.create().where("status = ?", 1)
+                    QueryWrapper.create().where("enabled = ?", 1)
             );
             Set<Long> mysqlIds = mysqlPosts.stream()
                     .map(PostEntity::getId)
@@ -181,7 +179,7 @@ public class DataConsistencyService {
         try {
             // 1. 获取 MySQL 所有 Activity ID
             List<ActivityEntity> mysqlActivities = activityMapper.selectListByQuery(
-                    QueryWrapper.create().where("status = ?", 1)
+                    QueryWrapper.create().where("status = ?", "RECRUITING")
             );
             Set<Long> mysqlIds = mysqlActivities.stream()
                     .map(ActivityEntity::getId)

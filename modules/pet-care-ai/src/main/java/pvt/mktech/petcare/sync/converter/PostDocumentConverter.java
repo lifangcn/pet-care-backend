@@ -41,7 +41,6 @@ public class PostDocumentConverter implements DocumentConverter<PostCdcData, EsP
         doc.setRatingTotal(cdcData.getRatingTotal());
         doc.setRatingAvg(cdcData.getRatingAvg());
         doc.setViewCount(cdcData.getViewCount());
-        doc.setStatus(cdcData.getStatus());
         doc.setActivityId(cdcData.getActivityId());
         doc.setCreatedAt(DateTimeConverter.parseCanalDateTime(cdcData.getCreatedAt()));
         return doc;

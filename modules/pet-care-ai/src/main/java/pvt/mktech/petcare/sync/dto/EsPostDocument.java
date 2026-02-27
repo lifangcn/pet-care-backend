@@ -54,7 +54,7 @@ public class EsPostDocument {
     @JsonProperty("view_count")
     private Integer viewCount;
 
-    private String status;
+    @JsonProperty("enabled")
     private Integer enabled;
 
     @JsonProperty("activity_id")

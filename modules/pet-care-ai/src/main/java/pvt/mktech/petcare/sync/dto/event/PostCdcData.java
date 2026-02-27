@@ -54,9 +54,6 @@ public class PostCdcData implements CdcData {
     @JsonProperty("enabled")
     private Integer enabled;
 
-    @JsonProperty("status")
-    private String status;
-
     @JsonProperty("activity_id")
     private Long activityId;
 

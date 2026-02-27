@@ -40,7 +40,6 @@ public class PostEntityConverter {
         doc.setLikeCount(entity.getLikeCount());
         doc.setRatingAvg(entity.getRatingAvg());
         doc.setViewCount(entity.getViewCount());
-        doc.setStatus(entity.getStatus());
         doc.setActivityId(entity.getActivityId());
         doc.setCreatedAt(DateTimeConverter.toInstant(entity.getCreatedAt()));
         return doc;

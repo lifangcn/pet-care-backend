@@ -29,7 +29,7 @@ public class PostEntity {
     private Integer likeCount;
     private BigDecimal ratingAvg;
     private Integer viewCount;
-    private String status;
+    private Integer enabled;
     private Long activityId;
     private LocalDateTime createdAt;
 }
