@@ -1,16 +1,10 @@
 pipeline {
     agent any
 
-    environment {
-        INFRA_DIR = '/opt/petcare/infra'
-    }
-
     stages {
         stage('Deploy') {
             steps {
-                dir("${env.INFRA_DIR}") {
-                    sh 'docker compose -f docker-compose.app.yml up -d --build'
-                }
+                sh 'docker compose -f /opt/petcare/infra/docker-compose.app.yml -f /opt/petcare/infra/.env up -d --build'
             }
         }
 
