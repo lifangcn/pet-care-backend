@@ -6,19 +6,6 @@ pipeline {
     }
 
     stages {
-        stage('Sync from GitHub') {
-            steps {
-                // 从 GitHub 拉取最新代码
-                sh '''
-                    git remote add github https://github.com/lifangcn/pet-care-backend.git || true
-                    git fetch github main
-                    git checkout main
-                    git merge github/main --no-edit
-                    echo "✅ 已从 GitHub 同步最新代码"
-                '''
-            }
-        }
-
         stage('Build') {
             steps {
                 // sh 默认在 workspace 中执行
