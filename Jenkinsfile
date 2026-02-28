@@ -12,7 +12,7 @@ pipeline {
             steps {
                 sh '''
                     echo "等待服务启动..."
-                    sleep 60
+                    sleep 90
                     curl -f http://localhost:8080/actuator/health || exit 1
                     curl -f http://localhost:8081/actuator/health || exit 1
                     echo "✅ 健康检查通过！"
