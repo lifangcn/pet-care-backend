@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Deploy') {
             steps {
-                sh 'docker compose -f /opt/petcare/infra/docker-compose.app.yml up -d --build'
+                sh 'docker compose -f /opt/petcare/infra/docker-compose.app.yml up -d'
             }
         }
 
