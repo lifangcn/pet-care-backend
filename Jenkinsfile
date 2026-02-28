@@ -2,21 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('Sync Code') {
-            steps {
-                sh '''
-                    # 同步代码到构建目录
-                    rm -rf /opt/petcare/app/modules/pet-care-core/*
-                    rm -rf /opt/petcare/app/modules/pet-care-ai/*
-                    rm -rf /opt/petcare/app/modules/pet-care-common/*
-                    cp -r $WORKSPACE/modules/pet-care-core/* /opt/petcare/app/modules/pet-care-core/
-                    cp -r $WORKSPACE/modules/pet-care-ai/* /opt/petcare/app/modules/pet-care-ai/
-                    cp -r $WORKSPACE/modules/pet-care-common/* /opt/petcare/app/modules/pet-care-common/ || true
-                    echo "✅ 代码已同步到构建目录"
-                '''
-            }
-        }
-
         stage('Deploy') {
             steps {
                 sh 'docker compose -f /opt/petcare/infra/docker-compose.app.yml up -d --build'
@@ -27,7 +12,7 @@ pipeline {
             steps {
                 sh '''
                     echo "等待服务启动..."
-                    sleep 45
+                    sleep 60
                     curl -f http://localhost:8080/actuator/health || exit 1
                     curl -f http://localhost:8081/actuator/health || exit 1
                     echo "✅ 健康检查通过！"
