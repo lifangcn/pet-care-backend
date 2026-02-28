@@ -15,8 +15,10 @@ pipeline {
 
         stage('Copy Jars') {
             steps {
-                // 使用 Jenkins 内置 WORKSPACE 环境变量
+                // 创建目标目录并复制 jar 包
                 sh '''
+                    mkdir -p /opt/petcare/infra/modules/pet-care-core/target
+                    mkdir -p /opt/petcare/infra/modules/pet-care-ai/target
                     cp $WORKSPACE/modules/pet-care-core/target/pet-care-core-1.0-SNAPSHOT.jar /opt/petcare/infra/modules/pet-care-core/target/
                     cp $WORKSPACE/modules/pet-care-ai/target/pet-care-ai-1.0-SNAPSHOT.jar /opt/petcare/infra/modules/pet-care-ai/target/
                     echo "JAR 包已复制到部署目录"
