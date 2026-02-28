@@ -6,9 +6,12 @@ pipeline {
             steps {
                 sh '''
                     # 同步代码到构建目录
-                    rsync -av --delete $WORKSPACE/modules/pet-care-core/ /opt/petcare/app/modules/pet-care-core/
-                    rsync -av --delete $WORKSPACE/modules/pet-care-ai/ /opt/petcare/app/modules/pet-care-ai/
-                    rsync -av --delete $WORKSPACE/modules/pet-care-common/ /opt/petcare/app/modules/pet-care-common/ || true
+                    rm -rf /opt/petcare/app/modules/pet-care-core/*
+                    rm -rf /opt/petcare/app/modules/pet-care-ai/*
+                    rm -rf /opt/petcare/app/modules/pet-care-common/*
+                    cp -r $WORKSPACE/modules/pet-care-core/* /opt/petcare/app/modules/pet-care-core/
+                    cp -r $WORKSPACE/modules/pet-care-ai/* /opt/petcare/app/modules/pet-care-ai/
+                    cp -r $WORKSPACE/modules/pet-care-common/* /opt/petcare/app/modules/pet-care-common/ || true
                     echo "✅ 代码已同步到构建目录"
                 '''
             }
