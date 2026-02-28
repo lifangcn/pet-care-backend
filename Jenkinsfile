@@ -2,9 +2,21 @@ pipeline {
     agent any
 
     stages {
+        stage('Sync Code') {
+            steps {
+                sh '''
+                    # 同步代码到构建目录
+                    rsync -av --delete $WORKSPACE/modules/pet-care-core/ /opt/petcare/app/modules/pet-care-core/
+                    rsync -av --delete $WORKSPACE/modules/pet-care-ai/ /opt/petcare/app/modules/pet-care-ai/
+                    rsync -av --delete $WORKSPACE/modules/pet-care-common/ /opt/petcare/app/modules/pet-care-common/ || true
+                    echo "✅ 代码已同步到构建目录"
+                '''
+            }
+        }
+
         stage('Deploy') {
             steps {
-                sh 'docker compose -f /opt/petcare/infra/docker-compose.app.yml -f /opt/petcare/infra/.env up -d --build'
+                sh 'docker compose -f /opt/petcare/infra/docker-compose.app.yml up -d --build'
             }
         }
 
