@@ -2,26 +2,27 @@ pipeline {
     agent any
 
     environment {
-        APP_DIR = '/opt/petcare/app-build'
+        // Jenkins 工作空间代码路径
+        WORKSPACE = '${WORKSPACE}'
         INFRA_DIR = '/opt/petcare/infra'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Build') {
             steps {
-                dir("${env.APP_DIR}") {
-                    // 清理旧代码
-                    sh 'rm -rf * || true'
-                    // Jenkins 已经从 Gitea 拉取了代码
-                }
+                // Jenkins 已从 Gitea 拉取代码到工作空间
+                sh 'cd ${WORKSPACE} && mvn clean package -DskipTests -q'
             }
         }
 
-        stage('Build') {
+        stage('Copy Jars') {
             steps {
-                dir("${env.APP_DIR}") {
-                    sh 'mvn clean package -DskipTests -q'
-                }
+                // 复制编译好的 jar 包到部署目录
+                sh '''
+                    cp ${WORKSPACE}/modules/pet-care-core/target/pet-care-core-1.0-SNAPSHOT.jar /opt/petcare/infra/modules/pet-care-core/target/
+                    cp ${WORKSPACE}/modules/pet-care-ai/target/pet-care-ai-1.0-SNAPSHOT.jar /opt/petcare/infra/modules/pet-care-ai/target/
+                    echo "JAR 包已复制到部署目录"
+                '''
             }
         }
 
