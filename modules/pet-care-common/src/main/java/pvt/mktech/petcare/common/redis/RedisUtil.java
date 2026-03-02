@@ -1,14 +1,13 @@
 package pvt.mktech.petcare.common.redis;
 
-import org.redisson.api.RBitSet;
-import org.redisson.api.RBucket;
-import org.redisson.api.RMap;
-import org.redisson.api.RedissonClient;
+import org.redisson.api.*;
+import org.redisson.api.options.KeysScanOptions;
 import org.redisson.client.protocol.ScoredEntry;
 
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * {@code @description}: Redis缓存工具类
@@ -173,5 +172,84 @@ public record RedisUtil(RedissonClient redissonClient) {
 
     public Collection<ScoredEntry<Object>> rangeByScoreWithScores(String key, double min, double max) {
         return redissonClient.getScoredSortedSet(key).entryRange(min, true, max, true);
+    }
+
+    /* 扩展功能 Set */
+
+    /**
+     * 向 Set 集合添加元素
+     *
+     * @param key   缓存键
+     * @param value 元素值
+     * @param <T>   元素类型
+     * @return 是否添加成功（元素不存在时返回 true）
+     */
+    public <T> boolean setAdd(String key, T value) {
+        RSet<T> set = redissonClient.getSet(key);
+        return set.add(value);
+    }
+
+    /**
+     * 判断 Set 集合是否包含元素
+     *
+     * @param key   缓存键
+     * @param value 元素值
+     * @param <T>   元素类型
+     * @return 是否包含
+     */
+    public <T> boolean setIsMember(String key, T value) {
+        RSet<T> set = redissonClient.getSet(key);
+        return set.contains(value);
+    }
+
+    /**
+     * 获取 Set 集合所有元素
+     *
+     * @param key 缓存键
+     * @param <T> 元素类型
+     * @return 所有元素
+     */
+    public <T> Collection<T> setMembers(String key) {
+        RSet<T> set = redissonClient.getSet(key);
+        return set.readAll();
+    }
+
+    /**
+     * 删除 Set 集合中的元素
+     *
+     * @param key   缓存键
+     * @param value 元素值
+     * @param <T>   元素类型
+     * @return 是否删除成功
+     */
+    public <T> boolean setRemove(String key, T value) {
+        RSet<T> set = redissonClient.getSet(key);
+        return set.remove(value);
+    }
+
+    /**
+     * 获取 Set 集合大小
+     *
+     * @param key 缓存键
+     * @return 集合大小
+     */
+    public long setSize(String key) {
+        RSet<Object> set = redissonClient.getSet(key);
+        return set.size();
+    }
+
+    /* 扩展功能 Keys/Scan */
+
+    /**
+     * 渐进式扫描 Key（生产环境推荐）
+     *
+     * @param pattern 匹配模式（如 core:post:view_count:*）
+     * @param count   每次扫描返回的数量
+     * @return 匹配的 Key 集合
+     */
+    public Collection<String> scan(String pattern, int count) {
+        KeysScanOptions options = KeysScanOptions.defaults().pattern( pattern).limit(count);
+        return redissonClient.getKeys().getKeysStream(options).collect(Collectors.toSet());
+
     }
 }

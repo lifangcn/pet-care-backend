@@ -7,6 +7,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.redisson.api.RRateLimiter;
+import org.redisson.api.RateType;
 import org.redisson.api.RedissonClient;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -15,6 +17,7 @@ import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.web.UserContext;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 
 /**
  * {@code @description}: 限流切面
@@ -30,19 +33,19 @@ public record RateLimitAspect(RedissonClient redissonClient) {
     private static final String UNKNOWN = "unknown";
     private static final String IP_SEPARATOR_REGEX = "\\.";
 
+
     @Around(value = "@annotation(rateLimit)", argNames = "joinPoint,rateLimit")
     public Object around(ProceedingJoinPoint joinPoint, RateLimit rateLimit) throws Throwable {
         // 1. 构建限流key
         String limitKey = buildLimitKey(joinPoint, rateLimit);
 
-        // 2. 计算速率：每秒生成的令牌数 = maxRequests / interval
-        long rate = Math.max(1L, rateLimit.maxRequests() / rateLimit.interval());
+        // 2. 限流参数：每 interval 秒生成 maxRequests 个令牌
+        //    例如：maxRequests=10, interval=60 表示每60秒生成10个令牌
+        RRateLimiter rateLimiter = redissonClient.getRateLimiter(limitKey);
+        // 使用 setRate 确保配置始终有效，如果已存在则覆盖
+        rateLimiter.trySetRate(RateType.OVERALL, rateLimit.maxRequests(), Duration.ofSeconds(rateLimit.interval()));
 
-        // 3. 尝试获取令牌
-        RateLimitUtil rateLimitUtil = new RateLimitUtil(redissonClient);
-        boolean acquired = rateLimitUtil.tryAcquire(limitKey, 1, rate, rateLimit.interval());
-
-        if (!acquired) {
+        if (!rateLimiter.tryAcquire(1)) {
             log.warn("限流触发，key: {}, rate: {}/{}s", limitKey, rateLimit.maxRequests(), rateLimit.interval());
             throw new BusinessException(ErrorCode.RATE_LIMIT_EXCEEDED);
         }

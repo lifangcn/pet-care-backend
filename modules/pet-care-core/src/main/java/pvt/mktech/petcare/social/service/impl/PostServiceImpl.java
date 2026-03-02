@@ -22,9 +22,13 @@ import pvt.mktech.petcare.social.service.InteractionService;
 import pvt.mktech.petcare.social.service.PostLabelService;
 import pvt.mktech.petcare.social.service.PostService;
 import pvt.mktech.petcare.common.web.UserContext;
+import pvt.mktech.petcare.common.redis.RedisUtil;
+import pvt.mktech.petcare.infrastructure.constant.CoreConstant;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static pvt.mktech.petcare.social.entity.table.InteractionTableDef.INTERACTION;
@@ -40,6 +44,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final InteractionService interactionService;
     private final PostLabelService postLabelService;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final RedisUtil redisUtil;
 
     @Override
     public Post savePost(PostSaveRequest request) {
@@ -117,12 +122,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public void incrementViewCount(Long id) {
-        // TODO 扩展点：使用 Redis 计数，定时同步到数据库
-        // 这里简单实现，直接更新数据库
-        Post post = getById(id);
-        if (post != null) {
-            post.setViewCount((post.getViewCount() == null ? 0 : post.getViewCount()) + 1);
-            updateById(post);
+        Long userId = UserContext.getUserId();
+        if (userId == null) {
+            return;
+        }
+
+        // 按小时去重：生成小时级 key（格式：yyyyMMddHH）
+        String hourKey = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHH"));
+        String viewedKey = CoreConstant.CORE_POST_VIEWED_KEY_PREFIX + id + ":" + hourKey;
+
+        // 尝试添加用户到已浏览 Set，返回 true 表示首次浏览
+        boolean isFirstView = redisUtil.setAdd(viewedKey, userId.toString());
+        if (isFirstView) {
+            // 首次浏览，增加计数器
+            String countKey = CoreConstant.CORE_POST_VIEW_COUNT_KEY_PREFIX + id;
+            redisUtil.increment(countKey, 1);
         }
     }
 

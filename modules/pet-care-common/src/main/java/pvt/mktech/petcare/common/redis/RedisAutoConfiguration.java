@@ -44,12 +44,6 @@ public class RedisAutoConfiguration {
     }
 
     @Bean
-    public RateLimitUtil rateLimitUtil(RedissonClient redissonClient) {
-        log.info("初始化限流工具");
-        return new RateLimitUtil(redissonClient);
-    }
-
-    @Bean
     public RateLimitAspect rateLimitAspect(RedissonClient redissonClient) {
         log.info("初始化限流切面");
         return new RateLimitAspect(redissonClient);

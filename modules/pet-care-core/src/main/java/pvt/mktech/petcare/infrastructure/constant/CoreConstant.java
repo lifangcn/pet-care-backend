@@ -83,4 +83,18 @@ public class CoreConstant {
      * 用户注册主题消费组
      */
     public static final String CORE_USER_REGISTER_CONSUMER = "core_user_register_consumer";
+
+    /** 浏览量系统 **/
+    /**
+     * 浏览去重 Set，key格式: core:post:viewed:{postId}:{yyyyMMddHH}
+     */
+    public static final String CORE_POST_VIEWED_KEY_PREFIX = "core:post:viewed:";
+    /**
+     * 浏览计数器，key格式: core:post:view_count:{postId}
+     */
+    public static final String CORE_POST_VIEW_COUNT_KEY_PREFIX = "core:post:view_count:";
+    /**
+     * 浏览量同步锁
+     */
+    public static final String CORE_POST_VIEW_COUNT_SYNC_LOCK_KEY = "core:post:view_count:sync:lock";
 }

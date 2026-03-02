@@ -60,7 +60,6 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     @Resource
     private RedissonClient redissonClient;
 
-
     @Override
     public Result<String> sendCode(String phone, HttpSession httpSession) {
         // 1.校验手机号
@@ -71,9 +70,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         // 2.手机号级别限流（1分钟内最多3次）
         String rateLimitKey = "rate_limit:sendCode:phone:" + phone;
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(rateLimitKey);
-        if (!rateLimiter.isExists()) {
-            rateLimiter.trySetRate(RateType.OVERALL, 3, 1, RateIntervalUnit.MINUTES);
-        }
+        rateLimiter.trySetRate(RateType.OVERALL, 3, Duration.ofMillis(1));
         if (!rateLimiter.tryAcquire(1)) {
             throw new BusinessException(ErrorCode.RATE_LIMIT_EXCEEDED, "验证码发送过于频繁，请稍后再试");
         }
