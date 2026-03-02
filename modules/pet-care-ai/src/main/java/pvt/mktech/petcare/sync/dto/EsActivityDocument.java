@@ -1,7 +1,10 @@
 package pvt.mktech.petcare.sync.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
+import pvt.mktech.petcare.sync.util.CanalInstantDeserializer;
 
 import java.time.Instant;
 
@@ -25,9 +28,11 @@ public class EsActivityDocument {
     private String activityType;
 
     @JsonProperty("activity_time")
+    @JsonDeserialize(using = CanalInstantDeserializer.class)
     private Instant activityTime;
 
     @JsonProperty("end_time")
+    @JsonDeserialize(using = CanalInstantDeserializer.class)
     private Instant endTime;
 
     private String address;
@@ -56,5 +61,23 @@ public class EsActivityDocument {
     private Long embeddedAt;
 
     @JsonProperty("created_at")
+    @JsonDeserialize(using = CanalInstantDeserializer.class)
     private Instant createdAt;
+
+    @JsonProperty("updated_at")
+    @JsonDeserialize(using = CanalInstantDeserializer.class)
+    private Instant updatedAt;
+
+    /**
+     * 是否删除（CDC 字段，不存入 ES）
+     */
+    @JsonProperty("is_deleted")
+    private Integer isDeleted;
+
+    /**
+     * 删除时间（CDC 字段，不存入 ES）
+     */
+    @JsonProperty("deleted_at")
+    @JsonDeserialize(using = CanalInstantDeserializer.class)
+    private Instant deletedAt;
 }

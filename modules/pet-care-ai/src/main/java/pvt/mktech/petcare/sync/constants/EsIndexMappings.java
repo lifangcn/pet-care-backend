@@ -68,6 +68,7 @@ public final class EsIndexMappings {
                   "view_count": {"type": "integer"},
                   "enabled": {"type": "short"},
                   "activity_id": {"type": "long"},
+                  "updated_at": {"type": "date"},
                   "created_at": {"type": "date"}
                 }
               }
@@ -99,6 +100,7 @@ public final class EsIndexMappings {
               "status": {"type": "text"},
               "check_in_enabled": {"type": "short"},
               "check_in_count": {"type": "integer"},
+              "updated_at": {"type": "date"},
               "created_at": {"type": "date"}
             }
           }

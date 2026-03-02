@@ -6,8 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
-import pvt.mktech.petcare.sync.converter.ActivityDocumentConverter;
-import pvt.mktech.petcare.sync.dto.event.ActivityCdcData;
+import pvt.mktech.petcare.sync.dto.EsActivityDocument;
 import pvt.mktech.petcare.sync.service.CdcHandlerService;
 
 import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
@@ -24,20 +23,12 @@ import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
 public class ActivityCdcListener {
 
     private final CdcHandlerService cdcHandlerService;
-    private final ActivityDocumentConverter documentConverter;
-
 
     /**
      * 监听 Activity 表变更
      */
     @KafkaListener(topics = PET_CARE_CDC_ACTIVITY_TOPIC, groupId = PET_CARE_CDC_ES_SYNC_CONSUMER_GROUP)
     public void onActivityChange(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        cdcHandlerService.handleCanalEvent(
-                record,
-                ActivityCdcData.class,
-                documentConverter,
-                ACTIVITY_INDEX,
-                ack
-        );
+        cdcHandlerService.handleCanalEvent(record, EsActivityDocument.class, ACTIVITY_INDEX, ack);
     }
 }

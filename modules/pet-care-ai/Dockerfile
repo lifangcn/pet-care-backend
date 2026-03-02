@@ -12,5 +12,5 @@ RUN mvn clean package -DskipTests
 # 暴露应用端口
 EXPOSE 8082
 
-# 使用生产环境配置启动应用
-CMD ["java", "-jar", "/app/target/pet-care-gateway-1.0-SNAPSHOT.jar", "--spring.profiles.active=sae"]
+# 使用生产环境配置启动应用（profile 由 docker-compose 环境变量覆盖）
+ENTRYPOINT ["java", "-jar", "/app/target/pet-care-ai-1.0-SNAPSHOT.jar"]

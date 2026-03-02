@@ -6,8 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
-import pvt.mktech.petcare.sync.converter.PostDocumentConverter;
-import pvt.mktech.petcare.sync.dto.event.PostCdcData;
+import pvt.mktech.petcare.sync.dto.EsPostDocument;
 import pvt.mktech.petcare.sync.service.CdcHandlerService;
 
 import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
@@ -25,16 +24,12 @@ import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
 public class PostCdcListener {
 
     private final CdcHandlerService cdcHandlerService;
-    private final PostDocumentConverter documentConverter;
-
 
     /**
      * 监听 Post 表变更
      */
     @KafkaListener(topics = PET_CARE_CDC_POST_TOPIC, groupId = PET_CARE_CDC_ES_SYNC_CONSUMER_GROUP)
     public void onPostChange(ConsumerRecord<String, String> record, Acknowledgment ack) {
-        cdcHandlerService.handleCanalEvent(record, PostCdcData.class, documentConverter,
-                POST_INDEX, ack
-        );
+        cdcHandlerService.handleCanalEvent(record, EsPostDocument.class, POST_INDEX, ack);
     }
 }

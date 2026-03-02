@@ -27,6 +27,8 @@ public class PostEntity {
     private String externalLink;
     private String priceRange;
     private Integer likeCount;
+    private Integer ratingCount;
+    private Integer ratingTotal;
     private BigDecimal ratingAvg;
     private Integer viewCount;
     private Integer enabled;

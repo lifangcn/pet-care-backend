@@ -6,11 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
-import pvt.mktech.petcare.sync.converter.DocumentConverter;
 import pvt.mktech.petcare.sync.dto.event.CanalEvent;
-import pvt.mktech.petcare.sync.dto.event.CdcData;
 
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Set;
 
 /**
  * {@code @description}: CDC处理核心服务
@@ -24,6 +24,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CdcHandlerService {
 
+    /**
+     * 高频变动字段（仅这些字段变动时跳过 ES 同步）
+     */
+    private static final Set<String> HIGH_FREQ_FIELDS = Set.of(
+        "updated_at", "view_count", "like_count", "rating_count",
+        "rating_total", "rating_avg", "current_participants", "check_in_count"
+    );
+
     private final ObjectMapper objectMapper;
     private final SyncService syncService;
 
@@ -31,29 +39,32 @@ public class CdcHandlerService {
      * 处理 Canal CDC 事件（Canal Flat Message 格式）
      *
      * @param record      Kafka消息记录
-     * @param cdcDataType CDC数据类型
-     * @param converter   文档转换器
+     * @param documentType ES文档类型（直接从 Canal 反序列化）
      * @param index       ES索引名
      * @param ack         Acknowledgment
-     * @param <T>         CDC数据类型
-     * @param <R>         ES文档类型
+     * @param <T>         文档类型
      */
-    public <T extends CdcData, R> void handleCanalEvent(
-            ConsumerRecord<String, String> record,
-            Class<T> cdcDataType,
-            DocumentConverter<T, R> converter,
-            String index,
-            Acknowledgment ack) {
+    public <T> void handleCanalEvent(ConsumerRecord<String, String> record, Class<T> documentType,
+            String index, Acknowledgment ack) {
 
         try {
             String message = record.value();
             log.info("收到 Canal CDC 消息: message={}, topic={}, partition={}, offset={}",
                     message, record.topic(), record.partition(), record.offset());
 
-            // 1. 解析 Canal 消息
-            CanalEvent<T> event = parseCanalEvent(message, cdcDataType);
+            // 1. 解析 Canal 消息（直接反序列化为目标文档类型）
+            CanalEvent<T> event = parseCanalEvent(message, documentType);
 
-            // 2. Canal data 是数组，需要遍历处理（批量变更）
+            // 2. 高频字段过滤：仅高频字段变动时跳过
+            if (isOnlyHighFreqFieldsChanged(event)) {
+                log.info("仅高频字段变动，跳过 ES 同步: type={}, table={}", event.getType(), event.getTable());
+                if (ack != null) {
+                    ack.acknowledge();
+                }
+                return;
+            }
+
+            // 3. Canal data 是数组，需要遍历处理（批量变更）
             List<T> dataList = event.getData();
             if (dataList == null || dataList.isEmpty()) {
                 log.warn("Canal 消息 data 为空: {}", message);
@@ -63,19 +74,24 @@ public class CdcHandlerService {
                 return;
             }
 
-            // 3. 根据操作类型处理
+            // 4. 根据操作类型处理
             String type = event.getType();
-            for (T cdcData : dataList) {
+            for (T document : dataList) {
                 if ("DELETE".equals(type)) {
-                    handleDelete(index, cdcData.getId());
+                    handleDelete(index, document);
                 } else if ("INSERT".equals(type) || "UPDATE".equals(type)) {
-                    handleUpsert(index, cdcData, converter);
+                    // 数据质量过滤
+                    if (!shouldSync(document)) {
+                        log.debug("数据不满足同步质量要求，跳过: id={}", getId(document));
+                        continue;
+                    }
+                    handleUpsert(index, document);
                 } else {
                     log.info("忽略操作类型: type={}", type);
                 }
             }
 
-            // 4. 手动提交 offset
+            // 5. 手动提交 offset
             if (ack != null) {
                 ack.acknowledge();
             }
@@ -100,21 +116,12 @@ public class CdcHandlerService {
     /**
      * 处理创建/更新操作
      */
-    private <T extends CdcData, R> void handleUpsert(
-            String index,
-            T cdcData,
-            DocumentConverter<T, R> converter) {
-
+    private <T> void handleUpsert(String index, T document) {
         try {
-            // 转换为ES文档
-            R document = converter.convert(cdcData);
-
-            // 同步到ES
-            syncService.upsert(index, String.valueOf(cdcData.getId()), document);
-
-            log.info("CDC upsert 成功: index={}, id={}", index, cdcData.getId());
+            syncService.upsert(index, String.valueOf(getId(document)), document);
+            log.info("CDC upsert 成功: index={}, id={}", index, getId(document));
         } catch (Exception e) {
-            log.error("CDC upsert 失败: index={}, id={}", index, cdcData.getId(), e);
+            log.error("CDC upsert 失败: index={}, id={}", index, getId(document), e);
             throw e;
         }
     }
@@ -122,13 +129,97 @@ public class CdcHandlerService {
     /**
      * 处理删除操作
      */
-    private void handleDelete(String index, Long id) {
+    private <T> void handleDelete(String index, T document) {
         try {
+            Long id = getId(document);
             syncService.delete(index, String.valueOf(id));
             log.info("CDC delete 成功: index={}, id={}", index, id);
         } catch (Exception e) {
-            log.error("CDC delete 失败: index={}, id={}", index, id, e);
+            log.error("CDC delete 失败: index={}, id={}", index, getId(document), e);
             throw e;
         }
+    }
+
+    /**
+     * 从文档中提取 ID（通过反射获取 id 字段）
+     */
+    private <T> Long getId(T document) {
+        try {
+            java.lang.reflect.Field field = document.getClass().getDeclaredField("id");
+            field.setAccessible(true);
+            return (Long) field.get(document);
+        } catch (Exception e) {
+            throw new RuntimeException("无法获取文档 ID", e);
+        }
+    }
+
+    /**
+     * 检查是否仅高频字段变动（若是则跳过 ES 同步）
+     *
+     * @param event Canal 事件
+     * @param <T>    文档类型
+     * @return true-仅高频字段变动，false-有其他字段变动
+     */
+    private <T> boolean isOnlyHighFreqFieldsChanged(CanalEvent<T> event) {
+        if (!"UPDATE".equals(event.getType()) || event.getOld() == null || event.getOld().isEmpty()) {
+            return false;
+        }
+        // old 的 keySet 就是变动的字段
+        T oldData = event.getOld().get(0);
+        for (Field field : oldData.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            try {
+                Object value = field.get(oldData);
+                if (value != null) {
+                    String fieldName = camelToSnake(field.getName());
+                    if (!HIGH_FREQ_FIELDS.contains(fieldName)) {
+                        return false; // 有非高频字段变动
+                    }
+                }
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+        return true; // 只有高频字段变动
+    }
+
+    /**
+     * 检查数据是否符合同步质量要求
+     *
+     * @param document 文档对象
+     * @param <T>      文档类型
+     * @return true-符合同步要求，false-不符合
+     */
+    private <T> boolean shouldSync(T document) {
+        Integer enabled = getFieldValue(document, "enabled");
+        Integer isDeleted = getFieldValue(document, "isDeleted");
+        // 只同步：enabled=1 且 is_deleted=0
+        return enabled != null && enabled == 1
+            && (isDeleted == null || isDeleted == 0);
+    }
+
+    /**
+     * 通过反射获取字段值
+     *
+     * @param document 文档对象
+     * @param fieldName 字段名（驼峰命名）
+     * @param <T>      文档类型
+     * @param <V>      返回值类型
+     * @return 字段值
+     */
+    private <T, V> V getFieldValue(T document, String fieldName) {
+        try {
+            Field field = document.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return (V) field.get(document);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 驼峰命名转下划线命名
+     */
+    private String camelToSnake(String camelCase) {
+        return camelCase.replaceAll("([a-z])([A-Z])", "$1_$2").toLowerCase();
     }
 }
