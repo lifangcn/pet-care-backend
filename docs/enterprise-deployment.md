@@ -409,7 +409,7 @@ services:
       - REDIS_PASSWORD=!QAZ2wsx
       - NACOS_HOST=petcare-nacos
       - ES_HOST_HOST=host.docker.internal
-      - ZHIPU_AI_API_KEY=5e8dbcb5a339499f9ccc435bb06a7317.ewmsAOAjvGsXanAG
+      - ZHIPU_AI_API_KEY={your_api_key}
       - OSS_ENDPOINT=oss-cn-hangzhou.aliyuncs.com
       - OSS_ACCESS_KEY_ID={your_access_key_id}
       - OSS_ACCESS_KEY_SECRET={your_access_key_secret}
