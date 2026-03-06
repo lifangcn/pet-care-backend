@@ -106,4 +106,42 @@ public final class EsIndexMappings {
           }
         }
         """;
+
+    /**
+     * 聊天历史索引映射（支持向量检索）
+     */
+    public static final String CHAT_HISTORY_MAPPING = """
+        {
+          "settings": {
+            "number_of_shards": 3,
+            "number_of_replicas": 1
+          },
+          "mappings": {
+            "properties": {
+              "id": {"type": "long"},
+              "conversation_id": {"type": "keyword"},
+              "user_id": {"type": "long"},
+              "session_id": {"type": "keyword"},
+              "role": {"type": "keyword"},
+              "content": {"type": "text", "analyzer": "ik_max_word"},
+              "embedding": {
+                "type": "dense_vector",
+                "dims": 1024,
+                "index": true,
+                "similarity": "cosine"
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "tool_calls": {"type": "keyword"},
+                  "tokens_used": {"type": "integer"},
+                  "model": {"type": "keyword"}
+                }
+              },
+              "created_at": {"type": "date"},
+              "expires_at": {"type": "date"}
+            }
+          }
+        }
+        """;
 }

@@ -7,13 +7,14 @@ import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvi
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import pvt.mktech.petcare.chat.dto.response.ClearHistoryResponse;
 import pvt.mktech.petcare.chat.rag.advisor.MyLoggerAdvisor;
+import pvt.mktech.petcare.chat.service.ChatHistoryService;
+import pvt.mktech.petcare.chat.sink.ChatMessageSink;
 import pvt.mktech.petcare.common.constant.CommonConstant;
+import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.shared.ConversationIdGenerator;
 import reactor.core.publisher.Flux;
@@ -39,6 +40,7 @@ public class ChatController {
     private final ConversationIdGenerator conversationIdGenerator;
     private final VectorStore elasticsearchVectorStore;
     private final WebClient.Builder webClientBuilder;
+    private final ChatMessageSink chatMessageSink;
 
     @Value("${core.service.url:http://localhost:8080}")
     private String coreServiceUrl;
@@ -57,6 +59,9 @@ public class ChatController {
         Long userId = UserContext.getUserId();
         String conversationId = conversationIdGenerator.generate(userId, sessionId);
 
+        // 用于收集完整响应
+        StringBuilder fullResponse = new StringBuilder();
+
         return chatClient.prompt()
                 .advisors(new MyLoggerAdvisor())
                 .advisors(advisorSpec -> advisorSpec.param(CONVERSATION_ID, conversationId))
@@ -64,7 +69,13 @@ public class ChatController {
                 .user("[用户ID:" + userId + "]\n[当前时间:" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "]\n" + message)
                 .stream()
                 .content()
-                .doOnComplete(() -> consumeAiPoints(userId, conversationId));
+                .doOnNext(fullResponse::append) // 收集响应
+                .doOnComplete(() -> {
+                    consumeAiPoints(userId, conversationId);
+                    // 异步保存消息
+                    chatMessageSink.onChatCompleted(userId, sessionId,
+                            conversationId, message, fullResponse.toString());
+                });
     }
 
     /**

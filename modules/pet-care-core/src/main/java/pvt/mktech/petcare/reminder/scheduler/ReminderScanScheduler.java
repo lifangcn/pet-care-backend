@@ -54,7 +54,7 @@ public class ReminderScanScheduler {
      * 1. 时间排序：score存储时间戳，天然按时间有序
      * 2. 范围查询：rangeByScoreWithScores(0, now) 高效获取到期记录
      * 3. 时间复杂度：增删查都是 O(log N)，适合频繁操作
-     * 4. 轻量级: 比引入 RabbitMQ 延迟插件、Quartz 等更轻量（RocketMQ延迟等级不精确，不做讨论）
+     * 4. 轻量级: 比引入 RabbitMQ 延迟插件、Quartz 等更轻量， RocketMQ 5.0之后支持任意时间的延迟队列，但需要考虑架构升级的问题
      */
     @Scheduled(cron = "${scheduler.reminder-scan.cron:0 */1 * * * ?}")  // 默认每1分钟执行一次
     @DistributedLock(lockKey = CoreConstant.REMINDER_SCAN_LOCK_KEY)

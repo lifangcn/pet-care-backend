@@ -4,12 +4,15 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.support.TaskExecutorAdapter;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import pvt.mktech.petcare.common.thread.ThreadPoolManager;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -26,12 +29,24 @@ public class AsyncConfig implements WebMvcConfigurer {
 
     @Override
     public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
-        ThreadPoolExecutor threadPoolExecutor = ThreadPoolManager.createThreadPool("mvc-async");
-        ExecutorServiceMetrics.monitor(meterRegistry, threadPoolExecutor, "mvc-async");
+        ThreadPoolExecutor threadPoolExecutor = ThreadPoolManager.createThreadPool("ai-mvc-async");
+        ExecutorServiceMetrics.monitor(meterRegistry, threadPoolExecutor, "ai-mvc-async");
         // 预热线程
         threadPoolExecutor.prestartAllCoreThreads();
         configurer.setTaskExecutor(new TaskExecutorAdapter(threadPoolExecutor));
         configurer.setDefaultTimeout(30000);
         log.info("异步线程池配置成功");
+    }
+
+    /**
+     * 向量处理线程池
+     * 用于文档向量异步处理
+     */
+    @Bean("aiSyncThreadPoolExecutor")
+    public Executor aiSyncThreadPoolExecutor(MeterRegistry meterRegistry) {
+        ThreadPoolExecutor executor = ThreadPoolManager.createThreadPool("ai-async");
+        ExecutorServiceMetrics.monitor(meterRegistry, executor, "ai-async");
+        executor.prestartAllCoreThreads();
+        return executor;
     }
 }

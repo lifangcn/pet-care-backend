@@ -21,6 +21,11 @@ public final class SyncConstants {
     public static final String ACTIVITY_INDEX = "activity";
 
     /**
+     * 聊天历史索引
+     */
+    public static final String CHAT_HISTORY_INDEX = "chat_history";
+
+    /**
      * CDC 动态(Post) 主题
      */
     public static final String PET_CARE_CDC_POST_TOPIC = "pet_care_core_tb_post";

@@ -140,10 +140,10 @@ public record RateLimitAspect(RedissonClient redissonClient) {
         if (ip == null || ip.isEmpty()) {
             return UNKNOWN;
         }
-        String[] parts = ip.split(IP_SEPARATOR_REGEX);
-        if (parts.length >= 2) {
-            return parts[0] + IP_SEPARATOR + parts[1];
-        }
+//        String[] parts = ip.split(IP_SEPARATOR_REGEX);
+//        if (parts.length >= 2) {
+//            return parts[0] + IP_SEPARATOR + parts[1];
+//        }
         return ip;
     }
 }
