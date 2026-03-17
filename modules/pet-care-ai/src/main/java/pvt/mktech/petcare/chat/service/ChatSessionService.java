@@ -4,14 +4,19 @@ import cn.hutool.core.util.IdUtil;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.MaxAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.MinAggregate;
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.chat.dto.request.CreateSessionRequest;
-import pvt.mktech.petcare.chat.dto.response.*;
+import pvt.mktech.petcare.chat.dto.response.ChatMessageResponse;
+import pvt.mktech.petcare.chat.dto.response.SessionItem;
+import pvt.mktech.petcare.chat.dto.response.SessionListResponse;
+import pvt.mktech.petcare.chat.dto.response.SessionResponse;
 import pvt.mktech.petcare.chat.repository.ChatHistoryRepository;
 import pvt.mktech.petcare.entity.ChatMessageDocument;
 
@@ -23,6 +28,7 @@ import java.util.Map;
 /**
  * {@code @description}: 会话管理服务
  * {@code @date}: 2026-03-02
+ *
  * @author Michael
  */
 @Slf4j
@@ -56,9 +62,9 @@ public class ChatSessionService {
     /**
      * 获取会话列表（聚合查询）
      *
-     * @param userId 用户ID
-     * @param page   页码
-     * @param size   每页大小
+     * @param userId     用户ID
+     * @param pageNumber 页码
+     * @param pageSize   每页大小
      * @return 会话列表响应
      */
     public SessionListResponse listSessions(Long userId, Long pageNumber, Long pageSize) {
@@ -82,6 +88,17 @@ public class ChatSessionService {
                                     )
                                     .aggregations("last_message", subAgg -> subAgg
                                             .max(m -> m.field("created_at"))
+                                    )
+                                    .aggregations("session_name", subAgg -> subAgg
+                                            .topHits(th -> th
+                                                    .size(1)
+                                                    .sort(sort -> sort
+                                                            .field(f -> f
+                                                                    .field("created_at")
+                                                                    .order(SortOrder.Asc)
+                                                            )
+                                                    )
+                                            )
                                     )
                             ),
                     ChatMessageDocument.class
@@ -134,15 +151,70 @@ public class ChatSessionService {
 
     /**
      * 解析会话聚合结果
+     * {@code @date}: 2026-03-09
+     * @author Michael
      */
     private List<SessionItem> parseSessionAggregation(Map<String, Aggregate> aggregations) {
         List<SessionItem> sessions = new ArrayList<>();
 
-        // TODO: 完整解析ES聚合结果
-        // 由于ES Java Client的聚合解析较复杂，这里返回空列表
-        // 实际实现需要解析 StringTerms agg 和嵌套的 min/max agg
+        Aggregate sessionsAgg = aggregations.get("sessions");
+        if (sessionsAgg == null || !sessionsAgg.isSterms()) {
+            return sessions;
+        }
 
-        log.warn("parseSessionAggregation 尚未完全实现，返回空列表");
+        StringTermsAggregate termsAgg = sessionsAgg.sterms();
+        if (termsAgg == null || termsAgg.buckets() == null) {
+            return sessions;
+        }
+
+        for (var bucket : termsAgg.buckets().array()) {
+            String sessionId = bucket.key().stringValue();
+
+            // 解析子聚合
+            MinAggregate firstMsgAgg = bucket.aggregations().get("first_message") != null
+                    ? bucket.aggregations().get("first_message").min()
+                    : null;
+            MaxAggregate lastMsgAgg = bucket.aggregations().get("last_message") != null
+                    ? bucket.aggregations().get("last_message").max()
+                    : null;
+            Aggregate nameAgg = bucket.aggregations().get("session_name");
+            Long docCount = bucket.docCount();
+
+            Instant createdAt = null;
+            if (firstMsgAgg != null && !Double.isNaN(firstMsgAgg.value())) {
+                createdAt = Instant.ofEpochMilli((long) firstMsgAgg.value());
+            }
+
+            Instant updatedAt = null;
+            if (lastMsgAgg != null && !Double.isNaN(lastMsgAgg.value())) {
+                updatedAt = Instant.ofEpochMilli((long) lastMsgAgg.value());
+            }
+
+            // 从 top_hits 中获取 session_name
+            String sessionName = sessionId; // 默认值
+            if (nameAgg != null && nameAgg.isTopHits()) {
+                var topHits = nameAgg.topHits();
+                if (topHits != null && topHits.hits() != null && !topHits.hits().hits().isEmpty()) {
+                    var hit = topHits.hits().hits().get(0);
+                    if (hit.source() != null) {
+                        var doc = hit.source().to(ChatMessageDocument.class);
+                        if (doc != null && doc.getSessionName() != null) {
+                            sessionName = doc.getSessionName();
+                        }
+                    }
+                }
+            }
+
+            sessions.add(new SessionItem(sessionId, sessionName, createdAt, updatedAt, docCount));
+        }
+
+        // 按 updatedAt 降序排序
+        sessions.sort((a, b) -> {
+            if (a.getUpdatedAt() == null) return 1;
+            if (b.getUpdatedAt() == null) return -1;
+            return b.getUpdatedAt().compareTo(a.getUpdatedAt());
+        });
+
         return sessions;
     }
 

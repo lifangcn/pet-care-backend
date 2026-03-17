@@ -10,6 +10,7 @@ import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.embedding.Embedding;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
@@ -64,7 +65,7 @@ public class ChatHistoryRepository {
 
                 var embedResponse = embeddingModel.embedForResponse(contents);
                 List<float[]> embeddings = embedResponse.getResults().stream()
-                        .map(result -> result.getOutput())
+                        .map(Embedding::getOutput)
                         .toList();
 
                 // 填充向量到USER消息
@@ -276,6 +277,54 @@ public class ChatHistoryRepository {
         } catch (Exception e) {
             log.error("统计会话消息数失败: sessionId={}", sessionId, e);
             return 0;
+        }
+    }
+
+    /**
+     * 更新会话名称（批量更新该会话的所有消息）
+     *
+     * {@code @date}: 2026-03-09
+     * @author Michael
+     *
+     * @param sessionId   会话ID
+     * @param sessionName 会话名称
+     */
+    public void updateSessionName(String sessionId, String sessionName) {
+        try {
+            // 先查询该会话的所有消息
+            SearchResponse<ChatMessageDocument> searchResponse = elasticsearchClient.search(
+                    s -> s.index(indexName)
+                            .size(1000)
+                            .query(q -> q
+                                    .term(t -> t
+                                            .field("session_id")
+                                            .value(sessionId))
+                            ),
+                    ChatMessageDocument.class
+            );
+
+            // 批量更新
+            BulkRequest.Builder bulkBuilder = new BulkRequest.Builder();
+            for (Hit<ChatMessageDocument> hit : searchResponse.hits().hits()) {
+                ChatMessageDocument doc = hit.source();
+                if (doc != null) {
+                    doc.setSessionName(sessionName);
+                    bulkBuilder.operations(op -> op
+                            .update(idx -> idx
+                                    .index(indexName)
+                                    .id(hit.id())
+                                    .action(a -> a.doc(doc).docAsUpsert(true)))
+                    );
+                }
+            }
+
+            if (!searchResponse.hits().hits().isEmpty()) {
+                elasticsearchClient.bulk(bulkBuilder.build());
+                log.info("批量更新会话名称成功: sessionId={}, count={}", sessionId,
+                        searchResponse.hits().hits().size());
+            }
+        } catch (Exception e) {
+            log.error("更新会话名称失败: sessionId={}", sessionId, e);
         }
     }
 

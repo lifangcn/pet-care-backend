@@ -35,6 +35,11 @@ public class ChatMessageDocument {
     private String sessionId;
 
     /**
+     * 会话名称（AI生成或用户自定义）
+     */
+    private String sessionName;
+
+    /**
      * 角色：USER / ASSISTANT
      */
     private String role;

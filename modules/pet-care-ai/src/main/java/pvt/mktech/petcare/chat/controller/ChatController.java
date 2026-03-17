@@ -12,6 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import pvt.mktech.petcare.chat.dto.response.ClearHistoryResponse;
 import pvt.mktech.petcare.chat.rag.advisor.MyLoggerAdvisor;
 import pvt.mktech.petcare.chat.service.ChatHistoryService;
+import pvt.mktech.petcare.chat.service.SessionTitleGenerator;
 import pvt.mktech.petcare.chat.sink.ChatMessageSink;
 import pvt.mktech.petcare.common.constant.CommonConstant;
 import pvt.mktech.petcare.common.dto.response.Result;
@@ -41,6 +42,7 @@ public class ChatController {
     private final VectorStore elasticsearchVectorStore;
     private final WebClient.Builder webClientBuilder;
     private final ChatMessageSink chatMessageSink;
+    private final SessionTitleGenerator sessionTitleGenerator;
 
     @Value("${core.service.url:http://localhost:8080}")
     private String coreServiceUrl;
@@ -53,19 +55,20 @@ public class ChatController {
      * @return 流式响应（Token by Token）
      */
     @GetMapping("/chat/rag")
-    public Flux<String> ragChat(
-            @RequestParam("message") String message,
-            @RequestParam(value = "sessionId", required = false) String sessionId) {
+    public Flux<String> ragChat(@RequestParam("message") String message,
+                                @RequestParam(value = "sessionId", required = false) String sessionId) {
         Long userId = UserContext.getUserId();
         String conversationId = conversationIdGenerator.generate(userId, sessionId);
 
         // 用于收集完整响应
         StringBuilder fullResponse = new StringBuilder();
 
-        return chatClient.prompt()
-                .advisors(new MyLoggerAdvisor())
+        var promptBuilder = chatClient.prompt()
                 .advisors(advisorSpec -> advisorSpec.param(CONVERSATION_ID, conversationId))
-                .advisors(new QuestionAnswerAdvisor(elasticsearchVectorStore))
+                .advisors(advisorSpec -> advisorSpec.param("sessionId", sessionId))
+                .advisors(new QuestionAnswerAdvisor(elasticsearchVectorStore));
+
+        return promptBuilder
                 .user("[用户ID:" + userId + "]\n[当前时间:" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "]\n" + message)
                 .stream()
                 .content()
@@ -75,6 +78,10 @@ public class ChatController {
                     // 异步保存消息
                     chatMessageSink.onChatCompleted(userId, sessionId,
                             conversationId, message, fullResponse.toString());
+                    // 首条消息后生成会话标题
+                    if (sessionId != null && !sessionId.isEmpty()) {
+                        sessionTitleGenerator.generateTitle(userId, sessionId, message);
+                    }
                 });
     }
 

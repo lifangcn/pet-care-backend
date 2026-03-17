@@ -122,6 +122,7 @@ public final class EsIndexMappings {
               "conversation_id": {"type": "keyword"},
               "user_id": {"type": "long"},
               "session_id": {"type": "keyword"},
+              "session_name": {"type": "keyword"},
               "role": {"type": "keyword"},
               "content": {"type": "text", "analyzer": "ik_max_word"},
               "embedding": {
@@ -140,6 +141,79 @@ public final class EsIndexMappings {
               },
               "created_at": {"type": "date"},
               "expires_at": {"type": "date"}
+            }
+          }
+        }
+        """;
+
+    /**
+     * 聊天链路追踪索引映射
+     */
+    public static final String CHAT_TRACE_MAPPING = """
+        {
+          "settings": {
+            "number_of_shards": 3,
+            "number_of_replicas": 1
+          },
+          "mappings": {
+            "properties": {
+              "trace_id": {"type": "keyword"},
+              "conversation_id": {"type": "keyword"},
+              "session_id": {"type": "keyword"},
+              "user_id": {"type": "long"},
+              "timestamp": {"type": "date"},
+              "duration_ms": {"type": "integer"},
+              "request": {
+                "type": "object",
+                "properties": {
+                  "content": {"type": "text"},
+                  "tokens": {"type": "integer"}
+                }
+              },
+              "response": {
+                "type": "object",
+                "properties": {
+                  "content": {"type": "text"},
+                  "tokens": {"type": "integer"},
+                  "finish_reason": {"type": "keyword"}
+                }
+              },
+              "rag": {
+                "type": "object",
+                "properties": {
+                  "enabled": {"type": "boolean"},
+                  "query": {"type": "text"},
+                  "results_count": {"type": "integer"},
+                  "top_score": {"type": "float"},
+                  "duration_ms": {"type": "integer"}
+                }
+              },
+              "tool_calls": {
+                "type": "nested",
+                "properties": {
+                  "tool_name": {"type": "keyword"},
+                  "arguments": {"type": "text"},
+                  "result": {"type": "text"},
+                  "duration_ms": {"type": "integer"},
+                  "success": {"type": "boolean"}
+                }
+              },
+              "error": {
+                "type": "object",
+                "properties": {
+                  "type": {"type": "keyword"},
+                  "message": {"type": "text"},
+                  "stack_trace": {"type": "text"}
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "model": {"type": "keyword"},
+                  "ip": {"type": "ip"},
+                  "user_agent": {"type": "keyword"}
+                }
+              }
             }
           }
         }

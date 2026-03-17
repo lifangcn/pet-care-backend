@@ -23,7 +23,7 @@ public class ReminderTool {
 
     @Tool(name = "设置宠物提醒事项服务")
     public String addReminderFunction(AddReminderRequest request) {
-        log.info("制定宠物提醒事项调用成功，请求参数为: {}", request);
+        log.info("制定宠物提醒事项调用成功，请求参数为：{}", request);
         
         try {
             // 转换为 core 服务期望的格式
@@ -37,6 +37,7 @@ public class ReminderTool {
             saveRequest.setRecordTime(LocalDateTime.now());
             saveRequest.setUserId(request.userId());
 
+            // 通过 WebClient 调用核心服务的提醒事项接口
             String response = webClientBuilder.build()
                     .post()
                     .uri(coreServiceUrl + "/internal/reminder")
@@ -44,8 +45,9 @@ public class ReminderTool {
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-            log.info("Core 服务响应: {}", response);
+            log.info("Core 服务响应：{}", response);
 
+            // 根据 Core 服务响应返回结果
             if (Boolean.parseBoolean(response)) {
                 return "提醒事项设置成功，已保存到数据库";
             } else {

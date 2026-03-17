@@ -91,6 +91,12 @@
             <artifactId>spring-ai-tika-document-reader</artifactId>
         </dependency>
 
+        <!-- Token 计数 -->
+        <dependency>
+            <groupId>com.knuddels</groupId>
+            <artifactId>jtokkit</artifactId>
+        </dependency>
+
         <!-- MCP Client -->
         <!--<dependency>
             <groupId>org.springframework.ai</groupId>

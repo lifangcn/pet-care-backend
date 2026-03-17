@@ -110,6 +110,13 @@ core:
   service:
     url: ${CORE_SERVICE_URL:http://localhost:8080}
 
+# 可观测性配置
+observability:
+  enabled: true
+  es:
+    index-name: chat_trace
+    auto-init: true
+
 # JWT配置
 jwt:
   enabled: true
