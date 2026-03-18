@@ -1,4 +1,4 @@
-package pvt.mktech.petcare.ai;
+package pvt.mktech.petcare;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -12,14 +12,7 @@ import pvt.mktech.petcare.observability.config.ObservabilityAutoConfiguration;
  *
  * @author Michael
  */
-@SpringBootApplication(scanBasePackages = {
-    "pvt.mktech.petcare.knowledge",
-    "pvt.mktech.petcare.infrastructure",
-    "pvt.mktech.petcare.shared",
-    "pvt.mktech.petcare.chat",
-    "pvt.mktech.petcare.sync",
-    "pvt.mktech.petcare.observability",
-})
+@SpringBootApplication
 @MapperScan({
     "pvt.mktech.petcare.knowledge.mapper",
     "pvt.mktech.petcare.sync.mapper"

@@ -9,13 +9,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import pvt.mktech.petcare.chat.dto.response.ClearHistoryResponse;
-import pvt.mktech.petcare.chat.rag.advisor.MyLoggerAdvisor;
-import pvt.mktech.petcare.chat.service.ChatHistoryService;
+import pvt.mktech.petcare.agent.context.AgentContext;
+import pvt.mktech.petcare.agent.core.Agent;
+import pvt.mktech.petcare.agent.orchestrator.AgentOrchestrator;
 import pvt.mktech.petcare.chat.service.SessionTitleGenerator;
 import pvt.mktech.petcare.chat.sink.ChatMessageSink;
 import pvt.mktech.petcare.common.constant.CommonConstant;
-import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.shared.ConversationIdGenerator;
 import reactor.core.publisher.Flux;
@@ -43,6 +42,7 @@ public class ChatController {
     private final WebClient.Builder webClientBuilder;
     private final ChatMessageSink chatMessageSink;
     private final SessionTitleGenerator sessionTitleGenerator;
+    private final AgentOrchestrator agentOrchestrator;
 
     @Value("${core.service.url:http://localhost:8080}")
     private String coreServiceUrl;
@@ -90,24 +90,32 @@ public class ChatController {
      * 失败不影响用户体验，仅记录日志
      */
     private void consumeAiPoints(Long userId, String conversationId) {
+        consumeAiPoints(userId, conversationId, "AI_CONSULT");
+    }
+
+    /**
+     * 调用 Core 服务扣除 AI 咨询积分（指定类型）
+     * 失败不影响用户体验，仅记录日志
+     */
+    private void consumeAiPoints(Long userId, String conversationId, String actionType) {
         try {
             webClientBuilder.build()
                     .post()
                     .uri(coreServiceUrl + "/internal/points/consume-ai")
-                    .bodyValue(new AiPointsConsumeRequest(userId, conversationId))
+                    .bodyValue(new AiPointsConsumeRequest(userId, conversationId, actionType))
                     .retrieve()
                     .bodyToMono(Void.class)
-                    .doOnError(e -> log.error("AI咨询积分扣除失败, userId: {}, conversationId: {}", userId, conversationId, e))
+                    .doOnError(e -> log.error("AI咨询积分扣除失败, userId: {}, conversationId: {}, actionType: {}", userId, conversationId, actionType, e))
                     .subscribe();
         } catch (Exception e) {
-            log.error("AI咨询积分扣除异常, userId: {}, conversationId: {}", userId, conversationId, e);
+            log.error("AI咨询积分扣除异常, userId: {}, conversationId: {}, actionType: {}", userId, conversationId, actionType, e);
         }
     }
 
     /**
      * AI 积分扣除请求
      */
-    private record AiPointsConsumeRequest(Long userId, String conversationId) {}
+    private record AiPointsConsumeRequest(Long userId, String conversationId, String actionType) {}
 
     /**
      * 从请求Header获取用户ID
@@ -122,5 +130,44 @@ public class ChatController {
             }
         }
         return null;
+    }
+
+    /**
+     * Agent 对话接口（支持多步推理 ReAct）
+     *
+     * @param message   用户消息
+     * @param sessionId 会话标识（可选）
+     * @return 流式响应（包含思考步骤和最终答案）
+     */
+    @GetMapping("/chat/agent")
+    public Flux<String> agentChat(@RequestParam("message") String message,
+                                  @RequestParam(value = "sessionId", required = false) String sessionId) {
+        Long userId = UserContext.getUserId();
+        String conversationId = conversationIdGenerator.generate(userId, sessionId);
+
+        // 选择 Agent
+        Agent agent = agentOrchestrator.selectAgent(message);
+
+        // 构建上下文
+        AgentContext context = AgentContext.builder()
+                .userId(userId)
+                .conversationId(conversationId)
+                .build();
+
+        // 用于收集完整响应
+        StringBuilder fullResponse = new StringBuilder();
+
+        return agent.executeStreaming(message, context)
+                .doOnNext(fullResponse::append)
+                .doOnComplete(() -> {
+                    consumeAiPoints(userId, conversationId, "AI_CONSULT_AGENT");
+                    // 异步保存消息
+                    chatMessageSink.onChatCompleted(userId, sessionId,
+                            conversationId, message, fullResponse.toString());
+                    // 首条消息后生成会话标题
+                    if (sessionId != null && !sessionId.isEmpty()) {
+                        sessionTitleGenerator.generateTitle(userId, sessionId, message);
+                    }
+                });
     }
 }

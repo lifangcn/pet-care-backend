@@ -56,9 +56,8 @@ public class ChatSessionController {
             @PathVariable String sessionId,
             @RequestParam(defaultValue = "100") int limit) {
         Long userId = UserContext.getUserId();
-        // TODO: 验证会话归属（只能查看自己的会话）
         List<ChatMessageResponse> messages = chatSessionService
-                .getSessionMessages(sessionId, limit);
+                .getSessionMessages(userId, sessionId, limit);
         return Result.success(messages);
     }
 
@@ -68,8 +67,7 @@ public class ChatSessionController {
     @DeleteMapping("/session/{sessionId}")
     public Result<Void> deleteSession(@PathVariable String sessionId) {
         Long userId = UserContext.getUserId();
-        // TODO: 验证会话归属（只能删除自己的会话）
-        chatSessionService.deleteSession(sessionId);
+        chatSessionService.deleteSession(userId, sessionId);
         return Result.success();
     }
 

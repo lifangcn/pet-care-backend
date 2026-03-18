@@ -24,7 +24,8 @@ public enum ActionTypeOfPointsRecord {
     LIKE("LIKE", "点赞他人", 2),
     LIKED("LIKED", "被点赞", 1),
     COMMENTED("COMMENTED", "被评论", 3),
-    AI_CONSULT("AI_CONSULT", "AI健康咨询", -10),
+    AI_CONSULT("AI_CONSULT", "AI健康咨询(RAG)", -10),
+    AI_CONSULT_AGENT("AI_CONSULT_AGENT", "AI健康咨询(Agent多步推理)", -25),
     COUPON_REDEEM("COUPON_REDEEM", "积分代金券兑换", 0);
 
     @EnumValue

@@ -115,7 +115,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>pvt.mktech.petcare.core.CoreServiceApplication</mainClass>
+                    <mainClass>pvt.mktech.petcare.CoreServiceApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

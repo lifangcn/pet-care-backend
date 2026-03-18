@@ -1,19 +1,10 @@
-package pvt.mktech.petcare.core;
+package pvt.mktech.petcare;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = {
-        "pvt.mktech.petcare.user",
-        "pvt.mktech.petcare.pet",
-        "pvt.mktech.petcare.health",
-        "pvt.mktech.petcare.reminder",
-        "pvt.mktech.petcare.social",
-        "pvt.mktech.petcare.infrastructure",
-        "pvt.mktech.petcare.shared",
-        "pvt.mktech.petcare.points"
-})
+@SpringBootApplication
 @MapperScan(basePackages = {
         "pvt.mktech.petcare.user.mapper",
         "pvt.mktech.petcare.pet.mapper",

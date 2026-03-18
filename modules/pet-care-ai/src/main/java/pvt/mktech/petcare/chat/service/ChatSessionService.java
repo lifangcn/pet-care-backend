@@ -126,13 +126,22 @@ public class ChatSessionService {
     /**
      * 获取会话历史消息
      *
+     * @param userId   用户ID（验证权限）
      * @param sessionId 会话ID
      * @param limit     最大返回条数
      * @return 消息列表
      */
-    public List<ChatMessageResponse> getSessionMessages(String sessionId, int limit) {
+    public List<ChatMessageResponse> getSessionMessages(Long userId, String sessionId, int limit) {
         List<ChatMessageDocument> documents = chatHistoryRepository
                 .getSessionHistory(sessionId, limit);
+
+        // 权限验证：确保会话属于当前用户
+        if (!documents.isEmpty()) {
+            Long docUserId = documents.get(0).getUserId();
+            if (!docUserId.equals(userId)) {
+                throw new IllegalArgumentException("无权访问该会话");
+            }
+        }
 
         return documents.stream()
                 .map(this::toMessageResponse)
@@ -142,9 +151,20 @@ public class ChatSessionService {
     /**
      * 删除会话
      *
+     * @param userId   用户ID（验证权限）
      * @param sessionId 会话ID
      */
-    public void deleteSession(String sessionId) {
+    public void deleteSession(Long userId, String sessionId) {
+        // 权限验证：检查会话是否属于当前用户
+        List<ChatMessageDocument> documents = chatHistoryRepository
+                .getSessionHistory(sessionId, 1);
+        if (!documents.isEmpty()) {
+            Long docUserId = documents.get(0).getUserId();
+            if (!docUserId.equals(userId)) {
+                throw new IllegalArgumentException("无权删除该会话");
+            }
+        }
+
         long deletedCount = chatHistoryRepository.deleteBySessionId(sessionId);
         log.info("删除会话成功: sessionId={}, deletedCount={}", sessionId, deletedCount);
     }

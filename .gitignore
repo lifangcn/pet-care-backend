@@ -4,6 +4,7 @@ application-local.yml
 
 .lingma
 .aiassistant
+.trae
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

@@ -45,10 +45,11 @@
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-zhipuai</artifactId>
         </dependency>
-        <!--<dependency>
+        <!-- Spring AI Alibaba - Graph Agent 框架（包含 ReactAgent） -->
+        <dependency>
             <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
-        </dependency>-->
+            <artifactId>spring-ai-alibaba-graph-core</artifactId>
+        </dependency>
         <!-- Ollama  -->
         <!--<dependency>
             <groupId>org.springframework.ai</groupId>
@@ -170,7 +171,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>pvt.mktech.petcare.ai.AiServiceApplication</mainClass>
+                    <mainClass>pvt.mktech.petcare.AiServiceApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>

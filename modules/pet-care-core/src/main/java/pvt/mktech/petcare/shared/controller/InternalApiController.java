@@ -65,7 +65,11 @@ public class InternalApiController {
     /**
      * AI 积分扣除请求
      */
-    public record AiPointsConsumeRequest(Long userId, String conversationId) {}
+    public record AiPointsConsumeRequest(Long userId, String conversationId, String actionType) {
+        public AiPointsConsumeRequest(Long userId, String conversationId) {
+            this(userId, conversationId, "AI_CONSULT");
+        }
+    }
 
     /**
      * AI 服务调用：扣除咨询积分
@@ -73,24 +77,29 @@ public class InternalApiController {
      */
     @PostMapping("/points/consume-ai")
     public Boolean consumeAiPoints(@RequestBody AiPointsConsumeRequest request) {
-        log.info("内部API调用: consumeAiPoints, userId: {}", request.userId());
+        log.info("内部API调用: consumeAiPoints, userId: {}, actionType: {}", request.userId(), request.actionType());
+
+        ActionTypeOfPointsRecord actionType = ActionTypeOfPointsRecord.fromCode(request.actionType())
+                .orElse(ActionTypeOfPointsRecord.AI_CONSULT);
 
         PointsConsumeRequest consumeRequest = new PointsConsumeRequest();
         consumeRequest.setUserId(request.userId());
-        consumeRequest.setActionType(ActionTypeOfPointsRecord.AI_CONSULT.getCode());
-        consumeRequest.setPoints(ActionTypeOfPointsRecord.AI_CONSULT.getPoints());
-        consumeRequest.setBizType("AI_CONSULT");
+        consumeRequest.setActionType(actionType.getCode());
+        consumeRequest.setPoints(actionType.getPoints());
+        consumeRequest.setBizType(actionType.getCode());
 
         try {
             boolean result = pointsService.consume(consumeRequest);
             if (result) {
-                log.info("AI咨询积分扣除成功, userId: {}, points: {}", request.userId(), ActionTypeOfPointsRecord.AI_CONSULT.getPoints());
+                log.info("AI咨询积分扣除成功, userId: {}, actionType: {}, points: {}",
+                        request.userId(), actionType.getCode(), actionType.getPoints());
             } else {
-                log.warn("AI咨询积分扣除失败, userId: {}, points: {}", request.userId(), ActionTypeOfPointsRecord.AI_CONSULT.getPoints());
+                log.warn("AI咨询积分扣除失败, userId: {}, actionType: {}, points: {}",
+                        request.userId(), actionType.getCode(), actionType.getPoints());
             }
             return result;
         } catch (Exception e) {
-            log.error("AI咨询积分扣除失败, userId: {}", request.userId(), e);
+            log.error("AI咨询积分扣除失败, userId: {}, actionType: {}", request.userId(), request.actionType(), e);
             return false;
         }
     }

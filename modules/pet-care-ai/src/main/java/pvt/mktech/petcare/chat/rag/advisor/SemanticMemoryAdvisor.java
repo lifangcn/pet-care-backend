@@ -19,6 +19,7 @@ import pvt.mktech.petcare.infrastructure.config.ChatMemoryProperties;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.lang.reflect.Field;
 
 /**
  * {@code @description}: 语义记忆检索Advisor
@@ -57,9 +58,16 @@ public class SemanticMemoryAdvisor implements CallAdvisor, StreamAdvisor {
             ChatClientRequest request,
             CallAdvisorChain chain) {
 
-        // 检索相关历史并记录日志
-        String prompt = request.prompt() != null ? request.prompt().toString() : "";
-        retrieveAndLogHistory(prompt);
+        // 检索相关历史并注入到prompt
+        String originalPrompt = request.prompt() != null ? request.prompt().toString() : "";
+        List<ChatMessageDocument> relatedHistory = retrieveRelatedHistory(originalPrompt);
+        
+        if (!relatedHistory.isEmpty()) {
+            // 构建增强prompt
+            String enhancedPrompt = buildEnhancedPrompt(originalPrompt, relatedHistory);
+            // 通过反射修改prompt（Spring AI 1.0.1 API限制下的方案）
+            updateRequestPrompt(request, enhancedPrompt);
+        }
 
         return chain.nextCall(request);
     }
@@ -70,24 +78,25 @@ public class SemanticMemoryAdvisor implements CallAdvisor, StreamAdvisor {
             StreamAdvisorChain chain) {
 
         // 流式同理
-        String prompt = request.prompt() != null ? request.prompt().toString() : "";
-        retrieveAndLogHistory(prompt);
+        String originalPrompt = request.prompt() != null ? request.prompt().toString() : "";
+        List<ChatMessageDocument> relatedHistory = retrieveRelatedHistory(originalPrompt);
+        
+        if (!relatedHistory.isEmpty()) {
+            String enhancedPrompt = buildEnhancedPrompt(originalPrompt, relatedHistory);
+            updateRequestPrompt(request, enhancedPrompt);
+        }
 
         return chain.nextStream(request);
     }
 
     /**
-     * 检索并记录历史（先实现基础版本）
+     * 检索相关历史对话
      */
-    private void retrieveAndLogHistory(String prompt) {
+    private List<ChatMessageDocument> retrieveRelatedHistory(String prompt) {
         try {
             Long userId = UserContext.getUserId();
-            if (userId == null) {
-                return;
-            }
-
-            if (!org.springframework.util.StringUtils.hasText(prompt)) {
-                return;
+            if (userId == null || !org.springframework.util.StringUtils.hasText(prompt)) {
+                return List.of();
             }
 
             // 语义检索
@@ -99,13 +108,43 @@ public class SemanticMemoryAdvisor implements CallAdvisor, StreamAdvisor {
             );
 
             if (!history.isEmpty()) {
-                log.debug("检索到{}条相关历史", history.size());
-                // TODO: 将历史上下文注入到Prompt中
-                // 由于Spring AI 1.0.1的API限制，暂时只做记录
+                log.debug("检索到{}条相关历史对话", history.size());
             }
+            return history;
 
         } catch (Exception e) {
             log.error("检索历史上下文失败", e);
+            return List.of();
+        }
+    }
+
+    /**
+     * 构建增强prompt，注入相关历史上下文
+     */
+    private String buildEnhancedPrompt(String originalPrompt, List<ChatMessageDocument> relatedHistory) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("以下是与当前问题相关的历史对话上下文，请参考这些信息来回答用户的问题：\n\n");
+        
+        for (ChatMessageDocument doc : relatedHistory) {
+            sb.append("[").append(doc.getRole()).append("]: ").append(doc.getContent()).append("\n");
+        }
+        
+        sb.append("\n当前用户问题：\n").append(originalPrompt);
+        return sb.toString();
+    }
+
+    /**
+     * 通过反射修改ChatClientRequest中的prompt字段
+     * 适配Spring AI 1.0.1 API
+     */
+    private void updateRequestPrompt(ChatClientRequest request, String newPrompt) {
+        try {
+            Field promptField = ChatClientRequest.class.getDeclaredField("prompt");
+            promptField.setAccessible(true);
+            promptField.set(request, newPrompt);
+            log.debug("成功注入语义记忆上下文到prompt");
+        } catch (Exception e) {
+            log.error("注入语义记忆上下文失败", e);
         }
     }
 }

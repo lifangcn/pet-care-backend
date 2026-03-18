@@ -218,4 +218,55 @@ public final class EsIndexMappings {
           }
         }
         """;
+
+    /**
+     * Agent 执行记录索引映射
+     */
+    public static final String AGENT_EXECUTION_MAPPING = """
+        {
+          "settings": {
+            "number_of_shards": 3,
+            "number_of_replicas": 1
+          },
+          "mappings": {
+            "properties": {
+              "execution_id": {"type": "keyword"},
+              "agent_type": {"type": "keyword"},
+              "conversation_id": {"type": "keyword"},
+              "user_id": {"type": "long"},
+              "query": {"type": "text", "analyzer": "ik_max_word"},
+              "steps": {
+                "type": "nested",
+                "properties": {
+                  "step_number": {"type": "integer"},
+                  "thought": {"type": "text"},
+                  "action": {"type": "keyword"},
+                  "tool_name": {"type": "keyword"},
+                  "tool_input": {"type": "text"},
+                  "observation": {"type": "text"},
+                  "duration_ms": {"type": "integer"}
+                }
+              },
+              "result": {
+                "type": "object",
+                "properties": {
+                  "final_answer": {"type": "text"},
+                  "success": {"type": "boolean"},
+                  "reason": {"type": "text"}
+                }
+              },
+              "metrics": {
+                "type": "object",
+                "properties": {
+                  "total_steps": {"type": "integer"},
+                  "total_duration_ms": {"type": "integer"},
+                  "tool_calls": {"type": "integer"}
+                }
+              },
+              "created_at": {"type": "date"}
+            }
+          }
+        }
+        """;
 }
+

@@ -84,6 +84,12 @@ mybatis-flex:
           host: ${REDIS_HOST}
           port: ${REDIS_PORT:6379}
           password: ${REDIS_PASSWORD}
+    # Agent 配置（ReAct 多步推理）
+    agent:
+      enabled: true
+      default-type: REACT  # SIMPLE / REACT / PLAN_AND_EXECUTE
+      max-iterations: 5
+      timeout-ms: 30000
 
 # 应用启动时自动创建所需的索引
 es:

@@ -36,6 +36,7 @@ public class IndexAdminService {
         createActivityIndex();
         createChatHistoryIndex();
         createChatTraceIndex();
+        createAgentExecutionIndex();
 
         log.info("Elasticsearch 索引初始化完成");
     }
@@ -73,6 +74,13 @@ public class IndexAdminService {
      */
     public boolean createChatTraceIndex() {
         return createIndexFromMapping("chat_trace", EsIndexMappings.CHAT_TRACE_MAPPING);
+    }
+
+    /**
+     * 创建 Agent 执行记录索引
+     */
+    public boolean createAgentExecutionIndex() {
+        return createIndexFromMapping(AGENT_EXECUTION_INDEX, EsIndexMappings.AGENT_EXECUTION_MAPPING);
     }
 
     /**
