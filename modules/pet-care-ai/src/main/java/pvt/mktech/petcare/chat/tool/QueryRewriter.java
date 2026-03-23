@@ -1,7 +1,7 @@
 package pvt.mktech.petcare.chat.tool;
 
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.rag.Query;
 import org.springframework.ai.rag.preretrieval.query.transformation.QueryTransformer;
 import org.springframework.ai.rag.preretrieval.query.transformation.RewriteQueryTransformer;
@@ -18,8 +18,8 @@ public class QueryRewriter {
 
     private final QueryTransformer queryTransformer;
 
-    public QueryRewriter(ChatModel zhiPuAiChatModel) {
-        ChatClient.Builder builder = ChatClient.builder(zhiPuAiChatModel);
+    public QueryRewriter(DashScopeChatModel dashScopeChatModel) {
+        ChatClient.Builder builder = ChatClient.builder(dashScopeChatModel);
         queryTransformer = RewriteQueryTransformer.builder()
                 .chatClientBuilder(builder)
                 .build();

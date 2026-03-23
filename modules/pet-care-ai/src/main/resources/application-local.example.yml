@@ -86,7 +86,13 @@ mybatis-flex:
   # AI 大模型配置
   # -------------------------------------------------------------------------
   ai:
-    # 智谱 AI 配置（用于 embedding 和对话）
+    # DashScope 通义千问配置（用于对话）
+    dashscope:
+      api-key: your_dashscope_api_key  # 获取地址: https://dashscope.aliyun.com/
+      chat:
+        options:
+          model: qwen-plus  # 可选: qwen-plus, qwen-max, qwen-turbo
+    # 智谱 AI 配置（保留给 Embedding 使用）
     zhipuai:
       api-key: your_zhipuai_api_key  # 获取地址: https://open.bigmodel.cn/
       embedding:
@@ -142,9 +148,11 @@ jwt:
 #
 # 4. Redis: 缓存 + AI 会话记忆存储
 #
-# 5. 智谱 AI: 大模型服务，获取 API Key: https://open.bigmodel.cn/
-#    - embedding-2: 文本向量化模型
-#    - 也可用于对话，需额外配置 chat.options.model
+# 5. DashScope 通义千问: 大模型对话服务，获取 API Key: https://dashscope.aliyun.com/
+#    - qwen-plus: 默认对话模型
 #
-# 6. JWT: 用户认证签名密钥，需与 pet-care-core 保持一致
+# 6. 智谱 AI: Embedding 服务，获取 API Key: https://open.bigmodel.cn/
+#    - embedding-2: 文本向量化模型，维度 1024
+#
+# 7. JWT: 用户认证签名密钥，需与 pet-care-core 保持一致
 # =============================================================================

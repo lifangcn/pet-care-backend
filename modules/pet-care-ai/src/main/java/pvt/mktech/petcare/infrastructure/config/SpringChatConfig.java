@@ -1,5 +1,6 @@
 package pvt.mktech.petcare.infrastructure.config;
 
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.alibaba.cloud.ai.memory.redis.LettuceRedisChatMemoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,6 @@ import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.ai.zhipuai.ZhiPuAiChatModel;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -53,12 +53,12 @@ public class SpringChatConfig {
     }
 
     @Bean
-    public ChatClient chatClient(ZhiPuAiChatModel zhiPuAiChatModel,
+    public ChatClient chatClient(DashScopeChatModel dashScopeChatModel,
                                  ChatMemory chatMemory,
                                  ToolCallbackProvider toolCallbackProvider,
                                  @Lazy SemanticMemoryAdvisor semanticMemoryAdvisor,
                                  ObservabilityAdvisor observabilityAdvisor) {
-        ChatClient.Builder builder = ChatClient.builder(zhiPuAiChatModel)
+        ChatClient.Builder builder = ChatClient.builder(dashScopeChatModel)
                 .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
                 .defaultSystem(loadSystemPrompt())
                 .defaultAdvisors(

@@ -1,22 +1,21 @@
 package pvt.mktech.petcare.infrastructure.config;
 
+import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.model.transformer.KeywordMetadataEnricher;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStore;
 import org.springframework.ai.vectorstore.elasticsearch.ElasticsearchVectorStoreOptions;
+import org.springframework.ai.zhipuai.ZhiPuAiEmbeddingModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableAsync;
 import pvt.mktech.petcare.common.thread.ThreadPoolManager;
-import pvt.mktech.petcare.sync.constants.EsIndexConstants;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -39,8 +38,8 @@ public class ElasticsearchVectorStoreConfig {
      * 复用实例提升性能
      */
     @Bean
-    public KeywordMetadataEnricher keywordMetadataEnricher(ChatModel zhiPuAiChatModel) {
-        return new KeywordMetadataEnricher(zhiPuAiChatModel, 5);
+    public KeywordMetadataEnricher keywordMetadataEnricher(DashScopeChatModel dashScopeChatModel) {
+        return new KeywordMetadataEnricher(dashScopeChatModel, 5);
     }
 
     /**
@@ -48,7 +47,7 @@ public class ElasticsearchVectorStoreConfig {
      * 用于知识库文档的向量存储和检索
      */
     @Bean
-    public VectorStore elasticsearchVectorStore(RestClient restClient, EmbeddingModel zhiPuAiEmbeddingModel) {
+    public VectorStore elasticsearchVectorStore(RestClient restClient, ZhiPuAiEmbeddingModel zhiPuAiEmbeddingModel) {
         ElasticsearchVectorStoreOptions options = new ElasticsearchVectorStoreOptions();
         options.setIndexName(KNOWLEDGE_DOCUMENT_INDEX);
         options.setDimensions(1024);  // 智谱 embedding-2 维度

@@ -8,14 +8,13 @@ import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.zhipuai.ZhiPuAiEmbeddingModel;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.chat.dto.SearchResult;
-import pvt.mktech.petcare.sync.constants.EsIndexConstants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,11 +33,12 @@ import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class MultiIndexSearchTool {
 
-    private final ElasticsearchClient elasticsearchClient;
-    private final EmbeddingModel embeddingModel;
+    @Resource
+    private ElasticsearchClient elasticsearchClient;
+    @Resource
+    private ZhiPuAiEmbeddingModel zhiPuAiEmbeddingModel;
 
     /**
      * 检索知识库文档（KNN 向量检索）
@@ -256,7 +256,7 @@ public class MultiIndexSearchTool {
      */
     private float[] generateQueryVector(String query) {
         try {
-            var response = embeddingModel.embedForResponse(List.of(query));
+            var response = zhiPuAiEmbeddingModel.embedForResponse(List.of(query));
             return response.getResults().getFirst().getOutput();
         } catch (Exception e) {
             log.error("生成查询向量失败", e);

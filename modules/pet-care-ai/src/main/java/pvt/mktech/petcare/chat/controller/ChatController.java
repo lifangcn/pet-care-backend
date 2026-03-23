@@ -115,7 +115,8 @@ public class ChatController {
     /**
      * AI 积分扣除请求
      */
-    private record AiPointsConsumeRequest(Long userId, String conversationId, String actionType) {}
+    private record AiPointsConsumeRequest(Long userId, String conversationId, String actionType) {
+    }
 
     /**
      * 从请求Header获取用户ID

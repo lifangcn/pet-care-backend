@@ -68,8 +68,15 @@ mybatis-flex:
           max-idle: 8
           min-idle: 0
 
-  # AI 配置（智谱大模型）
+  # AI 配置
   ai:
+    # DashScope 通义千问（对话模型）
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY}
+      chat:
+        options:
+          model: ${DASHSCOPE_CHAT_MODEL:qwen-plus}
+    # 智谱 AI（Embedding 模型）
     zhipuai:
       api-key: ${ZHIPUAI_API_KEY}
       embedding:

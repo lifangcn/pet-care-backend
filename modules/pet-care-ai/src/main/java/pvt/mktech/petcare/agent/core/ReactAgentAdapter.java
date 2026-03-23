@@ -4,11 +4,10 @@ import com.alibaba.cloud.ai.graph.CompiledGraph;
 import com.alibaba.cloud.ai.graph.OverAllState;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import com.alibaba.cloud.ai.graph.exception.GraphStateException;
-import com.alibaba.cloud.ai.graph.exception.GraphRunnerException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.agent.config.AgentProperties;
 import pvt.mktech.petcare.agent.context.AgentContext;
 import pvt.mktech.petcare.agent.context.AgentExecutionRecord;
@@ -68,17 +67,16 @@ public class ReactAgentAdapter implements Agent {
 
                 List<AgentStep> steps = new ArrayList<>();
 
-                var result = compiledGraph.invoke(Map.of("messages", List.of(new UserMessage(query))));
+                var result = compiledGraph.call(Map.of("messages", List.of(new UserMessage(query))));
 
-                if (!result.isPresent()) {
+                if (result.isEmpty()) {
                     sink.error(new RuntimeException("Agent 执行返回空结果"));
                     return;
                 }
 
                 OverAllState state = result.get();
                 @SuppressWarnings("unchecked")
-                List<org.springframework.ai.chat.messages.Message> messages =
-                        (List<org.springframework.ai.chat.messages.Message>) state.value("messages").get();
+                List<Message> messages = (List<Message>) state.value("messages").get();
 
                 for (var message : messages) {
                     if (message instanceof org.springframework.ai.chat.messages.AssistantMessage assistantMsg) {
@@ -101,7 +99,7 @@ public class ReactAgentAdapter implements Agent {
 
                 sink.complete();
 
-            } catch (GraphStateException | GraphRunnerException e) {
+            } catch (GraphStateException e) {
                 log.error("ReAct Agent 执行失败: query={}", query, e);
                 saveExecutionRecord(context, query, new ArrayList<>(), null, false, e.getMessage(), System.currentTimeMillis());
                 sink.error(e);
