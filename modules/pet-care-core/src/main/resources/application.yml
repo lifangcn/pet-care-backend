@@ -32,17 +32,18 @@ jwt:
   expire-time: 86400
   refresh-expire-time: 604800
 
-# Web MVC 拦截器配置
-web:
-  mvc:
-    jwt-include-paths:
-      - /user/**
-      - /pet/**
-      - /reminder/**
-      - /activity/**
-      - /post/**
-      - /label/**
-      - /points/**
+# SA-Token 配置（整合 JWT）
+sa-token:
+  token-name: Authorization
+  timeout: 86400
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  is-log: true
+  token-prefix: Bearer
+  is-read-header: true
+  is-read-cookie: false
+  is-write-header: true
 
 # Knife4j 配置
 knife4j:

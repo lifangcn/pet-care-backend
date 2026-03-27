@@ -43,6 +43,36 @@ CREATE TABLE `tb_user` (
   INDEX `idx_deleted` (`is_deleted`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
 
+-- 角色表
+CREATE TABLE `tb_role` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '角色ID',
+  `role_code` VARCHAR(50) NOT NULL COMMENT '角色编码（如：admin, user）',
+  `role_name` VARCHAR(100) NOT NULL COMMENT '角色名称',
+  `description` VARCHAR(500) DEFAULT NULL COMMENT '角色描述',
+  `sort` INT DEFAULT 0 COMMENT '排序',
+  `status` TINYINT DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `is_deleted` TINYINT DEFAULT 0 COMMENT '逻辑删除：0-正常，1-已删除',
+  `deleted_at` DATETIME DEFAULT NULL COMMENT '删除时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_code` (`role_code`),
+  INDEX `idx_status` (`status`),
+  INDEX `idx_deleted` (`is_deleted`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色表';
+
+-- 用户角色关联表
+CREATE TABLE `tb_user_role` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `user_id` BIGINT NOT NULL COMMENT '用户ID',
+  `role_id` BIGINT NOT NULL COMMENT '角色ID',
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_role` (`user_id`, `role_id`),
+  INDEX `idx_user_id` (`user_id`),
+  INDEX `idx_role_id` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
+
 -- -----------------------------------------------------------------------------
 -- 2. 宠物相关表
 -- -----------------------------------------------------------------------------
@@ -268,6 +298,16 @@ CREATE TABLE `tb_knowledge_document` (
   `deleted_at` DATETIME DEFAULT NULL COMMENT '删除时间',
   INDEX `idx_deleted` (`is_deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='RAG知识库文档表';
+
+-- =============================================================================
+-- 插入初始数据
+-- =============================================================================
+USE `pet_care_core`;
+
+-- 初始化默认角色
+INSERT INTO `tb_role` (`role_code`, `role_name`, `description`, `sort`, `status`) VALUES
+('admin', '超级管理员', '系统管理员，拥有所有权限', 1, 1),
+('user', '普通用户', '普通注册用户，拥有基础功能权限', 2, 1);
 
 -- =============================================================================
 -- 执行完成提示

@@ -204,7 +204,7 @@ registry.addInterceptor(new SaInterceptor(handle -> StpUtil.checkLogin()))
 ```xml
 <!-- SA-Token 权限认证 -->
 <dependency>
-    <groupId>cn.dev32</groupId>
+    <groupId>cn.dev33</groupId>
     <artifactId>sa-token-spring-boot3-starter</artifactId>
     <version>${sa-token.version}</version>
 </dependency>

@@ -9,7 +9,6 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RRateLimiter;
-import org.redisson.api.RateIntervalUnit;
 import org.redisson.api.RateType;
 import org.redisson.api.RedissonClient;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -20,8 +19,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import pvt.mktech.petcare.common.dto.response.Result;
 import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
-import pvt.mktech.petcare.common.jwt.JwtUtil;
 import pvt.mktech.petcare.common.redis.RedisUtil;
+import cn.dev33.satoken.stp.StpUtil;
 import pvt.mktech.petcare.infrastructure.ValidatorUtil;
 import pvt.mktech.petcare.shared.dto.WechatQRCodeResponse;
 import pvt.mktech.petcare.shared.dto.WechatScanStatus;
@@ -40,17 +39,18 @@ import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.*;
 import static pvt.mktech.petcare.user.entity.table.UserTableDef.USER;
 
 /**
- * {@code @description}:
+ * 认证服务实现类
  * {@code @date}: 2025/11/28 14:52
- *
  * @author Michael
  */
 @Slf4j
 @Service
 public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements AuthService {
 
-    @Resource
-    private JwtUtil jwtUtil;
+    private static final String REFRESH_TOKEN_PREFIX = "auth:refresh_token:";
+    private static final long ACCESS_TOKEN_TTL = 86400L;
+    private static final long REFRESH_TOKEN_TTL = 604800L;
+
     @Resource
     private RedisUtil redisUtil;
     @Resource
@@ -60,90 +60,102 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     @Resource
     private RedissonClient redissonClient;
 
+
     @Override
     public Result<String> sendCode(String phone, HttpSession httpSession) {
-        // 1.校验手机号
         if (ValidatorUtil.isPhoneInvalid(phone)) {
             throw new BusinessException(ErrorCode.PHONE_FORMAT_ERROR);
         }
 
-        // 2.手机号级别限流（1分钟内最多3次）
         String rateLimitKey = "rate_limit:sendCode:phone:" + phone;
         RRateLimiter rateLimiter = redissonClient.getRateLimiter(rateLimitKey);
-        rateLimiter.trySetRate(RateType.OVERALL, 3, Duration.ofMillis(1));
+        rateLimiter.trySetRate(RateType.OVERALL, 3, Duration.ofMinutes(1));
         if (!rateLimiter.tryAcquire(1)) {
             throw new BusinessException(ErrorCode.RATE_LIMIT_EXCEEDED, "验证码发送过于频繁，请稍后再试");
         }
 
-        // 3.生成验证码
         String code = RandomUtil.randomNumbers(6);
-        // 4.保存验证码到 redis
         redisUtil.set(LOGIN_CODE_KEY + phone, code, Duration.ofSeconds(LOGIN_CODE_TTL));
         log.info("向手机发送验证码: {}", code);
         return Result.success(code);
     }
-
 
     @Transactional
     @Override
     public Result<LoginInfoDto> login(LoginRequest request) {
         String phone = request.getPhone();
         String code = request.getCode();
-        // 1. 校验手机号和验证码是否正确
+
         if (ValidatorUtil.isPhoneInvalid(phone)) {
             throw new BusinessException(ErrorCode.PHONE_FORMAT_ERROR);
         }
+
         String cacheCode = redisUtil.get(LOGIN_CODE_KEY + phone);
-        // cacheCode为空，可能验证码过期；request.code为空，可能请求错误。这里简单判断
         if (!StrUtil.equals(code, cacheCode)) {
             throw new BusinessException(ErrorCode.VERIFICATION_CODE_ERROR);
         }
 
-        // 2.手机号用户是否存在
         User user = getOne(USER.PHONE.eq(phone));
-        // 3.不存在，创建用户
         if (user == null) {
-            user = new User();
-            user.setPhone(phone);
-            user.setUsername(USER_DEFAULT_NAME_PREFIX + RandomUtil.randomString(10));
-            save(user);
-            Long userId = user.getId();
-            // 同步创建积分账户
-            pointsService.createAccount(userId);
-            // 异步发放新人券（通过MQ解耦）
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    kafkaTemplate.send(CORE_USER_REGISTER_TOPIC, userId.toString(), userId.toString())
-                            .whenComplete((result, ex) -> {
-                                if (ex != null) {
-                                    log.error("发送 用户注册主题 失败，topic: {}, key: {}", CORE_USER_REGISTER_TOPIC, userId, ex);
-                                }
-                            });
-                }
-            });
+            user = createNewUser(phone);
         }
+
         LoginInfoDto loginInfoDto = new LoginInfoDto();
         BeanUtil.copyProperties(user, loginInfoDto);
-        // 4.生成双token, 并保存 refreshToken 到 Redis中用于后续认证
-        generateDoubleToken(loginInfoDto);
-        // 将验证码移除
+        generateTokens(loginInfoDto);
+
         redisUtil.delete(LOGIN_CODE_KEY + phone);
         return Result.success(loginInfoDto);
     }
 
     /**
-     * 生成双token，即access token和refresh token，并保存 refresh token 到 Redis中用于后续认证
-     *
-     * @param loginInfoDto
+     * 创建新用户
      */
-    private void generateDoubleToken(LoginInfoDto loginInfoDto) {
-        String accessToken = jwtUtil.generateAccessToken(loginInfoDto.getId());
-        String refreshToken = jwtUtil.generateRefreshToken(loginInfoDto.getId());
+    private User createNewUser(String phone) {
+        User user = new User();
+        user.setPhone(phone);
+        user.setUsername(USER_DEFAULT_NAME_PREFIX + RandomUtil.randomString(10));
+        save(user);
+
+        Long userId = user.getId();
+        pointsService.createAccount(userId);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                kafkaTemplate.send(CORE_USER_REGISTER_TOPIC, userId.toString(), userId.toString())
+                        .whenComplete((result, ex) -> {
+                            if (ex != null) {
+                                log.error("发送用户注册主题失败，topic: {}, key: {}", CORE_USER_REGISTER_TOPIC, userId, ex);
+                            }
+                        });
+            }
+        });
+        return user;
+    }
+
+    /**
+     * 生成双 Token（Access Token + Refresh Token）
+     * Access Token: JWT 格式，短期有效，用于接口访问
+     * Refresh Token: UUID 格式，长期有效，存储在 Redis，用于刷新 Access Token
+     */
+    private void generateTokens(LoginInfoDto loginInfoDto) {
+        Long userId = loginInfoDto.getId();
+
+        // Sa-Token 登录，生成 JWT 格式的 Access Token
+        StpUtil.login(userId);
+        String accessToken = StpUtil.getTokenValue();
+
+        // 生成 Refresh Token（UUID 格式，存储在 Redis）
+        String refreshToken = RandomUtil.randomString(32);
+        String refreshTokenKey = REFRESH_TOKEN_PREFIX + refreshToken;
+        redisUtil.set(refreshTokenKey, userId.toString(), Duration.ofSeconds(REFRESH_TOKEN_TTL));
+
         loginInfoDto.setAccessToken(accessToken);
         loginInfoDto.setRefreshToken(refreshToken);
         loginInfoDto.setExpiresIn(ACCESS_TOKEN_TTL);
-        redisUtil.set(REFRESH_TOKEN_KEY + loginInfoDto.getId(), refreshToken, Duration.ofSeconds(REFRESH_TOKEN_TTL));
+
+        log.debug("用户登录成功，userId: {}, accessToken 已生成", userId);
     }
 
     @Override
@@ -152,58 +164,61 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         if (StrUtil.isBlank(refreshToken)) {
             throw new BusinessException(ErrorCode.TOKEN_INVALID);
         }
-        // 1. 验证refresh token格式
-        if (!jwtUtil.validateRefreshToken(refreshToken)) {
-            throw new BusinessException(ErrorCode.TOKEN_INVALID);
+
+        // 从 Redis 获取 Refresh Token 对应的用户 ID
+        String refreshTokenKey = REFRESH_TOKEN_PREFIX + refreshToken;
+        String userIdStr = redisUtil.get(refreshTokenKey);
+        if (StrUtil.isBlank(userIdStr)) {
+            throw new BusinessException(ErrorCode.TOKEN_EXPIRED);
         }
-        // 2. 解析token获取用户ID
-        Long userId;
-        try {
-            userId = jwtUtil.getUserIdFromToken(refreshToken);
-        } catch (Exception e) {
-            log.error("解析refresh token失败", e);
-            throw new BusinessException(ErrorCode.TOKEN_INVALID);
-        }
-        // 3. 验证Redis中的refresh token是否匹配
-        String storedToken = redisUtil.get(REFRESH_TOKEN_KEY + userId);
-        if (!refreshToken.equals(storedToken)) {
-            throw new BusinessException(ErrorCode.TOKEN_INVALID);
-        }
-        // 4. 查询用户信息，生成新的access token
+
+        Long userId = Long.parseLong(userIdStr);
+
+        // 删除旧的 Refresh Token
+        redisUtil.delete(refreshTokenKey);
+
+        // 查询用户信息
         User user = getById(userId);
         if (user == null) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
-        String newAccessToken = jwtUtil.generateAccessToken(userId);
-        dto.setAccessToken(newAccessToken);
-        dto.setExpiresIn(ACCESS_TOKEN_TTL);
-        return dto;
+
+        // 生成新的双 Token
+        LoginInfoDto newLoginInfo = new LoginInfoDto();
+        BeanUtil.copyProperties(user, newLoginInfo);
+        generateTokens(newLoginInfo);
+
+        log.info("Token 刷新成功，userId: {}", userId);
+        return newLoginInfo;
     }
 
     @Override
     public void logout(LoginInfoDto dto) {
-        if (StrUtil.isBlank(dto.getRefreshToken())) {
-            return;
-        }
         try {
-            // 删除refresh token
-            Long userId = jwtUtil.getUserIdFromToken(dto.getRefreshToken());
-            redisUtil.delete(REFRESH_TOKEN_KEY + userId);
+            // 删除 Refresh Token
+            if (dto != null && StrUtil.isNotBlank(dto.getRefreshToken())) {
+                String refreshTokenKey = REFRESH_TOKEN_PREFIX + dto.getRefreshToken();
+                redisUtil.delete(refreshTokenKey);
+            }
+
+            // Sa-Token 登出
+            StpUtil.logout();
+            log.info("用户登出成功");
         } catch (Exception e) {
-            log.warn("登出时解析refresh token失败", e);
+            log.warn("登出失败", e);
         }
     }
 
     @Override
     public Result<WechatQRCodeResponse> getWechatQRCode() {
-        String ticket = "平台审核太苛刻，我只能假装调用接口";
-        // TODO 后续替换为微信开放平台真实调用
-        //  暂时生成二维码Base64
+        String ticket = "platform_review_too_strict_mock_ticket";
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         QrCodeUtil.generate(ticket, 300, 300, "jpg", stream);
         String base64 = Base64.getEncoder().encodeToString(stream.toByteArray());
         String qrcodeUrl = "data:image/jpeg;base64," + base64;
+
         redisUtil.set(WECHAT_LOGIN_TICKET_KEY + ticket, "WAITING", Duration.ofSeconds(WECHAT_LOGIN_TTL));
+
         return Result.success(WechatQRCodeResponse.builder()
                 .qrcodeUrl(qrcodeUrl)
                 .ticket(ticket)
@@ -213,37 +228,38 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
 
     @Override
     public Result<WechatScanStatus> checkWechatScanStatus(String ticket) {
-        // TODO 后续替换为微信开放平台真实调用
         String status = redisUtil.get(WECHAT_LOGIN_TICKET_KEY + ticket);
         if (status == null) {
             return Result.success(WechatScanStatus.builder()
                     .status("EXPIRED")
                     .build());
         }
-        // 模拟状态：WAITING -> CONFIRMED（实际应接入微信回调更新状态）
+
         if ("WAITING".equals(status)) {
-            // 模拟：首次查询后自动变为已确认状态（方便测试）
             redisUtil.set(WECHAT_LOGIN_TICKET_KEY + ticket, "CONFIRMED", Duration.ofSeconds(WECHAT_LOGIN_TTL));
             return Result.success(WechatScanStatus.builder()
                     .status("WAITING")
                     .build());
         }
+
         if ("CONFIRMED".equals(status)) {
-            // 模拟创建用户并返回登录信息
             User user = new User();
             user.setUsername("wechat_user_" + RandomUtil.randomString(6));
             user.setNickname("WechatUser");
             save(user);
+
             LoginInfoDto loginInfoDto = new LoginInfoDto();
             BeanUtil.copyProperties(user, loginInfoDto);
-            generateDoubleToken(loginInfoDto);
-            // 清除ticket
+            generateTokens(loginInfoDto);
+
             redisUtil.delete(WECHAT_LOGIN_TICKET_KEY + ticket);
+
             return Result.success(WechatScanStatus.builder()
                     .status("CONFIRMED")
                     .loginInfo(loginInfoDto)
                     .build());
         }
+
         return Result.success(WechatScanStatus.builder()
                 .status(status)
                 .build());

@@ -53,6 +53,8 @@
         <logstash.version>7.4</logstash.version>
         <!-- 监控：Prometheus -->
         <prometheus.version>1.13.14</prometheus.version>
+        <!-- SA-Token 权限认证 -->
+        <sa-token.version>1.43.0</sa-token.version>
 
         <!-- maven-compiler-plugin-->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -212,7 +214,18 @@
                 <artifactId>micrometer-registry-prometheus</artifactId>
                 <version>${prometheus.version}</version>
             </dependency>
-
+            <!-- SA-Token 权限认证 -->
+            <dependency>
+                <groupId>cn.dev33</groupId>
+                <artifactId>sa-token-spring-boot3-starter</artifactId>
+                <version>${sa-token.version}</version>
+            </dependency>
+            <!-- SA-Token 整合 JWT -->
+            <dependency>
+                <groupId>cn.dev33</groupId>
+                <artifactId>sa-token-jwt</artifactId>
+                <version>${sa-token.version}</version>
+            </dependency>
 
             <!-- Nacos Client (排除日志适配器以避免与 Spring Boot Logback 冲突) -->
             <dependency>
@@ -232,7 +245,6 @@
                 <artifactId>redisson</artifactId>
                 <version>3.42.0</version>
             </dependency>
-
         </dependencies>
     </dependencyManagement>
 

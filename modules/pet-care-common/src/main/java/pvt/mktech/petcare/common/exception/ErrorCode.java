@@ -50,6 +50,9 @@ public enum ErrorCode {
     FORBIDDEN("10017", "禁止访问"),
 
     USER_ALREADY_CHECKIN("10018", "用户已签到"),
+    ROLE_NOT_FOUND("10019", "角色不存在"),
+    ROLE_CODE_ALREADY_EXISTS("10020", "角色编码已存在"),
+    ROLE_IN_USE("10021", "角色正在使用中"),
 
     // ========== 宠物相关错误码 (20000-29999) ==========
     PET_NOT_FOUND("20001", "宠物不存在"),
