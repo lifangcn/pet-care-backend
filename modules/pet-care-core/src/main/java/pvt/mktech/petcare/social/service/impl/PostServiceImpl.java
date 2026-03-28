@@ -15,12 +15,15 @@ import pvt.mktech.petcare.social.dto.request.PostSaveRequest;
 import pvt.mktech.petcare.social.dto.response.PostDetailResponse;
 import pvt.mktech.petcare.social.entity.Interaction;
 import pvt.mktech.petcare.social.entity.Post;
+import pvt.mktech.petcare.social.entity.codelist.AuditStatusOfContent;
 import pvt.mktech.petcare.social.entity.codelist.TypeOfInteraction;
 import pvt.mktech.petcare.social.entity.codelist.TypeOfPost;
 import pvt.mktech.petcare.social.mapper.PostMapper;
 import pvt.mktech.petcare.social.service.InteractionService;
 import pvt.mktech.petcare.social.service.PostLabelService;
 import pvt.mktech.petcare.social.service.PostService;
+import pvt.mktech.petcare.common.exception.BusinessException;
+import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.infrastructure.constant.CoreConstant;
@@ -50,6 +53,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public Post savePost(PostSaveRequest request) {
         Post post = BeanUtil.copyProperties(request, Post.class);
         post.setUserId(UserContext.getUserId());
+        post.setAuditStatus(AuditStatusOfContent.PENDING);
         save(post);
         // 处理标签关联
         if (request.getLabelIds() != null && !request.getLabelIds().isEmpty()) {
@@ -64,6 +68,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public Page<Post> findPageByQueryRequest(Long pageNumber, Long pageSize, PostQueryRequest request) {
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .where(POST.ENABLED.eq(1))
+                .and(POST.AUDIT_STATUS.eq(AuditStatusOfContent.APPROVED))
                 .orderBy(POST.CREATED_AT.desc());
 
         if (request.getPostType() != null) {
@@ -92,7 +97,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         PostDetailResponse response = getOneAs(QueryWrapper.create()
                 .select(POST.ALL_COLUMNS)
                 .from(POST)
-                .where(POST.ID.eq(id)), PostDetailResponse.class);
+                .where(POST.ID.eq(id))
+                .and(POST.ENABLED.eq(1))
+                .and(POST.AUDIT_STATUS.eq(AuditStatusOfContent.APPROVED)), PostDetailResponse.class);
         if (response == null) {
             return null;
         }
@@ -185,6 +192,25 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         return success;
     }
 
+    @Override
+    public Page<Post> pagePendingPosts(Long pageNumber, Long pageSize) {
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .where(POST.AUDIT_STATUS.eq(AuditStatusOfContent.PENDING))
+                .and(POST.IS_DELETED.eq(false))
+                .orderBy(POST.CREATED_AT.desc());
+        return page(Page.of(pageNumber, pageSize), queryWrapper);
+    }
+
+    @Override
+    public boolean approvePost(Long id) {
+        return updateAuditStatus(id, AuditStatusOfContent.APPROVED);
+    }
+
+    @Override
+    public boolean rejectPost(Long id) {
+        return updateAuditStatus(id, AuditStatusOfContent.REJECTED);
+    }
+
     private void updateLikeCount(Long postId, int delta) {
         Post post = getById(postId);
         if (post != null) {
@@ -212,5 +238,14 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                 updateById(post);
             }
         }
+    }
+
+    private boolean updateAuditStatus(Long id, AuditStatusOfContent auditStatus) {
+        Post post = getById(id);
+        if (post == null || Boolean.TRUE.equals(post.getIsDeleted())) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "动态不存在");
+        }
+        post.setAuditStatus(auditStatus);
+        return updateById(post);
     }
 }

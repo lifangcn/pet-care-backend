@@ -12,6 +12,7 @@ import pvt.mktech.petcare.common.exception.BusinessException;
 import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.redis.RedisUtil;
 import pvt.mktech.petcare.points.dto.request.PointsCouponQueryRequest;
+import pvt.mktech.petcare.points.dto.request.PointsCouponTemplateRequest;
 import pvt.mktech.petcare.points.dto.response.PointsCouponTemplateResponse;
 import pvt.mktech.petcare.points.entity.PointsCoupon;
 import pvt.mktech.petcare.points.entity.PointsCouponTemplate;
@@ -30,12 +31,6 @@ import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_COUPO
 import static pvt.mktech.petcare.points.entity.table.PointsCouponTableDef.POINTS_COUPON;
 import static pvt.mktech.petcare.points.entity.table.PointsCouponTemplateTableDef.POINTS_COUPON_TEMPLATE;
 
-/**
- * {@code @description}: 积分代金券服务实现
- * {@code @date}: 2025/02/06
- *
- * @author Michael
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -48,18 +43,13 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long issueCoupon(Long userId, Long templateId) {
-        // 查询券模板
         PointsCouponTemplate template = pointsCouponTemplateMapper.selectOneById(templateId);
         if (template == null || template.getStatus() != 1) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "券模板不存在或已停用");
         }
-
-        // 检查发放总量
         if (template.getTotalCount() > 0 && template.getIssuedCount() >= template.getTotalCount()) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "券已发放完毕");
         }
-
-        // 检查用户领取数量
         long userCount = count(QueryWrapper.create()
                 .where(POINTS_COUPON.USER_ID.eq(userId))
                 .and(POINTS_COUPON.TEMPLATE_ID.eq(templateId))
@@ -67,8 +57,6 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
         if (userCount >= template.getPerUserLimit()) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "已达到领取上限");
         }
-
-        // 创建代金券
         PointsCoupon coupon = new PointsCoupon();
         coupon.setUserId(userId);
         coupon.setTemplateId(templateId);
@@ -77,11 +65,8 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
         coupon.setStartTime(LocalDateTime.now());
         coupon.setEndTime(LocalDateTime.now().plusDays(template.getValidDays()));
         save(coupon);
-
-        // 更新已发放数量
         template.setIssuedCount(template.getIssuedCount() + 1);
         pointsCouponTemplateMapper.update(template);
-
         return coupon.getId();
     }
 
@@ -89,13 +74,9 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
     public Page<PointsCoupon> pageCoupons(Long userId, Long pageNumber, Long pageSize, PointsCouponQueryRequest request) {
         QueryWrapper queryWrapper = queryChain()
                 .where(POINTS_COUPON.USER_ID.eq(userId));
-
         Optional<StatusOfPointsCoupon> statusOfPointsCoupon = StatusOfPointsCoupon.fromCode(request.getStatus());
         statusOfPointsCoupon.ifPresent(ofPointsCoupon -> queryWrapper.and(POINTS_COUPON.STATUS.eq(ofPointsCoupon)));
-
-        // 默认按创建时间倒序
         queryWrapper.orderBy(POINTS_COUPON.CREATED_AT.desc());
-
         return page(Page.of(pageNumber, pageSize), queryWrapper);
     }
 
@@ -106,18 +87,14 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
         if (coupon == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "代金券不存在");
         }
-
         if (!coupon.getStatus().equals(StatusOfPointsCoupon.USED)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "代金券已使用或已过期");
         }
-
         if (coupon.getEndTime().isBefore(LocalDateTime.now())) {
-            // 标记为已过期
             coupon.setStatus(StatusOfPointsCoupon.EXPIRED);
             updateById(coupon);
             throw new BusinessException(ErrorCode.PARAM_ERROR, "代金券已过期");
         }
-
         coupon.setStatus(StatusOfPointsCoupon.USED);
         coupon.setUsedTime(LocalDateTime.now());
         coupon.setUsedRecordId(recordId);
@@ -138,7 +115,6 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean issueCouponForNewComer(Long userId) {
-        // 查询新人券模板并自动领取
         List<PointsCouponTemplate> newcomerTemplates = pointsCouponTemplateMapper.selectListByQuery(
                 QueryWrapper.create()
                         .where(POINTS_COUPON_TEMPLATE.SOURCE_TYPE.eq(SourceTypeOfCouponTemplate.NEWCOMER))
@@ -147,24 +123,15 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
         );
         if (!newcomerTemplates.isEmpty()) {
             PointsCouponTemplate template = newcomerTemplates.getFirst();
-            // 发放新人券
             Long couponId = issueCoupon(userId, template.getId());
-            // 立即领取
             redeemCoupon(userId, couponId);
         }
         return false;
     }
 
-    /**
-     * {@code @description}: 领取积分券（充值积分到账户）
-     * 通过事件解耦，避免循环依赖
-     * {@code @date}: 2026/02/13
-     * {@code @author}: Michael
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean redeemCoupon(Long userId, Long couponId) {
-        // 1. 校验券归属、状态、有效期
         PointsCoupon coupon = getById(couponId);
         if (coupon == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "代金券不存在");
@@ -176,72 +143,44 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
             throw new BusinessException(ErrorCode.PARAM_ERROR, "代金券已使用或已过期");
         }
         if (coupon.getEndTime().isBefore(LocalDateTime.now())) {
-            // 标记为已过期
             coupon.setStatus(StatusOfPointsCoupon.EXPIRED);
             updateById(coupon);
             throw new BusinessException(ErrorCode.PARAM_ERROR, "代金券已过期");
         }
-
-        // 2. 更新券状态为已使用
         coupon.setStatus(StatusOfPointsCoupon.USED);
         coupon.setUsedTime(LocalDateTime.now());
         updateById(coupon);
-
-        // 3. 发布券兑换事件（监听器在同一事务内处理余额更新）
         applicationEventPublisher.publishEvent(new CouponRedeemEvent(userId, couponId));
         return true;
     }
 
-    /**
-     * {@code @description}: 抢劵（发放未使用券到用户账户）
-     * {@code @date}: 2026/02/13
-     * {@code @author}: Michael
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long grabCoupon(Long userId, Long templateId) {
-        // 1. 校验券模板
         PointsCouponTemplate template = pointsCouponTemplateMapper.selectOneById(templateId);
         if (template == null || template.getStatus() != 1) {
             throw new BusinessException(ErrorCode.PARAM_ERROR, "券模板不存在或已停用");
         }
-
-        // 2. Redis原子减库存
         String stockKey = CORE_COUPON_STOCK_KEY_PREFIX + templateId;
         Long remainingStock = redisUtil.decrement(stockKey, 1L);
         if (remainingStock < 0) {
-            // 库存不足，回滚
             redisUtil.increment(stockKey, 1);
             throw new BusinessException(ErrorCode.PARAM_ERROR, "券已被抢完");
         }
-
         try {
-            // 3. 发放未使用券
-            Long couponId = issueCoupon(userId, templateId);
-            return couponId;
+            return issueCoupon(userId, templateId);
         } catch (Exception e) {
-            // 发券失败，回滚库存
             redisUtil.increment(stockKey, 1);
             throw e;
         }
     }
 
-    /**
-     * {@code @description}: 设置券库存（运营调用）
-     * {@code @date}: 2026/02/13
-     * {@code @author}: Michael
-     */
     @Override
     public void setCouponStock(Long templateId, Integer stock) {
         String stockKey = CORE_COUPON_STOCK_KEY_PREFIX + templateId;
         redisUtil.setAtomicLong(stockKey, stock);
     }
 
-    /**
-     * {@code @description}: 查询券剩余库存
-     * {@code @date}: 2026/02/13
-     * {@code @author}: Michael
-     */
     @Override
     public Long getCouponStock(Long templateId) {
         String stockKey = CORE_COUPON_STOCK_KEY_PREFIX + templateId;
@@ -251,11 +190,6 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
         return redisUtil.getAtomicLong(stockKey);
     }
 
-    /**
-     * {@code @description}: 查询可供抢券的生效模板列表
-     * {@code @date}: 2026/02/16
-     * {@code @author}: Michael Li
-     */
     @Override
     public List<PointsCouponTemplateResponse> listActiveTemplates() {
         List<PointsCouponTemplate> templates = pointsCouponTemplateMapper.selectListByQuery(
@@ -264,7 +198,6 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
                         .and(POINTS_COUPON_TEMPLATE.STATUS.eq(1))
                         .orderBy(POINTS_COUPON_TEMPLATE.CREATED_AT.desc())
         );
-
         return templates.stream().map(template -> {
             Long stock = getCouponStock(template.getId());
             return PointsCouponTemplateResponse.builder()
@@ -276,5 +209,73 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
                     .validDesc("领取后" + template.getValidDays() + "天有效")
                     .build();
         }).toList();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long createTemplate(PointsCouponTemplateRequest request) {
+        PointsCouponTemplate template = new PointsCouponTemplate();
+        template.setName(request.getName());
+        template.setFaceValue(request.getFaceValue());
+        template.setValidDays(request.getValidDays());
+        template.setTotalCount(request.getTotalCount());
+        template.setPerUserLimit(request.getPerUserLimit());
+        template.setIssuedCount(0);
+        Optional<SourceTypeOfCouponTemplate> sourceType = SourceTypeOfCouponTemplate.fromCode(request.getSourceType());
+        if (sourceType.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "来源类型不合法");
+        }
+        template.setSourceType(sourceType.get());
+        template.setStatus(request.getStatus());
+        pointsCouponTemplateMapper.insert(template);
+        return template.getId();
+    }
+
+    @Override
+    public Page<PointsCouponTemplate> pageTemplates(Long pageNumber, Long pageSize) {
+        QueryWrapper queryWrapper = QueryWrapper.create().orderBy(POINTS_COUPON_TEMPLATE.CREATED_AT.desc());
+        return pointsCouponTemplateMapper.paginate(Page.of(pageNumber, pageSize), queryWrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateTemplate(Long id, PointsCouponTemplateRequest request) {
+        PointsCouponTemplate template = pointsCouponTemplateMapper.selectOneById(id);
+        if (template == null) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "模板不存在");
+        }
+        template.setName(request.getName());
+        template.setFaceValue(request.getFaceValue());
+        template.setValidDays(request.getValidDays());
+        template.setTotalCount(request.getTotalCount());
+        template.setPerUserLimit(request.getPerUserLimit());
+        Optional<SourceTypeOfCouponTemplate> sourceType = SourceTypeOfCouponTemplate.fromCode(request.getSourceType());
+        if (sourceType.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "来源类型不合法");
+        }
+        template.setSourceType(sourceType.get());
+        template.setStatus(request.getStatus());
+        pointsCouponTemplateMapper.update(template);
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean issueCoupons(Long templateId, List<Long> userIds) {
+        PointsCouponTemplate template = pointsCouponTemplateMapper.selectOneById(templateId);
+        if (template == null || template.getStatus() != 1) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "券模板不存在或已停用");
+        }
+        int successCount = 0;
+        for (Long userId : userIds) {
+            try {
+                issueCoupon(userId, templateId);
+                successCount++;
+            } catch (Exception e) {
+                log.warn("发放券失败: userId={}", userId, e);
+            }
+        }
+        log.info("批量发放券完成: templateId={}, successCount={}, totalCount={}", templateId, successCount, userIds.size());
+        return true;
     }
 }

@@ -36,4 +36,29 @@ public interface ActivityService extends IService<Activity> {
      */
     Post checkInActivity(Long userId, Long activityId, Post post);
 
+    /**
+     * 分页查询待审核活动
+     *
+     * @param pageNumber 页码
+     * @param pageSize 页大小
+     * @return 待审核活动分页结果
+     */
+    Page<Activity> pagePendingActivities(Long pageNumber, Long pageSize);
+
+    /**
+     * 审核通过活动
+     *
+     * @param id 活动ID
+     * @return 是否成功
+     */
+    boolean approveActivity(Long id);
+
+    /**
+     * 审核拒绝活动
+     *
+     * @param id 活动ID
+     * @return 是否成功
+     */
+    boolean rejectActivity(Long id);
+
 }

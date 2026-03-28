@@ -2,8 +2,10 @@ package pvt.mktech.petcare.points.service;
 
 import com.mybatisflex.core.paginate.Page;
 import pvt.mktech.petcare.points.dto.request.PointsCouponQueryRequest;
+import pvt.mktech.petcare.points.dto.request.PointsCouponTemplateRequest;
 import pvt.mktech.petcare.points.dto.response.PointsCouponTemplateResponse;
 import pvt.mktech.petcare.points.entity.PointsCoupon;
+import pvt.mktech.petcare.points.entity.PointsCouponTemplate;
 
 import java.util.List;
 
@@ -100,4 +102,39 @@ public interface PointsCouponService {
      * @return 生效模板列表
      */
     List<PointsCouponTemplateResponse> listActiveTemplates();
+
+    /**
+     * 创建积分券模板
+     *
+     * @param request 模板请求
+     * @return 模板ID
+     */
+    Long createTemplate(PointsCouponTemplateRequest request);
+
+    /**
+     * 分页查询模板
+     *
+     * @param pageNumber 页码
+     * @param pageSize 页大小
+     * @return 模板分页
+     */
+    Page<PointsCouponTemplate> pageTemplates(Long pageNumber, Long pageSize);
+
+    /**
+     * 更新模板
+     *
+     * @param id 模板ID
+     * @param request 请求
+     * @return 是否成功
+     */
+    boolean updateTemplate(Long id, PointsCouponTemplateRequest request);
+
+    /**
+     * 批量发放积分券
+     *
+     * @param templateId 模板ID
+     * @param userIds 用户ID列表
+     * @return 是否成功
+     */
+    boolean issueCoupons(Long templateId, List<Long> userIds);
 }

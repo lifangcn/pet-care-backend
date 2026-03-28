@@ -3,35 +3,38 @@ package pvt.mktech.petcare.social.entity.table;
 import com.mybatisflex.core.query.QueryColumn;
 import com.mybatisflex.core.table.TableDef;
 
+/**
+ * 活动表定义类，继承自TableDef，用于定义活动表的结构和字段
+ */
 public class ActivityTableDef extends TableDef {
 
     /**
-     * 活动表
+     * 活动表的静态实例，用于单例模式
      */
     public static final ActivityTableDef ACTIVITY = new ActivityTableDef();
 
     /**
-     * 主键ID
+     * 主键ID字段定义
      */
     public final QueryColumn ID = new QueryColumn(this, "id");
 
     /**
-     * 创建者ID
+     * 创建者ID字段定义
      */
     public final QueryColumn USER_ID = new QueryColumn(this, "user_id");
 
     /**
-     * 活动标题
+     * 活动标题字段定义
      */
     public final QueryColumn TITLE = new QueryColumn(this, "title");
 
     /**
-     * 活动描述
+     * 活动描述字段定义
      */
     public final QueryColumn DESCRIPTION = new QueryColumn(this, "description");
 
     /**
-     * 封面图
+     * 封面图片字段定义
      */
     public final QueryColumn COVER_IMAGE = new QueryColumn(this, "cover_image");
 
@@ -76,6 +79,11 @@ public class ActivityTableDef extends TableDef {
     public final QueryColumn STATUS = new QueryColumn(this, "status");
 
     /**
+     * 审核状态
+     */
+    public final QueryColumn AUDIT_STATUS = new QueryColumn(this, "audit_status");
+
+    /**
      * 活动标签数组
      */
     public final QueryColumn LABELS = new QueryColumn(this, "labels");
@@ -118,7 +126,7 @@ public class ActivityTableDef extends TableDef {
     /**
      * 默认字段
      */
-    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, DESCRIPTION, COVER_IMAGE, ACTIVITY_TYPE, ACTIVITY_TIME, END_TIME, ADDRESS, ONLINE_LINK, MAX_PARTICIPANTS, CURRENT_PARTICIPANTS, STATUS, LABELS, CHECK_IN_ENABLED, CHECK_IN_COUNT};
+    public final QueryColumn[] DEFAULT_COLUMNS = new QueryColumn[]{ID, USER_ID, TITLE, DESCRIPTION, COVER_IMAGE, ACTIVITY_TYPE, ACTIVITY_TIME, END_TIME, ADDRESS, ONLINE_LINK, MAX_PARTICIPANTS, CURRENT_PARTICIPANTS, STATUS, AUDIT_STATUS, LABELS, CHECK_IN_ENABLED, CHECK_IN_COUNT};
 
     public ActivityTableDef() {
         super("", "tb_activity");

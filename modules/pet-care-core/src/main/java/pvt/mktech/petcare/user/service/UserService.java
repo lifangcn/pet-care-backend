@@ -1,7 +1,9 @@
 package pvt.mktech.petcare.user.service;
 
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.service.IService;
 import org.springframework.transaction.annotation.Transactional;
+import pvt.mktech.petcare.user.dto.response.AdminUserResponse;
 import pvt.mktech.petcare.user.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.shared.dto.CheckInStatsResponse;
 import pvt.mktech.petcare.user.dto.response.UserResponse;
@@ -81,4 +83,49 @@ public interface UserService extends IService<User> {
      * @return 签到统计信息
      */
     CheckInStatsResponse getCheckInStats(Long userId, Long year, Long month);
+
+    /**
+     * 分页查询后台用户列表
+     *
+     * @param pageNumber 页码
+     * @param pageSize 页大小
+     * @return 用户分页结果
+     * @author Michael Li
+     * @since 2026-03-27
+     */
+    Page<AdminUserResponse> pageAdminUsers(Long pageNumber, Long pageSize);
+
+    /**
+     * 更新用户管理员身份
+     *
+     * @param userId 用户ID
+     * @param isAdmin 是否授予管理员
+     * @return 是否成功
+     * @author Michael Li
+     * @since 2026-03-27
+     */
+    @Transactional
+    boolean updateAdminRole(Long userId, Boolean isAdmin);
+
+    /**
+     * 更新用户启用状态
+     *
+     * @param userId 用户ID
+     * @param enabled 启用状态
+     * @return 是否成功
+     * @author Michael Li
+     * @since 2026-03-27
+     */
+    @Transactional
+    boolean updateEnabledStatus(Long userId, Integer enabled);
+
+    /**
+     * 根据用户ID获取管理员用户信息
+     *
+     * @param userId 用户ID
+     * @return 管理员用户响应对象
+     * @author Michael Li
+     * @since 2026-03-28
+     */
+    AdminUserResponse getAdminUserById(Long userId);
 }

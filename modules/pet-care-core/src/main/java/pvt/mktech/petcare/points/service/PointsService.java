@@ -93,4 +93,15 @@ public interface PointsService extends IService<PointsAccount> {
      * @param bizId   业务ID，用于关联具体的业务场景，如订单ID、活动ID等
      */
     void saveRecord(PointsAccount account, Integer points, ActionTypeOfPointsRecord action, Long bizId);
+
+    /**
+     * 后台分页查询积分流水（无用户过滤）
+     *
+     * @param pageNumber 页码
+     * @param pageSize 页大小
+     * @return 分页结果
+     * @author Michael Li
+     * @since 2026-03-27
+     */
+    Page<PointsRecord> pageRecords(Long pageNumber, Long pageSize);
 }

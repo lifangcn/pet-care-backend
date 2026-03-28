@@ -345,4 +345,12 @@ public class PointsServiceImpl extends ServiceImpl<PointsAccountMapper, PointsAc
         if (totalPoints < 120000) return 9;
         return 10;
     }
+
+    @Override
+    public Page<PointsRecord> pageRecords(Long pageNumber, Long pageSize) {
+        QueryWrapper queryWrapper = queryChain()
+                .select(POINTS_RECORD.ALL_COLUMNS)
+                .orderBy(POINTS_RECORD.CREATED_AT.desc());
+        return pointsRecordMapper.paginate(Page.of(pageNumber, pageSize), queryWrapper);
+    }
 }

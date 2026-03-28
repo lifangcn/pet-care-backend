@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.social.entity.codelist.AuditStatusOfContent;
 import pvt.mktech.petcare.social.entity.codelist.StatusOfActivity;
 import pvt.mktech.petcare.social.entity.codelist.TypeOfActivity;
 import pvt.mktech.petcare.social.handler.StringListTypeHandler;
@@ -89,6 +90,11 @@ public class Activity implements Serializable {
      * 状态：RECRUITING-招募中 ONGOING-进行中 ENDED-已结束
      */
     private StatusOfActivity status;
+
+    /**
+     * 审核状态：PENDING-待审核 APPROVED-已通过 REJECTED-已拒绝
+     */
+    private AuditStatusOfContent auditStatus = AuditStatusOfContent.PENDING;
 
     /**
      * 活动标签数组

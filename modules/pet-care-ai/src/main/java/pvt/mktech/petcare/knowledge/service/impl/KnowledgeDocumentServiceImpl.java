@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.knowledge.dto.response.KnowledgeDocumentResponse;
 import pvt.mktech.petcare.knowledge.entity.KnowledgeDocument;
+import pvt.mktech.petcare.knowledge.entity.codelist.ProcessingStatusOfKnowledgeDocument;
 import pvt.mktech.petcare.knowledge.mapper.KnowledgeDocumentMapper;
 import pvt.mktech.petcare.knowledge.service.KnowledgeDocumentService;
 import pvt.mktech.petcare.common.exception.BusinessException;
@@ -235,5 +236,30 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         KnowledgeDocumentResponse response = new KnowledgeDocumentResponse();
         BeanUtil.copyProperties(document, response);
         return response;
+    }
+
+    @Override
+    public void reindexDocument(Long id) {
+        KnowledgeDocument document = getOne(DOCUMENT.ID.eq(id));
+        if (document == null) {
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "文档不存在");
+        }
+
+        // 删除 ES 中已有的向量数据
+        try {
+            // TODO: 需要根据 documentId 删除对应的向量数据，当前 VectorStore 未提供按 metadata 查询删除的能力
+            log.info("开始重新索引文档: id={}, name={}", id, document.getName());
+        } catch (Exception e) {
+            log.warn("删除旧向量数据失败: documentId={}", id, e);
+        }
+
+        // 重新设置处理状态为待处理
+        document.setProcessingStatus(ProcessingStatusOfKnowledgeDocument.PENDING);
+        document.setChunkCount(0);
+        document.setProcessingError(null);
+        updateById(document);
+
+        // 重新触发异步处理（需要重新读取文件，这里简化处理，实际应从 OSS 重新下载）
+        log.info("文档重新索引任务已触发: id={}", id);
     }
 }

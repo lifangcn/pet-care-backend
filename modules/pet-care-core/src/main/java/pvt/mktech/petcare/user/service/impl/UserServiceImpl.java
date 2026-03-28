@@ -3,6 +3,7 @@ package pvt.mktech.petcare.user.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
@@ -19,9 +20,14 @@ import pvt.mktech.petcare.common.storage.OssTemplate;
 import pvt.mktech.petcare.points.service.PointsService;
 import pvt.mktech.petcare.user.dto.request.UserUpdateRequest;
 import pvt.mktech.petcare.shared.dto.CheckInStatsResponse;
+import pvt.mktech.petcare.user.dto.response.AdminUserResponse;
 import pvt.mktech.petcare.user.dto.response.UserResponse;
+import pvt.mktech.petcare.user.entity.Role;
 import pvt.mktech.petcare.user.entity.User;
+import pvt.mktech.petcare.user.entity.UserRole;
+import pvt.mktech.petcare.user.mapper.RoleMapper;
 import pvt.mktech.petcare.user.mapper.UserMapper;
+import pvt.mktech.petcare.user.mapper.UserRoleMapper;
 import pvt.mktech.petcare.user.service.UserService;
 
 import java.time.Duration;
@@ -31,6 +37,8 @@ import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static pvt.mktech.petcare.infrastructure.constant.CoreConstant.CORE_USER_CHECK_IN_KEY;
+import static pvt.mktech.petcare.user.entity.table.RoleTableDef.ROLE;
+import static pvt.mktech.petcare.user.entity.table.UserRoleTableDef.USER_ROLE;
 import static pvt.mktech.petcare.user.entity.table.UserTableDef.USER;
 
 
@@ -40,6 +48,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private RoleMapper roleMapper;
+    @Resource
+    private UserRoleMapper userRoleMapper;
     @Resource
     private OssTemplate ossTemplate;
     @Resource
@@ -206,6 +218,150 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private UserResponse convertToResponse(User user) {
         UserResponse response = new UserResponse();
         BeanUtil.copyProperties(user, response);
+        return response;
+    }
+
+    /**
+     * 分页查询后台用户列表
+     *
+     * @param pageNumber 页码
+     * @param pageSize   页大小
+     * @return 用户分页结果
+     * @author Michael Li
+     * @since 2026-03-27
+     */
+    @Override
+    public Page<AdminUserResponse> pageAdminUsers(Long pageNumber, Long pageSize) {
+        // 1. 分页查询用户
+        Page<User> userPage = page(Page.of(pageNumber, pageSize), QueryWrapper.create().orderBy(USER.CREATED_AT.desc()));
+
+        // 2. 查询 admin 角色
+        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(ROLE.ROLE_CODE.eq("admin")));
+        Long adminRoleId = adminRole != null ? adminRole.getId() : null;
+
+        // 3. 获取用户ID列表，查询对应的用户角色关联
+        List<Long> userIds = userPage.getRecords().stream().map(User::getId).toList();
+        List<UserRole> userRoles = new ArrayList<>();
+        if (adminRoleId != null && !userIds.isEmpty()) {
+            userRoles = userRoleMapper.selectListByQuery(QueryWrapper.create()
+                    .where(USER_ROLE.USER_ID.in(userIds))
+                    .and(USER_ROLE.ROLE_ID.eq(adminRoleId)));
+        }
+
+        // 4. 构建管理员用户ID集合
+        java.util.Set<Long> adminUserIds = userRoles.stream().map(UserRole::getUserId).collect(java.util.stream.Collectors.toSet());
+
+        // 5. 映射为 AdminUserResponse
+        List<AdminUserResponse> responses = userPage.getRecords().stream().map(user -> {
+            AdminUserResponse response = new AdminUserResponse();
+            BeanUtil.copyProperties(user, response);
+            response.setIsAdmin(adminUserIds.contains(user.getId()));
+            return response;
+        }).toList();
+
+        // 6. 构建返回的 Page 对象
+        Page<AdminUserResponse> resultPage = new Page<>(userPage.getPageNumber(), userPage.getPageSize(), userPage.getTotalRow());
+        resultPage.setRecords(responses);
+        return resultPage;
+    }
+
+    /**
+     * 更新用户管理员身份
+     *
+     * @param userId 用户ID
+     * @param isAdmin 是否授予管理员
+     * @return 是否成功
+     * @author Michael Li
+     * @since 2026-03-27
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateAdminRole(Long userId, Boolean isAdmin) {
+        // 1. 查询 admin 角色
+        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(ROLE.ROLE_CODE.eq("admin")));
+        if (adminRole == null) {
+            throw new BusinessException(ErrorCode.ROLE_NOT_FOUND);
+        }
+
+        Long adminRoleId = adminRole.getId();
+
+        if (isAdmin) {
+            // 2. 授予管理员：检查是否已存在，避免重复插入
+            long count = userRoleMapper.selectCountByQuery(QueryWrapper.create()
+                    .where(USER_ROLE.USER_ID.eq(userId))
+                    .and(USER_ROLE.ROLE_ID.eq(adminRoleId)));
+            if (count == 0) {
+                UserRole userRole = new UserRole();
+                userRole.setUserId(userId);
+                userRole.setRoleId(adminRoleId);
+                userRoleMapper.insert(userRole);
+            }
+        } else {
+            // 3. 移除管理员：删除对应的 user_role
+            userRoleMapper.deleteByQuery(QueryWrapper.create()
+                    .where(USER_ROLE.USER_ID.eq(userId))
+                    .and(USER_ROLE.ROLE_ID.eq(adminRoleId)));
+        }
+
+        return true;
+    }
+
+    /**
+     * 更新用户启用状态
+     *
+     * @param userId 用户ID
+     * @param enabled 启用状态
+     * @return 是否成功
+     * @author Michael Li
+     * @since 2026-03-27
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateEnabledStatus(Long userId, Integer enabled) {
+        // 1. 查询用户是否存在
+        User user = getOne(USER.ID.eq(userId));
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // 2. 更新启用状态
+        user.setEnabled(enabled);
+        userMapper.update(user);
+
+        return true;
+    }
+
+    /**
+     * 根据用户ID获取管理员用户信息
+     *
+     * @param userId 用户ID
+     * @return 管理员用户响应对象
+     * @author Michael Li
+     * @since 2026-03-28
+     */
+    @Override
+    public AdminUserResponse getAdminUserById(Long userId) {
+        User user = getOne(USER.ID.eq(userId));
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // 查询 admin 角色
+        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(ROLE.ROLE_CODE.eq("admin")));
+        Long adminRoleId = adminRole != null ? adminRole.getId() : null;
+
+        // 判断是否是管理员
+        boolean isAdmin = false;
+        if (adminRoleId != null) {
+            long count = userRoleMapper.selectCountByQuery(QueryWrapper.create()
+                    .where(USER_ROLE.USER_ID.eq(userId))
+                    .and(USER_ROLE.ROLE_ID.eq(adminRoleId)));
+            isAdmin = count > 0;
+        }
+
+        AdminUserResponse response = new AdminUserResponse();
+        BeanUtil.copyProperties(user, response);
+        response.setIsAdmin(isAdmin);
         return response;
     }
 }

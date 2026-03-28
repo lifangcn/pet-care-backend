@@ -5,6 +5,7 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
+import pvt.mktech.petcare.social.entity.codelist.AuditStatusOfContent;
 import pvt.mktech.petcare.social.entity.codelist.TypeOfPost;
 import pvt.mktech.petcare.social.handler.StringListTypeHandler;
 
@@ -100,6 +101,11 @@ public class Post implements Serializable {
      * 是否启用：1-正常，0-隐藏
      */
     private Integer enabled;
+
+    /**
+     * 审核状态：PENDING-待审核 APPROVED-已通过 REJECTED-已拒绝
+     */
+    private AuditStatusOfContent auditStatus = AuditStatusOfContent.PENDING;
 
     /**
      * 关联的活动ID

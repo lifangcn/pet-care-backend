@@ -83,4 +83,29 @@ public interface PostService extends IService<Post> {
      * @return 是否成功
      */
     boolean rate(Long postId, Integer rating);
+
+    /**
+     * 分页查询待审核动态
+     *
+     * @param pageNumber 页码
+     * @param pageSize 页大小
+     * @return 待审核动态分页结果
+     */
+    Page<Post> pagePendingPosts(Long pageNumber, Long pageSize);
+
+    /**
+     * 审核通过动态
+     *
+     * @param id 动态ID
+     * @return 是否成功
+     */
+    boolean approvePost(Long id);
+
+    /**
+     * 审核拒绝动态
+     *
+     * @param id 动态ID
+     * @return 是否成功
+     */
+    boolean rejectPost(Long id);
 }

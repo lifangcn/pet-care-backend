@@ -33,4 +33,9 @@ public interface KnowledgeDocumentService extends IService<KnowledgeDocument> {
      * 删除文档
      */
     void deleteDocument(Long id);
+
+    /**
+     * 重新索引文档
+     */
+    void reindexDocument(Long id);
 }
