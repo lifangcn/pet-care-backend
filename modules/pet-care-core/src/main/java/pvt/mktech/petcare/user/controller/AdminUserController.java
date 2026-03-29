@@ -27,7 +27,6 @@ import pvt.mktech.petcare.user.service.UserService;
  */
 @Tag(name = "后台用户管理", description = "后台用户管理相关接口")
 @RestController
-@RequireAdmin
 @RequestMapping("/admin/user")
 @RequiredArgsConstructor
 public class AdminUserController {
@@ -56,6 +55,7 @@ public class AdminUserController {
      * @author Michael Li
      * @since 2026-03-27
      */
+    @RequireAdmin
     @GetMapping("/list")
     @Operation(summary = "分页查询用户列表")
     public Result<Page<AdminUserResponse>> pageAdminUsers(@RequestParam(value = "pageNumber", defaultValue = "1") Long pageNumber,
@@ -72,6 +72,7 @@ public class AdminUserController {
      * @author Michael Li
      * @since 2026-03-27
      */
+    @RequireAdmin
     @PutMapping("/{id}/role")
     @Operation(summary = "更新用户管理员角色")
     public Result<Boolean> updateAdminRole(@PathVariable("id") Long id,
@@ -88,6 +89,7 @@ public class AdminUserController {
      * @author Michael Li
      * @since 2026-03-27
      */
+    @RequireAdmin
     @PutMapping("/{id}/enabled")
     @Operation(summary = "更新用户启用状态")
     public Result<Boolean> updateEnabledStatus(@PathVariable("id") Long id,
