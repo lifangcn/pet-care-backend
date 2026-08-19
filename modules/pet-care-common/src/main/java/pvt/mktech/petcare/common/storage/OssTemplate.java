@@ -177,6 +177,7 @@ public class OssTemplate {
      */
     public String generateAccessUrl(String objectName) {
         // 设置 URL 过期时间，例如 1 小时
+
         return ossClient.generatePresignedUrl(
                 ossProperties.getBucketName(),
                 objectName, new DateTime().offset(DateField.MONTH, 1)
