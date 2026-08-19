@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * {@code @description}: 提醒来源类型 枚举类: MANUAL(手动添加), SYSTEM(系统生成)
+ * {@code @description}: 提醒来源类型 枚举类: MANUAL(手动添加), HEALTH_RECORD(健康记录), SYSTEM(系统生成)
  * {@code @date}: 2026/02/13
  *
  * @author Michael Li
@@ -18,6 +18,7 @@ import java.util.Optional;
 public enum SourceTypeOfReminder {
 
     MANUAL("MANUAL", "手动添加"),
+    HEALTH_RECORD("HEALTH_RECORD", "健康记录"),
     SYSTEM("SYSTEM", "系统生成");
 
     @EnumValue

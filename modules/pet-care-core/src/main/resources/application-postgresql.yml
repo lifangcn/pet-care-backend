@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:petcare}?currentSchema=petcare
+    # Runtime POSTGRES_USER must inherit the NOLOGIN petcare_app group role created during deployment bootstrap.
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    # FLYWAY_USER is the migration owner and is responsible for schema changes and application privileges.
+    user: ${FLYWAY_USER}
+    password: ${FLYWAY_PASSWORD}
+    locations: classpath:db/migration
+    schemas: petcare
+    default-schema: petcare
+    create-schemas: true
