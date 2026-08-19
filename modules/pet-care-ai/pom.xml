@@ -53,6 +53,12 @@
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>pvt.mktech.petcare</groupId>
+            <artifactId>pet-care-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- Spring AI -->
         <!-- OpenAI 兼容（DeepSeek 等第三方模型） -->

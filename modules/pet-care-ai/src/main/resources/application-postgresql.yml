@@ -1,0 +1,20 @@
+spring:
+  flyway:
+    enabled: false
+
+mybatis-flex:
+  datasource:
+    ai:
+      url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:petcare}?currentSchema=petcare
+      username: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      maximum-pool-size: 5
+      minimum-idle: 1
+    core:
+      url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:petcare}?currentSchema=petcare
+      username: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      maximum-pool-size: 3
+      minimum-idle: 1
