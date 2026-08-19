@@ -6,7 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
 import pvt.mktech.petcare.observability.config.ObservabilityAutoConfiguration;
 
-import com.alibaba.cloud.ai.autoconfigure.dashscope.*;
 import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration;
 
 /**
@@ -16,15 +15,6 @@ import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfigura
  * @author Michael
  */
 @SpringBootApplication(exclude = {
-    // DashScope 全部排除
-    DashScopeChatAutoConfiguration.class,
-    DashScopeAgentAutoConfiguration.class,
-    DashScopeAudioSpeechAutoConfiguration.class,
-    DashScopeAudioTranscriptionAutoConfiguration.class,
-    DashScopeEmbeddingAutoConfiguration.class,
-    DashScopeImageAutoConfiguration.class,
-    DashScopeRerankAutoConfiguration.class,
-    DashScopeVideoAutoConfiguration.class,
     // 排除 OpenAI 自动配置（手动创建 DeepSeek ChatModel）
     OpenAiChatAutoConfiguration.class,
 })

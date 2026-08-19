@@ -38,7 +38,7 @@ public class ChatMemoryProperties {
     public static class Redis {
         private String host = "localhost";
         private Integer port = 6379;
-        private String password = "!QAZ2wsx";
+        private String password;
         private Integer timeout = 5000;
         private Integer maxMessages = 10;
     }

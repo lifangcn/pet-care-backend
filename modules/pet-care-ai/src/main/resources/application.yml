@@ -83,6 +83,7 @@ mybatis-flex:
       embedding:
         options:
           model: embedding-3
+          dimensions: 1024
     # 会话记忆 Redis 配置
     chat:
       memory:

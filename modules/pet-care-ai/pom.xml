@@ -40,11 +40,6 @@
         </dependency>
 
         <!-- Spring AI -->
-        <!-- DashScope 通义千问（Chat 模型） -->
-        <dependency>
-            <groupId>com.alibaba.cloud.ai</groupId>
-            <artifactId>spring-ai-alibaba-starter-dashscope</artifactId>
-        </dependency>
         <!-- OpenAI 兼容（DeepSeek 等第三方模型） -->
         <dependency>
             <groupId>org.springframework.ai</groupId>

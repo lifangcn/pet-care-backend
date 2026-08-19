@@ -61,12 +61,12 @@ public class SpringChatConfig {
     @Bean
     @Primary
     public ChatModel deepSeekChatModel(
+            @Value("${spring.ai.openai.api-key}") String apiKey,
             @Value("${spring.ai.openai.base-url}") String baseUrl,
             @Value("${spring.ai.openai.chat.options.model}") String model
     ) {
-        String apiKey = System.getenv("SPRING_AI_OPENAI_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalArgumentException("Environment variable SPRING_AI_OPENAI_API_KEY is required but not set or blank");
+            throw new IllegalArgumentException("spring.ai.openai.api-key is required but not set or blank");
         }
         var api = OpenAiApi.builder()
                 .apiKey(apiKey)
