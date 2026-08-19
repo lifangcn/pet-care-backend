@@ -21,7 +21,7 @@ public class ReminderTool {
     @Resource
     private WebClient.Builder webClientBuilder;
 
-    @Tool(name = "设置宠物提醒事项服务")
+    @Tool(name = "add_pet_reminder", description = "设置宠物提醒事项服务，如喂药、疫苗、美容等定时提醒")
     public String addReminderFunction(AddReminderRequest request) {
         log.info("制定宠物提醒事项调用成功，请求参数为：{}", request);
         

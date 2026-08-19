@@ -1,6 +1,7 @@
 package pvt.mktech.petcare.infrastructure.config;
 
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +39,8 @@ public class ElasticsearchVectorStoreConfig {
      * 复用实例提升性能
      */
     @Bean
-    public KeywordMetadataEnricher keywordMetadataEnricher(DashScopeChatModel dashScopeChatModel) {
-        return new KeywordMetadataEnricher(dashScopeChatModel, 5);
+    public KeywordMetadataEnricher keywordMetadataEnricher(@Qualifier("deepSeekChatModel") ChatModel chatModel) {
+        return new KeywordMetadataEnricher(chatModel, 5);
     }
 
     /**

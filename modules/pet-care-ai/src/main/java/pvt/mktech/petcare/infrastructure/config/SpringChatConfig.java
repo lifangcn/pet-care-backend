@@ -1,6 +1,11 @@
 package pvt.mktech.petcare.infrastructure.config;
 
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.openai.api.OpenAiApi;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import com.alibaba.cloud.ai.memory.redis.LettuceRedisChatMemoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +20,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
 import pvt.mktech.petcare.chat.rag.advisor.SemanticMemoryAdvisor;
@@ -53,12 +59,36 @@ public class SpringChatConfig {
     }
 
     @Bean
-    public ChatClient chatClient(DashScopeChatModel dashScopeChatModel,
+    @Primary
+    public ChatModel deepSeekChatModel(
+            @Value("${spring.ai.openai.base-url}") String baseUrl,
+            @Value("${spring.ai.openai.chat.options.model}") String model
+    ) {
+        String apiKey = System.getenv("SPRING_AI_OPENAI_API_KEY");
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalArgumentException("Environment variable SPRING_AI_OPENAI_API_KEY is required but not set or blank");
+        }
+        var api = OpenAiApi.builder()
+                .apiKey(apiKey)
+                .baseUrl(baseUrl)
+                .build();
+        return OpenAiChatModel.builder()
+                .openAiApi(api)
+                .defaultOptions(OpenAiChatOptions.builder()
+                        .model(model)
+                        .streamUsage(false)
+                        .reasoningEffort(null)
+                        .build())
+                .build();
+    }
+
+    @Bean
+    public ChatClient chatClient(@Qualifier("deepSeekChatModel") ChatModel chatModel,
                                  ChatMemory chatMemory,
                                  ToolCallbackProvider toolCallbackProvider,
                                  @Lazy SemanticMemoryAdvisor semanticMemoryAdvisor,
                                  ObservabilityAdvisor observabilityAdvisor) {
-        ChatClient.Builder builder = ChatClient.builder(dashScopeChatModel)
+        ChatClient.Builder builder = ChatClient.builder(chatModel)
                 .defaultToolCallbacks(toolCallbackProvider.getToolCallbacks())
                 .defaultSystem(loadSystemPrompt())
                 .defaultAdvisors(
@@ -88,17 +118,6 @@ public class SpringChatConfig {
                 .build();
     }
 
-
-    // ollama 太慢了
-    /*@Bean
-    public ChatClient chatClient(OllamaChatModel chatModel, RedisChatMemory chatMemory) {
-        return ChatClient.builder(chatModel)
-                .defaultSystem("你是一个具备10年架构经验的Java程序员导师")
-                .defaultAdvisors(
-//                        new SimpleLoggerAdvisor(),
-                        PromptChatMemoryAdvisor.builder(chatMemory).build()
-                ).build();
-    }*/
 
     /**
      * 加载系统提示词

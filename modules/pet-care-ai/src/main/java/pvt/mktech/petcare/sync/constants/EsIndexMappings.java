@@ -22,8 +22,8 @@ public final class EsIndexMappings {
                 "properties": {
                   "id": {"type": "long"},
                   "parent_document_id": {"type": "long"},
-                  "name": {"type": "text", "analyzer": "ik_max_word"},
-                  "content": {"type": "text", "analyzer": "ik_max_word"},
+                  "name": {"type": "text", "analyzer": "standard"},
+                  "content": {"type": "text", "analyzer": "standard"},
                   "embedding": {
                     "type": "dense_vector",
                     "dims": 1024,
@@ -51,8 +51,8 @@ public final class EsIndexMappings {
                 "properties": {
                   "id": {"type": "long"},
                   "user_id": {"type": "long"},
-                  "title": {"type": "text", "analyzer": "ik_max_word"},
-                  "content": {"type": "text", "analyzer": "ik_max_word"},
+                  "title": {"type": "text", "analyzer": "standard"},
+                  "content": {"type": "text", "analyzer": "standard"},
                   "post_type": {"type": "text"},
                   "media_urls": {"type": "keyword"},
                   "external_link": {"type": "keyword"},
@@ -88,12 +88,12 @@ public final class EsIndexMappings {
             "properties": {
               "id": {"type": "long"},
               "user_id": {"type": "long"},
-              "title": {"type": "text", "analyzer": "ik_max_word"},
-              "description": {"type": "text", "analyzer": "ik_max_word"},
+              "title": {"type": "text", "analyzer": "standard"},
+              "description": {"type": "text", "analyzer": "standard"},
               "activity_type": {"type": "text"},
               "activity_time": {"type": "date"},
               "end_time": {"type": "date"},
-              "address": {"type": "text", "analyzer": "ik_max_word"},
+              "address": {"type": "text", "analyzer": "standard"},
               "online_link": {"type": "keyword"},
               "max_participants": {"type": "integer"},
               "current_participants": {"type": "integer"},
@@ -124,7 +124,7 @@ public final class EsIndexMappings {
               "session_id": {"type": "keyword"},
               "session_name": {"type": "keyword"},
               "role": {"type": "keyword"},
-              "content": {"type": "text", "analyzer": "ik_max_word"},
+              "content": {"type": "text", "analyzer": "standard"},
               "embedding": {
                 "type": "dense_vector",
                 "dims": 1024,
@@ -234,7 +234,7 @@ public final class EsIndexMappings {
               "agent_type": {"type": "keyword"},
               "conversation_id": {"type": "keyword"},
               "user_id": {"type": "long"},
-              "query": {"type": "text", "analyzer": "ik_max_word"},
+              "query": {"type": "text", "analyzer": "standard"},
               "steps": {
                 "type": "nested",
                 "properties": {
@@ -269,4 +269,3 @@ public final class EsIndexMappings {
         }
         """;
 }
-

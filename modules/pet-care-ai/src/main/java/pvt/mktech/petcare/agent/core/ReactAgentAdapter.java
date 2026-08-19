@@ -91,7 +91,8 @@ public class ReactAgentAdapter implements Agent {
                 if (!messages.isEmpty()) {
                     var lastMessage = messages.get(messages.size() - 1);
                     if (lastMessage instanceof org.springframework.ai.chat.messages.AssistantMessage assistantMsg) {
-                        finalAnswer = assistantMsg.getText();
+                        String text = assistantMsg.getText();
+                        finalAnswer = (text != null && !text.isEmpty()) ? text : "[Agent 执行完成，无文本输出]";
                     }
                 }
 

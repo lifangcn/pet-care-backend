@@ -70,18 +70,19 @@ mybatis-flex:
 
   # AI 配置
   ai:
-    # DashScope 通义千问（对话模型）
-    dashscope:
-      api-key: ${DASHSCOPE_API_KEY}
+    # DeepSeek（OpenAI 兼容协议）
+    openai:
+      api-key: ${DEEPSEEK_API_KEY}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
       chat:
         options:
-          model: ${DASHSCOPE_CHAT_MODEL:qwen-plus}
+          model: ${DEEPSEEK_CHAT_MODEL:deepseek-v4-flash}
     # 智谱 AI（Embedding 模型）
     zhipuai:
       api-key: ${ZHIPUAI_API_KEY}
       embedding:
         options:
-          model: embedding-2
+          model: embedding-3
     # 会话记忆 Redis 配置
     chat:
       memory:

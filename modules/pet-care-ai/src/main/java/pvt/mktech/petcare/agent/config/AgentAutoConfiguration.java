@@ -1,9 +1,10 @@
 package pvt.mktech.petcare.agent.config;
 
-import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
+import org.springframework.ai.chat.model.ChatModel;
 import com.alibaba.cloud.ai.graph.agent.ReactAgent;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.resolution.StaticToolCallbackResolver;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
@@ -15,6 +16,7 @@ import pvt.mktech.petcare.agent.core.Agent;
 import pvt.mktech.petcare.agent.core.ReactAgentAdapter;
 import pvt.mktech.petcare.agent.orchestrator.AgentOrchestrator;
 import pvt.mktech.petcare.agent.repository.AgentExecutionRepository;
+import pvt.mktech.petcare.infrastructure.config.NonNullTextChatModelDecorator;
 
 import java.util.List;
 
@@ -32,8 +34,10 @@ public class AgentAutoConfiguration {
      * React Agent 原生实例（由 Spring AI Alibaba 构建）
      */
     @Bean
-    public ReactAgent reactAgent(DashScopeChatModel dashScopeChatModel, AgentProperties agentProperties, List<ToolCallback> tools) throws Exception {
-        ChatClient chatClient = ChatClient.create(dashScopeChatModel);
+    public ReactAgent reactAgent(@Qualifier("deepSeekChatModel") ChatModel chatModel, AgentProperties agentProperties, List<ToolCallback> tools) throws Exception {
+        // 包装 ChatModel，防止思考模型（如 DeepSeek deepseek-v4-flash）返回 null text 导致 NPE
+        ChatModel wrappedModel = new NonNullTextChatModelDecorator(chatModel);
+        ChatClient chatClient = ChatClient.create(wrappedModel);
         ToolCallbackResolver resolver = new StaticToolCallbackResolver(tools);
         
         String instruction = """
@@ -58,7 +62,7 @@ public class AgentAutoConfiguration {
                 .description("宠物关怀 AI 助手，支持多步推理和工具调用")
                 .instruction(instruction)
                 .chatClient(chatClient)
-                .model(dashScopeChatModel)
+                .model(wrappedModel)
                 .tools(tools)
                 .resolver(resolver)
                 .maxIterations(agentProperties.getMaxIterations())
