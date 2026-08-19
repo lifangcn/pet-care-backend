@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.apache.ibatis.type.JdbcType;
+
 /**
  * 动态表 实体类。
  */
@@ -54,7 +56,7 @@ public class Post implements Serializable {
     /**
      * 图片/视频URL数组
      */
-    @Column(typeHandler = StringListTypeHandler.class)
+    @Column(jdbcType = JdbcType.OTHER, typeHandler = StringListTypeHandler.class)
     private List<String> mediaUrls;
 
     /**
@@ -121,13 +123,13 @@ public class Post implements Serializable {
     /**
      * 更新时间
      */
-    @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP", onUpdateValue = "CURRENT_TIMESTAMP")
+    @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
     /**
      * 逻辑删除：0-正常，1-已删除
      */
-    @Column(value = "is_deleted", onInsertValue = "0")
+    @Column(value = "is_deleted")
     private Boolean isDeleted;
 
     /**

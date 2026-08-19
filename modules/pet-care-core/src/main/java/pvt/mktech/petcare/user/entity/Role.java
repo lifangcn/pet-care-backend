@@ -67,7 +67,7 @@ public class Role implements Serializable {
     /**
      * 逻辑删除：0-正常，1-已删除
      */
-    @Column(value = "is_deleted", onInsertValue = "0")
+    @Column(value = "is_deleted")
     private Boolean isDeleted;
 
     /**

@@ -10,6 +10,7 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 
 /**
@@ -23,7 +24,12 @@ public class StringListTypeHandler extends BaseTypeHandler<List<String>> {
     @Override
     public void setNonNullParameter(PreparedStatement ps, int i, List<String> parameter, JdbcType jdbcType) throws SQLException {
         try {
-            ps.setString(i, objectMapper.writeValueAsString(parameter));
+            String json = objectMapper.writeValueAsString(parameter);
+            if (JsonStringTypeHandler.isPostgreSql(ps)) {
+                ps.setObject(i, json, Types.OTHER);
+            } else {
+                ps.setString(i, json);
+            }
         } catch (JsonProcessingException e) {
             throw new SQLException("Error converting List<String> to JSON", e);
         }
@@ -55,4 +61,3 @@ public class StringListTypeHandler extends BaseTypeHandler<List<String>> {
         }
     }
 }
-

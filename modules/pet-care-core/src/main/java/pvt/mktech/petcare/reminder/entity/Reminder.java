@@ -2,14 +2,18 @@ package pvt.mktech.petcare.reminder.entity;
 
 import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Column;
 import com.mybatisflex.annotation.Table;
 import lombok.Data;
 import pvt.mktech.petcare.reminder.entity.codelist.RepeatTypeOfReminder;
 import pvt.mktech.petcare.reminder.entity.codelist.SourceTypeOfReminder;
+import pvt.mktech.petcare.social.handler.JsonStringTypeHandler;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import org.apache.ibatis.type.JdbcType;
 
 
 
@@ -89,6 +93,7 @@ public class Reminder implements Serializable {
     /**
      * 重复配置(自定义重复规则)
      */
+    @Column(value = "repeat_config", jdbcType = JdbcType.OTHER, typeHandler = JsonStringTypeHandler.class)
     private String repeatConfig;
 
     /**

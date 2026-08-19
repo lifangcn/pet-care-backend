@@ -1,6 +1,7 @@
 package pvt.mktech.petcare.social.service.impl;
 
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.social.entity.Label;
@@ -8,6 +9,7 @@ import pvt.mktech.petcare.social.mapper.LabelMapper;
 import pvt.mktech.petcare.social.service.LabelService;
 
 import java.util.List;
+import java.util.Locale;
 
 import static pvt.mktech.petcare.social.entity.table.LabelTableDef.LABEL;
 
@@ -37,7 +39,7 @@ public class LabelServiceImpl extends ServiceImpl<LabelMapper, Label> implements
     @Override
     public List<Label> suggestLabels(String keyword) {
         return list(QueryWrapper.create()
-                .where(LABEL.NAME.like("%" + keyword + "%"))
+                .where(QueryMethods.lower(LABEL.NAME).like("%" + keyword.toLowerCase(Locale.ROOT) + "%"))
                 .orderBy(LABEL.USE_COUNT.desc())
                 .limit(10));
     }

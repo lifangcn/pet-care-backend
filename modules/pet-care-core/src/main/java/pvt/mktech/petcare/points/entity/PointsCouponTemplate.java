@@ -80,13 +80,13 @@ public class PointsCouponTemplate implements Serializable {
     /**
      * 更新时间
      */
-    @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP", onUpdateValue = "CURRENT_TIMESTAMP")
+    @Column(value = "updated_at", onInsertValue = "CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
     /**
      * 逻辑删除：0-正常，1-已删除
      */
-    @Column(value = "is_deleted", onInsertValue = "0")
+    @Column(value = "is_deleted")
     private Boolean isDeleted;
 
     /**

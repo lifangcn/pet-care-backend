@@ -1,6 +1,7 @@
 package pvt.mktech.petcare.user.service.impl;
 
 import com.mybatisflex.core.query.QueryWrapper;
+import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import pvt.mktech.petcare.user.mapper.UserRoleMapper;
 import pvt.mktech.petcare.user.service.RoleService;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static pvt.mktech.petcare.user.entity.table.RoleTableDef.ROLE;
@@ -45,7 +47,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
 
     @Override
     public Role getRoleByCode(String roleCode) {
-        Role role = getOne(ROLE.ROLE_CODE.eq(roleCode));
+        Role role = getOne(QueryMethods.lower(ROLE.ROLE_CODE).eq(roleCode == null ? null : roleCode.toLowerCase(Locale.ROOT)));
         if (role == null) {
             throw new BusinessException(ErrorCode.ROLE_NOT_FOUND);
         }
@@ -61,7 +63,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
     @Override
     public Role createRole(Role role) {
         // 检查角色编码是否已存在
-        if (exists(ROLE.ROLE_CODE.eq(role.getRoleCode()))) {
+        if (exists(QueryMethods.lower(ROLE.ROLE_CODE).eq(role.getRoleCode().toLowerCase(Locale.ROOT)))) {
             throw new BusinessException(ErrorCode.ROLE_CODE_ALREADY_EXISTS);
         }
         save(role);
@@ -78,7 +80,7 @@ public class RoleServiceImpl extends ServiceImpl<RoleMapper, Role> implements Ro
         }
         // 检查角色编码是否已被其他角色使用
         QueryWrapper queryWrapper = QueryWrapper.create()
-                .where(ROLE.ROLE_CODE.eq(role.getRoleCode()))
+                .where(QueryMethods.lower(ROLE.ROLE_CODE).eq(role.getRoleCode().toLowerCase(Locale.ROOT)))
                 .and(ROLE.ID.ne(role.getId()));
         if (roleMapper.selectCountByQuery(queryWrapper) > 0) {
             throw new BusinessException(ErrorCode.ROLE_CODE_ALREADY_EXISTS);

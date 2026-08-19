@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
+import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
@@ -33,6 +34,7 @@ import pvt.mktech.petcare.user.service.UserService;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -72,7 +74,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Override
     public UserResponse getUserByUsername(String username) {
-        User user = getOne(USER.USERNAME.eq(username));
+        User user = getOne(QueryMethods.lower(USER.USERNAME).eq(username == null ? null : username.toLowerCase(Locale.ROOT)));
 
 
         if (user == null) {
@@ -124,7 +126,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     
     @Override
     public boolean checkUsernameExists(String username) {
-        return exists(USER.USERNAME.eq(username));
+        return exists(QueryMethods.lower(USER.USERNAME).eq(username == null ? null : username.toLowerCase(Locale.ROOT)));
     }
     
     @Override
@@ -236,7 +238,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Page<User> userPage = page(Page.of(pageNumber, pageSize), QueryWrapper.create().orderBy(USER.CREATED_AT.desc()));
 
         // 2. 查询 admin 角色
-        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(ROLE.ROLE_CODE.eq("admin")));
+        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(QueryMethods.lower(ROLE.ROLE_CODE).eq("admin")));
         Long adminRoleId = adminRole != null ? adminRole.getId() : null;
 
         // 3. 获取用户ID列表，查询对应的用户角色关联
@@ -278,7 +280,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Transactional(rollbackFor = Exception.class)
     public boolean updateAdminRole(Long userId, Boolean isAdmin) {
         // 1. 查询 admin 角色
-        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(ROLE.ROLE_CODE.eq("admin")));
+        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(QueryMethods.lower(ROLE.ROLE_CODE).eq("admin")));
         if (adminRole == null) {
             throw new BusinessException(ErrorCode.ROLE_NOT_FOUND);
         }
@@ -347,7 +349,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 查询 admin 角色
-        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(ROLE.ROLE_CODE.eq("admin")));
+        Role adminRole = roleMapper.selectOneByQuery(QueryWrapper.create().where(QueryMethods.lower(ROLE.ROLE_CODE).eq("admin")));
         Long adminRoleId = adminRole != null ? adminRole.getId() : null;
 
         // 判断是否是管理员
