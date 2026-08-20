@@ -1,6 +1,11 @@
 server:
   port: 8081
 
+petcare:
+  search:
+    content-backend: elasticsearch
+    business-zone: Asia/Shanghai
+
 spring:
   application:
     name: pet-care-ai
