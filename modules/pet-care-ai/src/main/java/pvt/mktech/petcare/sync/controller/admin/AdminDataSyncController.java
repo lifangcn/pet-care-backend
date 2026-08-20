@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/ai/sync")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "petcare.sync.enabled", havingValue = "true", matchIfMissing = true)
 public class AdminDataSyncController {
 
     private final DataMigrationService dataMigrationService;

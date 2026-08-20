@@ -7,6 +7,7 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.sync.dto.EsActivityDocument;
 import pvt.mktech.petcare.sync.dto.EsPostDocument;
@@ -31,6 +32,7 @@ import static pvt.mktech.petcare.sync.constants.SyncConstants.POST_INDEX;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "petcare.sync.enabled", havingValue = "true", matchIfMissing = true)
 public class DataMigrationService {
 
     private final PostMapper postMapper;

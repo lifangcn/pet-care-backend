@@ -2,6 +2,7 @@ package pvt.mktech.petcare.sync.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.sync.service.DataMigrationService;
 
@@ -16,6 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/ai/sync")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "petcare.sync.enabled", havingValue = "true", matchIfMissing = true)
 public class DataSyncController {
 
     private final DataMigrationService dataMigrationService;

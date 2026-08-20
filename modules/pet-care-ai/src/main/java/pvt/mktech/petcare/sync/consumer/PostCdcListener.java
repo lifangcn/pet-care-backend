@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.sync.dto.EsPostDocument;
 import pvt.mktech.petcare.sync.service.CdcHandlerService;
@@ -21,6 +22,7 @@ import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "petcare.sync.enabled", havingValue = "true", matchIfMissing = true)
 public class PostCdcListener {
 
     private final CdcHandlerService cdcHandlerService;

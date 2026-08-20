@@ -1,4 +1,10 @@
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  kafka:
+    bootstrap-servers: ""
   ai:
     chat:
       memory:
@@ -18,10 +24,18 @@ spring:
     enabled: false
 
 petcare:
+  elasticsearch:
+    enabled: false
+  sync:
+    enabled: false
   telemetry:
     store: postgresql
   search:
     content-backend: postgresql
+
+es:
+  index:
+    auto-init: false
 
 mybatis-flex:
   datasource:

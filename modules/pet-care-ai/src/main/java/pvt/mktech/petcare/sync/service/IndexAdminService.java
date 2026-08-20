@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.sync.constants.EsIndexConstants;
 import pvt.mktech.petcare.sync.constants.EsIndexMappings;
@@ -21,6 +22,7 @@ import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
  */
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "petcare.sync.enabled", havingValue = "true", matchIfMissing = true)
 public class IndexAdminService {
 
     private final ElasticsearchClient elasticsearchClient;

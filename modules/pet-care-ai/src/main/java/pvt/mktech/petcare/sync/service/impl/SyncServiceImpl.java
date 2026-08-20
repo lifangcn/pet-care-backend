@@ -3,6 +3,7 @@ package pvt.mktech.petcare.sync.service.impl;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.sync.service.SyncService;
 
@@ -14,6 +15,7 @@ import pvt.mktech.petcare.sync.service.SyncService;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "petcare.sync.enabled", havingValue = "true", matchIfMissing = true)
 public class SyncServiceImpl implements SyncService {
 
     private final ElasticsearchClient elasticsearchClient;

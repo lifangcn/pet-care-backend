@@ -7,6 +7,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.sync.constants.EsIndexConstants;
 
@@ -27,6 +28,7 @@ import static pvt.mktech.petcare.sync.constants.SyncConstants.POST_INDEX;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "petcare.search.content-backend", havingValue = "elasticsearch", matchIfMissing = true)
 public class HybridSearchService {
 
     private final ElasticsearchClient elasticsearchClient;

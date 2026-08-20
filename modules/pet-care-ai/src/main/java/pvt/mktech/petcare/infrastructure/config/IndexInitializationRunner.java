@@ -19,7 +19,7 @@ import pvt.mktech.petcare.sync.service.IndexAdminService;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "es.index.auto-init", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = {"petcare.sync.enabled", "es.index.auto-init"}, havingValue = "true", matchIfMissing = true)
 public class IndexInitializationRunner implements ApplicationRunner {
 
     private final IndexAdminService indexAdminService;

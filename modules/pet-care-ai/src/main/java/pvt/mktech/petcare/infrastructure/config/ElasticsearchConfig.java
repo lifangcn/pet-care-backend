@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.RestClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,6 +23,7 @@ import java.time.Instant;
  */
 @Slf4j
 @Configuration
+@ConditionalOnProperty(name = "petcare.elasticsearch.enabled", havingValue = "true", matchIfMissing = true)
 public class ElasticsearchConfig {
 
     /**
