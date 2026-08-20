@@ -1,0 +1,6 @@
+**
+!Dockerfile.runtime
+!app/
+!app/current
+!app/releases/
+!app/releases/**/*.jar

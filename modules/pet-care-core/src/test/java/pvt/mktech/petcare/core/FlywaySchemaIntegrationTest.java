@@ -39,10 +39,13 @@ class FlywaySchemaIntegrationTest {
         POSTGRES.start();
         try (Connection connection = openConnection(POSTGRES.getUsername(), POSTGRES.getPassword())) {
             execute(connection, "CREATE ROLE petcare_app NOLOGIN");
-            // pgvector installation requires elevated privileges, so this temporary test migration owner simulates deployment.
-            execute(connection, "CREATE ROLE " + MIGRATION_OWNER + " LOGIN SUPERUSER PASSWORD '" + MIGRATION_OWNER_PASSWORD + "'");
+            execute(connection, "CREATE ROLE " + MIGRATION_OWNER + " LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD '" + MIGRATION_OWNER_PASSWORD + "'");
             execute(connection, "CREATE ROLE " + APPLICATION_LOGIN + " LOGIN NOSUPERUSER PASSWORD '" + APPLICATION_LOGIN_PASSWORD + "'");
             execute(connection, "GRANT petcare_app TO " + APPLICATION_LOGIN);
+            execute(connection, "GRANT CREATE ON DATABASE " + POSTGRES.getDatabaseName() + " TO " + MIGRATION_OWNER);
+            execute(connection, "CREATE SCHEMA petcare AUTHORIZATION " + MIGRATION_OWNER);
+            execute(connection, "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA petcare");
+            execute(connection, "CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA petcare");
             execute(connection, "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\" WITH SCHEMA public");
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to bootstrap integration-test database roles", exception);

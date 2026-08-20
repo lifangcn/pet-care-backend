@@ -1,0 +1,9 @@
+conf/petcare.env
+app/
+data/
+logs/
+backups/
+incoming/
+*.jar
+*.htpasswd
+dist/

@@ -1,0 +1,240 @@
+name: petcare
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.1-pg16
+    container_name: petcare-postgres
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-petcare}
+      PETCARE_MIGRATOR_PASSWORD: ${PETCARE_MIGRATOR_PASSWORD}
+      PETCARE_CORE_DB_PASSWORD: ${PETCARE_CORE_DB_PASSWORD}
+      PETCARE_AI_DB_PASSWORD: ${PETCARE_AI_DB_PASSWORD}
+      TZ: Asia/Shanghai
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - max_connections=30
+      - -c
+      - work_mem=4MB
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./postgres/init/01-bootstrap.sh:/docker-entrypoint-initdb.d/01-bootstrap.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $${POSTGRES_DB} && psql -U postgres -d $${POSTGRES_DB} -tAc \"SELECT EXISTS (SELECT FROM pg_roles WHERE rolname = 'petcare_migrator') AND EXISTS (SELECT FROM pg_roles WHERE rolname = 'petcare_app') AND (SELECT count(*) = 2 FROM pg_extension WHERE extname IN ('vector','pg_trgm'))\" | grep -q t"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [backend]
+    logging: *default-logging
+
+  redis:
+    image: redis:7.4.2-alpine
+    container_name: petcare-redis
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      TZ: Asia/Shanghai
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD}
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --maxmemory
+      - 160mb
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - ./data/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [backend]
+    logging: *default-logging
+
+  kafka:
+    image: apache/kafka:3.9.1
+    container_name: petcare-kafka
+    restart: unless-stopped
+    mem_limit: 640m
+    environment:
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LOG_SEGMENT_BYTES: 134217728
+      KAFKA_LOG_RETENTION_BYTES: 268435456
+      KAFKA_HEAP_OPTS: -Xms256m -Xmx256m
+    volumes:
+      - ./data/kafka:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 8s
+      retries: 18
+      start_period: 30s
+    networks: [backend]
+    logging: *default-logging
+
+  kafka-init:
+    image: apache/kafka:3.9.1
+    container_name: petcare-kafka-init
+    restart: "no"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /bin/bash
+      - -ec
+      - |
+        for topic in core_reminder_pending core_reminder_send core_point_record_save core_user_register; do
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+            --create --if-not-exists --topic "$${topic}" --partitions 1 --replication-factor 1
+        done
+    networks: [backend]
+    logging: *default-logging
+
+  petcare-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+      args:
+        JAR_FILE: app/current/pet-care-core.jar
+    image: petcare-core:local
+    container_name: petcare-core
+    restart: unless-stopped
+    mem_limit: 640m
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,postgresql
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-petcare}
+      POSTGRES_USER: petcare_core
+      POSTGRES_PASSWORD: ${PETCARE_CORE_DB_PASSWORD}
+      FLYWAY_USER: petcare_migrator
+      FLYWAY_PASSWORD: ${PETCARE_MIGRATOR_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SA_TOKEN_JWT_SECRET_KEY: ${SA_TOKEN_JWT_SECRET_KEY}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      AUTH_DEMO_ENABLED: ${AUTH_DEMO_ENABLED:?AUTH_DEMO_ENABLED is required}
+      OSS_ENDPOINT: ${OSS_ENDPOINT}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET}
+      OSS_BUCKET_NAME: ${OSS_BUCKET_NAME}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 8
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: 1
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx320m -XX:MaxMetaspaceSize=160m -XX:+ExitOnOutOfMemoryError
+      TZ: Asia/Shanghai
+    ports:
+      - 127.0.0.1:8080:8080
+    volumes:
+      - ./logs/core:/app/logs
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      kafka-init: {condition: service_completed_successfully}
+    networks: [backend, egress, panel]
+    logging: *default-logging
+
+  petcare-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile.runtime
+      args:
+        JAR_FILE: app/current/pet-care-ai.jar
+    image: petcare-ai:local
+    container_name: petcare-ai
+    restart: unless-stopped
+    mem_limit: 896m
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,postgresql
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-petcare}
+      POSTGRES_USER: petcare_ai
+      POSTGRES_PASSWORD: ${PETCARE_AI_DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CORE_SERVICE_URL: http://petcare-core:8080
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SA_TOKEN_JWT_SECRET_KEY: ${SA_TOKEN_JWT_SECRET_KEY}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_CHAT_MODEL: ${DEEPSEEK_CHAT_MODEL}
+      ZHIPUAI_API_KEY: ${ZHIPUAI_API_KEY}
+      OSS_ENDPOINT: ${OSS_ENDPOINT}
+      OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID}
+      OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET}
+      OSS_BUCKET_NAME: ${OSS_BUCKET_NAME}
+      JAVA_TOOL_OPTIONS: -Xms96m -Xmx448m -XX:MaxMetaspaceSize=192m -XX:+ExitOnOutOfMemoryError
+      TZ: Asia/Shanghai
+    ports:
+      - 127.0.0.1:8081:8081
+    volumes:
+      - ./logs/ai:/app/logs
+    tmpfs:
+      - /tmp:size=96m,mode=1777
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/8081'"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 90s
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      petcare-core: {condition: service_healthy}
+    networks: [backend, egress, panel]
+    logging: *default-logging
+
+networks:
+  backend:
+    internal: true
+  egress: {}
+  panel:
+    external: true
+    name: 1panel-network

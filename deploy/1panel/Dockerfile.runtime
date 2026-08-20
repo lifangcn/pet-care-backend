@@ -1,0 +1,15 @@
+FROM eclipse-temurin:21.0.8_9-jre-jammy
+
+ARG JAR_FILE
+
+RUN groupadd --gid 10001 petcare \
+    && useradd --uid 10001 --gid petcare --home-dir /app --create-home --shell /usr/sbin/nologin petcare \
+    && mkdir -p /app/logs \
+    && chown -R petcare:petcare /app
+
+COPY --chown=petcare:petcare ${JAR_FILE} /app/app.jar
+RUN chmod 0444 /app/app.jar
+
+USER 10001:10001
+WORKDIR /app
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
