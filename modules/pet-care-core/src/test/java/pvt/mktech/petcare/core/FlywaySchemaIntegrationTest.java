@@ -75,6 +75,7 @@ class FlywaySchemaIntegrationTest {
             assertSearchPathExtensionSupport(connection);
             assertBusinessTables(connection);
             assertVectorStore(connection);
+            assertAiTelemetryTables(connection);
             assertIdentityPrimaryKeys(connection);
             assertConstraintsAndIndexes(connection);
             assertContentSearchIndexes(connection);
@@ -148,6 +149,14 @@ class FlywaySchemaIntegrationTest {
                     """)).isEqualTo(1);
             assertThat(queryForInt(connection, """
                     SELECT count(*)
+                    FROM (VALUES ('petcare.chat_trace'), ('petcare.agent_execution')) AS telemetry(table_name)
+                    WHERE has_table_privilege(current_user, telemetry.table_name, 'SELECT')
+                      AND has_table_privilege(current_user, telemetry.table_name, 'INSERT')
+                      AND has_table_privilege(current_user, telemetry.table_name, 'UPDATE')
+                      AND has_table_privilege(current_user, telemetry.table_name, 'DELETE')
+                    """)).isEqualTo(2);
+            assertThat(queryForInt(connection, """
+                    SELECT count(*)
                     WHERE has_sequence_privilege(current_user, 'petcare.tb_user_id_seq', 'USAGE')
                       AND has_sequence_privilege(current_user, 'petcare.tb_user_id_seq', 'SELECT')
                       AND has_function_privilege(current_user, 'petcare.touch_updated_at()', 'EXECUTE')
@@ -175,6 +184,7 @@ class FlywaySchemaIntegrationTest {
                     .isEqualTo(1);
             assertThat(executeUpdate(connection, "DELETE FROM vector_store WHERE id = '" + vectorStoreId + "'"))
                     .isEqualTo(1);
+            assertAiTelemetryCrudAndUpsert(connection);
 
             assertSqlRejected(connection, "CREATE TABLE petcare.application_denied (id bigint)");
             assertSqlRejected(connection, "CREATE INDEX application_denied_vector_store_idx ON petcare.vector_store (content)");
@@ -211,6 +221,59 @@ class FlywaySchemaIntegrationTest {
                 return result.getObject("id", UUID.class);
             }
         }
+    }
+
+    private void assertAiTelemetryCrudAndUpsert(Connection connection) throws SQLException {
+        UUID traceId = UUID.randomUUID();
+        UUID executionId = UUID.randomUUID();
+        execute(connection, """
+                INSERT INTO chat_trace (trace_id, occurred_at)
+                VALUES ('%s', CURRENT_TIMESTAMP)
+                """.formatted(traceId));
+        assertThat(executeUpdate(connection, """
+                INSERT INTO chat_trace (trace_id, occurred_at, duration_ms)
+                VALUES ('%s', CURRENT_TIMESTAMP, 1)
+                ON CONFLICT (trace_id) DO UPDATE SET duration_ms = EXCLUDED.duration_ms
+                """.formatted(traceId))).isEqualTo(1);
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM chat_trace
+                WHERE trace_id = '%s'
+                  AND duration_ms = 1
+                  AND request_data = '{}'::jsonb
+                  AND response_data = '{}'::jsonb
+                  AND tool_calls = '[]'::jsonb
+                  AND metadata = '{}'::jsonb
+                  AND expires_at > CURRENT_TIMESTAMP
+                """.formatted(traceId))).isEqualTo(1);
+        assertThat(executeUpdate(connection, "DELETE FROM chat_trace WHERE trace_id = '" + traceId + "'"))
+                .isEqualTo(1);
+
+        execute(connection, """
+                INSERT INTO agent_execution (
+                    execution_id, agent_type, query, success, total_steps, tool_calls, total_duration_ms, created_at
+                )
+                VALUES ('%s', 'integration-test', 'test query', true, 0, 0, 0, CURRENT_TIMESTAMP)
+                """.formatted(executionId));
+        assertThat(executeUpdate(connection, """
+                INSERT INTO agent_execution (
+                    execution_id, agent_type, query, success, total_steps, tool_calls, total_duration_ms, created_at
+                )
+                VALUES ('%s', 'integration-test', 'test query', true, 1, 0, 0, CURRENT_TIMESTAMP)
+                ON CONFLICT (execution_id) DO UPDATE SET total_steps = EXCLUDED.total_steps
+                """.formatted(executionId))).isEqualTo(1);
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM agent_execution
+                WHERE execution_id = '%s'
+                  AND total_steps = 1
+                  AND tool_calls = 0
+                  AND total_duration_ms = 0
+                  AND steps = '[]'::jsonb
+                  AND expires_at > CURRENT_TIMESTAMP
+                """.formatted(executionId))).isEqualTo(1);
+        assertThat(executeUpdate(connection, "DELETE FROM agent_execution WHERE execution_id = '" + executionId + "'"))
+                .isEqualTo(1);
     }
 
     private void assertSearchPathExtensionSupport(Connection connection) throws SQLException {
@@ -296,6 +359,150 @@ class FlywaySchemaIntegrationTest {
                 """)).isEqualTo(1);
     }
 
+    private void assertAiTelemetryTables(Connection connection) throws SQLException {
+        assertThat(queryForStrings(connection, """
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'petcare'
+                  AND table_name IN ('chat_trace', 'agent_execution')
+                """)).containsExactlyInAnyOrder("chat_trace", "agent_execution");
+        assertThat(queryForStrings(connection, """
+                SELECT table_name || '.' || column_name || ':' || data_type || ':' || is_nullable
+                FROM information_schema.columns
+                WHERE table_schema = 'petcare'
+                  AND (
+                      (table_name = 'chat_trace' AND column_name IN (
+                          'trace_id', 'conversation_id', 'session_id', 'user_id', 'occurred_at', 'duration_ms',
+                          'request_data', 'response_data', 'rag_data', 'tool_calls', 'error_data', 'metadata', 'expires_at'
+                      ))
+                      OR (table_name = 'agent_execution' AND column_name IN (
+                          'execution_id', 'agent_type', 'conversation_id', 'user_id', 'query', 'steps', 'final_answer',
+                          'success', 'reason', 'total_steps', 'tool_calls', 'total_duration_ms', 'created_at', 'expires_at'
+                      ))
+                  )
+                """)).containsExactlyInAnyOrder(
+                "chat_trace.trace_id:uuid:NO", "chat_trace.conversation_id:text:YES", "chat_trace.session_id:text:YES",
+                "chat_trace.user_id:bigint:YES", "chat_trace.occurred_at:timestamp with time zone:NO",
+                "chat_trace.duration_ms:integer:YES", "chat_trace.request_data:jsonb:NO",
+                "chat_trace.response_data:jsonb:NO", "chat_trace.rag_data:jsonb:YES", "chat_trace.tool_calls:jsonb:NO",
+                "chat_trace.error_data:jsonb:YES", "chat_trace.metadata:jsonb:NO",
+                "chat_trace.expires_at:timestamp with time zone:NO", "agent_execution.execution_id:uuid:NO",
+                "agent_execution.agent_type:text:NO", "agent_execution.conversation_id:text:YES",
+                "agent_execution.user_id:bigint:YES", "agent_execution.query:text:NO", "agent_execution.steps:jsonb:NO",
+                "agent_execution.final_answer:text:YES", "agent_execution.success:boolean:NO", "agent_execution.reason:text:YES",
+                "agent_execution.total_steps:integer:NO", "agent_execution.tool_calls:integer:NO",
+                "agent_execution.total_duration_ms:bigint:NO", "agent_execution.created_at:timestamp with time zone:NO",
+                "agent_execution.expires_at:timestamp with time zone:NO");
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM pg_constraint telemetry_constraint
+                JOIN pg_class table_name ON table_name.oid = telemetry_constraint.conrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                WHERE namespace.nspname = 'petcare'
+                  AND table_name.relname IN ('chat_trace', 'agent_execution')
+                  AND telemetry_constraint.contype = 'p'
+                """)).isEqualTo(2);
+        assertThat(queryForStrings(connection, """
+                SELECT telemetry_constraint.conname
+                FROM pg_constraint telemetry_constraint
+                JOIN pg_class table_name ON table_name.oid = telemetry_constraint.conrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                WHERE namespace.nspname = 'petcare'
+                  AND table_name.relname IN ('chat_trace', 'agent_execution')
+                  AND telemetry_constraint.contype = 'c'
+                  AND pg_get_constraintdef(telemetry_constraint.oid) LIKE '%>= 0%'
+                """)).containsExactlyInAnyOrder(
+                "ck_chat_trace_duration_ms", "ck_agent_execution_total_steps",
+                "ck_agent_execution_tool_calls", "ck_agent_execution_total_duration_ms");
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM pg_attrdef default_expression
+                JOIN pg_class table_name ON table_name.oid = default_expression.adrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                JOIN pg_attribute attribute
+                    ON attribute.attrelid = default_expression.adrelid
+                   AND attribute.attnum = default_expression.adnum
+                WHERE namespace.nspname = 'petcare'
+                  AND (
+                      (table_name.relname = 'chat_trace' AND attribute.attname IN (
+                          'request_data', 'response_data', 'tool_calls', 'metadata', 'expires_at'
+                      ))
+                      OR (table_name.relname = 'agent_execution' AND attribute.attname IN ('steps', 'expires_at'))
+                  )
+                """)).isEqualTo(7);
+        assertThat(queryForStrings(connection, """
+                SELECT index_name.relname || ':' || access_method.amname || ':' || attribute.attname
+                FROM pg_index index
+                JOIN pg_class index_name ON index_name.oid = index.indexrelid
+                JOIN pg_class table_name ON table_name.oid = index.indrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                JOIN pg_am access_method ON access_method.oid = index_name.relam
+                JOIN pg_attribute attribute
+                    ON attribute.attrelid = index.indrelid
+                   AND attribute.attnum = index.indkey[0]
+                WHERE namespace.nspname = 'petcare'
+                  AND index_name.relname IN ('idx_chat_trace_expires_at', 'idx_agent_execution_expires_at')
+                """)).containsExactlyInAnyOrder(
+                "idx_chat_trace_expires_at:btree:expires_at", "idx_agent_execution_expires_at:btree:expires_at");
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM pg_index index
+                JOIN pg_class table_name ON table_name.oid = index.indrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                WHERE namespace.nspname = 'petcare'
+                  AND table_name.relname IN ('chat_trace', 'agent_execution')
+                """)).isEqualTo(4);
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM pg_class table_name
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                JOIN pg_roles owner ON owner.oid = table_name.relowner
+                WHERE namespace.nspname = 'petcare'
+                  AND table_name.relname IN ('chat_trace', 'agent_execution')
+                  AND owner.rolname = '%s'
+                """.formatted(MIGRATION_OWNER))).isEqualTo(2);
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.chat_trace (trace_id, occurred_at, duration_ms)
+                VALUES ('%s', CURRENT_TIMESTAMP, -1)
+                """.formatted(UUID.randomUUID()));
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.agent_execution (
+                    execution_id, agent_type, query, success, total_steps, tool_calls, total_duration_ms, created_at
+                )
+                VALUES ('%s', 'test', 'test', true, -1, 0, 0, CURRENT_TIMESTAMP)
+                """.formatted(UUID.randomUUID()));
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.agent_execution (
+                    execution_id, agent_type, query, success, total_steps, tool_calls, total_duration_ms, created_at
+                )
+                VALUES ('%s', 'test', 'test', true, 0, -1, 0, CURRENT_TIMESTAMP)
+                """.formatted(UUID.randomUUID()));
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.agent_execution (
+                    execution_id, agent_type, query, success, total_steps, tool_calls, total_duration_ms, created_at
+                )
+                VALUES ('%s', 'test', 'test', true, 0, 0, -1, CURRENT_TIMESTAMP)
+                """.formatted(UUID.randomUUID()));
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.agent_execution (
+                    execution_id, agent_type, query, success, total_steps, tool_calls, total_duration_ms, created_at
+                )
+                VALUES ('%s', 'test', 'test', true, NULL, 0, 0, CURRENT_TIMESTAMP)
+                """.formatted(UUID.randomUUID()));
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.agent_execution (
+                    execution_id, agent_type, query, success, total_steps, tool_calls, total_duration_ms, created_at
+                )
+                VALUES ('%s', 'test', 'test', true, 0, NULL, 0, CURRENT_TIMESTAMP)
+                """.formatted(UUID.randomUUID()));
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.agent_execution (
+                    execution_id, agent_type, query, success, total_steps, tool_calls, total_duration_ms, created_at
+                )
+                VALUES ('%s', 'test', 'test', true, 0, 0, NULL, CURRENT_TIMESTAMP)
+                """.formatted(UUID.randomUUID()));
+    }
+
     private void assertIdentityPrimaryKeys(Connection connection) throws SQLException {
         assertThat(queryForInt(connection, """
                 SELECT count(*)
@@ -358,6 +565,7 @@ class FlywaySchemaIntegrationTest {
                 SELECT table_name || '.' || column_name
                 FROM information_schema.columns
                 WHERE table_schema = 'petcare'
+                  AND table_name LIKE 'tb_%'
                   AND data_type = 'jsonb'
                 """)).containsExactlyInAnyOrder(
                 "tb_reminder.repeat_config",
@@ -524,9 +732,9 @@ class FlywaySchemaIntegrationTest {
         assertThat(queryForStrings(connection, """
                 SELECT version || ':' || success
                 FROM petcare.flyway_schema_history
-                WHERE version IN ('1', '2', '3', '4', '5', '6', '7', '8')
+                WHERE version IN ('1', '2', '3', '4', '5', '6', '7', '8', '9')
                 """)).containsExactlyInAnyOrder(
-                "1:true", "2:true", "3:true", "4:true", "5:true", "6:true", "7:true", "8:true");
+                "1:true", "2:true", "3:true", "4:true", "5:true", "6:true", "7:true", "8:true", "9:true");
     }
 
     private Set<String> queryForStrings(Connection connection, String sql) throws SQLException {
