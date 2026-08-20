@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import pvt.mktech.petcare.chat.dto.RepeatTypeOfReminder;
+import pvt.mktech.petcare.common.web.InternalApiHeaders;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +19,8 @@ public class ReminderTool {
 
     @Value("${core.service.url:http://localhost:8080}")
     private String coreServiceUrl;
+    @Value("${core.service.token}")
+    private String coreServiceToken;
     @Resource
     private WebClient.Builder webClientBuilder;
 
@@ -41,6 +44,7 @@ public class ReminderTool {
             String response = webClientBuilder.build()
                     .post()
                     .uri(coreServiceUrl + "/internal/reminder")
+                    .header(InternalApiHeaders.SERVICE_TOKEN, coreServiceToken)
                     .bodyValue(saveRequest)
                     .retrieve()
                     .bodyToMono(String.class)

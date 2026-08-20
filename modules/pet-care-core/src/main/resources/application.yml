@@ -9,6 +9,10 @@ spring:
   application:
     name: pet-care-core
 
+petcare:
+  auth:
+    demo-enabled: ${AUTH_DEMO_ENABLED:false}
+
 # 内部服务间调用配置
 internal:
   api:

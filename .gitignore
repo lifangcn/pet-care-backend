@@ -1,6 +1,8 @@
 ### CUSTOM ###
 application-prod.yml
 application-local.yml
+!modules/pet-care-core/src/main/resources/application-prod.yml
+!modules/pet-care-ai/src/main/resources/application-prod.yml
 
 .lingma
 .aiassistant

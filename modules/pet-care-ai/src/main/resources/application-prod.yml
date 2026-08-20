@@ -1,0 +1,162 @@
+server:
+  port: 8081
+
+spring:
+  # Redis 配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  # Elasticsearch 配置
+  elasticsearch:
+    uris: http://pet-care-es-c53.public.cn-hangzhou.es-serverless.aliyuncs.com:9200
+    username: ${ES_USERNAME}
+    password: ${ES_PASSWORD}
+
+  # Kafka 配置
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 2
+      properties:
+        enable.idempotence: true
+    consumer:
+      group-id: es-sync-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 3
+    listener:
+      ack-mode: manual
+      concurrency: 3
+
+  # AI 配置
+  ai:
+    # DeepSeek（OpenAI 兼容协议）
+    openai:
+      api-key: ${DEEPSEEK_API_KEY}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+      chat:
+        options:
+          model: ${DEEPSEEK_CHAT_MODEL:deepseek-v4-flash}
+    # 智谱 AI（Embedding 模型）
+    zhipuai:
+      api-key: ${ZHIPUAI_API_KEY}
+      embedding:
+        options:
+          model: embedding-3
+          dimensions: 1024
+    # 会话记忆 Redis 配置
+    chat:
+      memory:
+        redis:
+          timeout: 5000
+          max-messages: 10
+          host: ${REDIS_HOST:localhost}
+          port: ${REDIS_PORT:6379}
+          password: ${REDIS_PASSWORD}
+        semantic:
+          enabled: true
+
+# Mybatis-Flex 多数据源配置
+mybatis-flex:
+  datasource:
+    # 主数据源 (pet_care_ai) - 默认数据源
+    ai:
+      url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/pet_care_ai?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+      username: ${MYSQL_USER:pet_care_ai}
+      password: ${MYSQL_PASSWORD}
+      hikari:
+        maximum-pool-size: 20
+        minimum-idle: 5
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+    # Core 数据源（用于 CDC 聚合查询）
+    core:
+      url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+      username: ${MYSQL_USER:pet_care_core}
+      password: ${MYSQL_PASSWORD}
+      type: hikari
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+
+# 应用启动时自动创建所需的索引
+es:
+  index:
+    auto-init: true
+
+# Aliyun OSS 配置
+aliyun:
+  oss:
+    endpoint: ${OSS_ENDPOINT:oss-cn-hangzhou.aliyuncs.com}
+    access-key-id: ${OSS_ACCESS_KEY_ID}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET}
+    bucket-name: ${OSS_BUCKET_NAME:lifang-pet-care}
+    enabled: true
+
+# Core 服务地址
+core:
+  service:
+    url: ${CORE_SERVICE_URL:http://localhost:8080}
+    token: ${INTERNAL_SERVICE_TOKEN}
+
+# JWT配置
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+# SA-Token 配置（与 Core 共享 JWT 密钥，用于解析 SA-Token 签发的 token）
+sa-token:
+  token-name: Authorization
+  timeout: 86400
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-prefix: Bearer
+  is-read-header: true
+  is-read-cookie: false
+  is-write-header: true
+  jwt-secret-key: ${SA_TOKEN_JWT_SECRET_KEY}
+
+# Knife4j 配置（生产环境关闭）
+knife4j:
+  production: true
+
+# SpringDoc OpenAPI 配置（生产环境关闭）
+springdoc:
+  swagger-ui:
+    enabled: false
+
+# 日志配置
+logging:
+  level:
+    pvt.mktech.petcare.ai: WARN
+    org.springframework.ai: WARN
+    org.apache.kafka: WARN
+    org.springframework.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: ./logs/pet-care-ai.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 7
+      total-size-cap: 500MB

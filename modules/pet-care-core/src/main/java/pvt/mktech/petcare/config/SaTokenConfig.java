@@ -1,6 +1,5 @@
 package pvt.mktech.petcare.config;
 
-import cn.dev33.satoken.SaManager;
 import cn.dev33.satoken.context.SaHolder;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.interceptor.SaInterceptor;
@@ -10,11 +9,13 @@ import cn.dev33.satoken.stp.StpUtil;
 import cn.hutool.core.util.StrUtil;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import pvt.mktech.petcare.common.web.UserContext;
+import pvt.mktech.petcare.shared.security.InternalApiAuthInterceptor;
 
 /**
  * SA-Token 配置类（整合 JWT）
@@ -23,12 +24,14 @@ import pvt.mktech.petcare.common.web.UserContext;
  */
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class SaTokenConfig implements WebMvcConfigurer {
+
+    private final InternalApiAuthInterceptor internalApiAuthInterceptor;
 
     @PostConstruct
     public void init() {
         log.info("SA-Token JWT 模式配置初始化完成");
-        log.info("当前版本：{}", SaManager.getConfig());
     }
 
     /**
@@ -49,6 +52,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
         .addPathPatterns("/**")
         .excludePathPatterns(
             "/auth/**",
+            "/internal/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/doc.html",
@@ -57,6 +61,10 @@ public class SaTokenConfig implements WebMvcConfigurer {
             "/actuator/**",
             "/error"
         );
+
+        registry.addInterceptor(internalApiAuthInterceptor)
+                .order(-1)
+                .addPathPatterns("/internal/**");
     }
 
     /**

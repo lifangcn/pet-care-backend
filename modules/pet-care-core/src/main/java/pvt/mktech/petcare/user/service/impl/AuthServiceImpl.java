@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RRateLimiter;
 import org.redisson.api.RateType;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,9 +61,13 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
     @Resource
     private RedissonClient redissonClient;
 
+    @Value("${petcare.auth.demo-enabled:false}")
+    private boolean demoEnabled;
+
 
     @Override
     public Result<String> sendCode(String phone, HttpSession httpSession) {
+        ensureDemoEnabled();
         if (ValidatorUtil.isPhoneInvalid(phone)) {
             throw new BusinessException(ErrorCode.PHONE_FORMAT_ERROR);
         }
@@ -76,13 +81,14 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
 
         String code = RandomUtil.randomNumbers(6);
         redisUtil.set(LOGIN_CODE_KEY + phone, code, Duration.ofSeconds(LOGIN_CODE_TTL));
-        log.info("向手机发送验证码: {}", code);
+        log.info("演示验证码已生成");
         return Result.success(code);
     }
 
     @Transactional
     @Override
     public Result<LoginInfoDto> login(LoginRequest request) {
+        ensureDemoEnabled();
         String phone = request.getPhone();
         String code = request.getCode();
 
@@ -160,6 +166,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
 
     @Override
     public LoginInfoDto refreshToken(LoginInfoDto dto) {
+        ensureDemoEnabled();
         String refreshToken = dto.getRefreshToken();
         if (StrUtil.isBlank(refreshToken)) {
             throw new BusinessException(ErrorCode.TOKEN_INVALID);
@@ -211,6 +218,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
 
     @Override
     public Result<WechatQRCodeResponse> getWechatQRCode() {
+        ensureDemoEnabled();
         String ticket = "platform_review_too_strict_mock_ticket";
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         QrCodeUtil.generate(ticket, 300, 300, "jpg", stream);
@@ -228,6 +236,7 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
 
     @Override
     public Result<WechatScanStatus> checkWechatScanStatus(String ticket) {
+        ensureDemoEnabled();
         String status = redisUtil.get(WECHAT_LOGIN_TICKET_KEY + ticket);
         if (status == null) {
             return Result.success(WechatScanStatus.builder()
@@ -263,5 +272,11 @@ public class AuthServiceImpl extends ServiceImpl<UserMapper, User> implements Au
         return Result.success(WechatScanStatus.builder()
                 .status(status)
                 .build());
+    }
+
+    private void ensureDemoEnabled() {
+        if (!demoEnabled) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "演示登录未启用");
+        }
     }
 }

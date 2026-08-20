@@ -1,0 +1,100 @@
+server:
+  port: 8080
+
+spring:
+  # MySQL 配置
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/pet_care_core?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    username: ${MYSQL_USER:pet_care_core}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      validation-timeout: 3000
+      leak-detection-threshold: 60000
+      pool-name: PetCareHikariPool
+  # Redis 配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      database: 0
+      timeout: 3000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  # Kafka 配置（生产环境使用环境变量）
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 2
+      properties:
+        enable.idempotence: true
+    consumer:
+      group-id: cdc-consumer-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 10
+    listener:
+      ack-mode: manual
+      concurrency: 3
+
+# Aliyun OSS 配置
+aliyun:
+  oss:
+    endpoint: ${OSS_ENDPOINT:oss-cn-hangzhou.aliyuncs.com}
+    access-key-id: ${OSS_ACCESS_KEY_ID}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET}
+    bucket-name: ${OSS_BUCKET_NAME:lifang-pet-care}
+    enabled: true
+
+# JWT配置
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+# Sa-Token 配置
+sa-token:
+  jwt-secret-key: ${SA_TOKEN_JWT_SECRET_KEY}
+
+# Knife4j 配置（生产环境关闭）
+knife4j:
+  production: true
+
+# SpringDoc OpenAPI 配置（生产环境关闭）
+springdoc:
+  swagger-ui:
+    enabled: false
+
+internal:
+  api:
+    token: ${INTERNAL_SERVICE_TOKEN}
+
+# 日志配置
+logging:
+  level:
+    pvt.mktech.petcare.core: INFO
+    pvt.mktech.petcare.club: INFO
+    com.mybatisflex: INFO
+    com.zaxxer.hikari: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"
+  file:
+    name: ./logs/pet-care-core.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 7
+      total-size-cap: 500MB

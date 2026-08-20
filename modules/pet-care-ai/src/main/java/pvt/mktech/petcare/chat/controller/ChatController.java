@@ -16,6 +16,7 @@ import pvt.mktech.petcare.chat.repository.ChatHistoryRepository;
 import pvt.mktech.petcare.chat.sink.ChatMessageSink;
 import pvt.mktech.petcare.common.constant.CommonConstant;
 import pvt.mktech.petcare.common.web.UserContext;
+import pvt.mktech.petcare.common.web.InternalApiHeaders;
 import pvt.mktech.petcare.shared.ConversationIdGenerator;
 import reactor.core.publisher.Flux;
 
@@ -46,6 +47,9 @@ public class ChatController {
 
     @Value("${core.service.url:http://localhost:8080}")
     private String coreServiceUrl;
+
+    @Value("${core.service.token}")
+    private String coreServiceToken;
 
     /**
      * RAG对话接口（基于向量数据库检索）
@@ -99,6 +103,7 @@ public class ChatController {
             webClientBuilder.build()
                     .post()
                     .uri(coreServiceUrl + "/internal/points/consume-ai")
+                    .header(InternalApiHeaders.SERVICE_TOKEN, coreServiceToken)
                     .bodyValue(new AiPointsConsumeRequest(userId, conversationId, actionType))
                     .retrieve()
                     .bodyToMono(Void.class)
