@@ -76,6 +76,7 @@ class FlywaySchemaIntegrationTest {
             assertBusinessTables(connection);
             assertVectorStore(connection);
             assertAiTelemetryTables(connection);
+            assertChatHistoryTables(connection);
             assertIdentityPrimaryKeys(connection);
             assertConstraintsAndIndexes(connection);
             assertContentSearchIndexes(connection);
@@ -157,6 +158,14 @@ class FlywaySchemaIntegrationTest {
                     """)).isEqualTo(2);
             assertThat(queryForInt(connection, """
                     SELECT count(*)
+                    FROM (VALUES ('petcare.chat_session'), ('petcare.chat_message')) AS chat_history(table_name)
+                    WHERE has_table_privilege(current_user, chat_history.table_name, 'SELECT')
+                      AND has_table_privilege(current_user, chat_history.table_name, 'INSERT')
+                      AND has_table_privilege(current_user, chat_history.table_name, 'UPDATE')
+                      AND has_table_privilege(current_user, chat_history.table_name, 'DELETE')
+                    """)).isEqualTo(2);
+            assertThat(queryForInt(connection, """
+                    SELECT count(*)
                     WHERE has_sequence_privilege(current_user, 'petcare.tb_user_id_seq', 'USAGE')
                       AND has_sequence_privilege(current_user, 'petcare.tb_user_id_seq', 'SELECT')
                       AND has_function_privilege(current_user, 'petcare.touch_updated_at()', 'EXECUTE')
@@ -185,6 +194,7 @@ class FlywaySchemaIntegrationTest {
             assertThat(executeUpdate(connection, "DELETE FROM vector_store WHERE id = '" + vectorStoreId + "'"))
                     .isEqualTo(1);
             assertAiTelemetryCrudAndUpsert(connection);
+            assertChatHistoryCrud(connection);
 
             assertSqlRejected(connection, "CREATE TABLE petcare.application_denied (id bigint)");
             assertSqlRejected(connection, "CREATE INDEX application_denied_vector_store_idx ON petcare.vector_store (content)");
@@ -522,6 +532,150 @@ class FlywaySchemaIntegrationTest {
                 """)).isEqualTo(17);
     }
 
+    private void assertChatHistoryTables(Connection connection) throws SQLException {
+        assertThat(queryForStrings(connection, """
+                SELECT table_name || '.' || column_name || ':' || data_type || ':' || is_nullable
+                FROM information_schema.columns
+                WHERE table_schema = 'petcare'
+                  AND ((table_name = 'chat_session' AND column_name IN
+                       ('user_id', 'session_id', 'name', 'created_at', 'updated_at', 'expires_at'))
+                    OR (table_name = 'chat_message' AND column_name IN
+                       ('id', 'user_id', 'session_id', 'conversation_id', 'role', 'content', 'metadata', 'created_at', 'expires_at')))
+                """)).containsExactlyInAnyOrder(
+                "chat_session.user_id:bigint:NO", "chat_session.session_id:character varying:NO",
+                "chat_session.name:character varying:NO", "chat_session.created_at:timestamp with time zone:NO",
+                "chat_session.updated_at:timestamp with time zone:NO", "chat_session.expires_at:timestamp with time zone:NO",
+                "chat_message.id:bigint:NO", "chat_message.user_id:bigint:NO",
+                "chat_message.session_id:character varying:NO", "chat_message.conversation_id:character varying:NO",
+                "chat_message.role:character varying:NO", "chat_message.content:text:NO",
+                "chat_message.metadata:jsonb:NO", "chat_message.created_at:timestamp with time zone:NO",
+                "chat_message.expires_at:timestamp with time zone:NO");
+        assertThat(queryForInt(connection, """
+                SELECT count(*) FROM information_schema.columns
+                WHERE table_schema = 'petcare' AND (
+                    (table_name = 'chat_session' AND column_name = 'session_id' AND character_maximum_length = 32)
+                    OR (table_name = 'chat_session' AND column_name = 'name' AND character_maximum_length = 100)
+                    OR (table_name = 'chat_message' AND column_name = 'conversation_id' AND character_maximum_length = 128)
+                    OR (table_name = 'chat_message' AND column_name = 'role' AND character_maximum_length = 16))
+                """)).isEqualTo(4);
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM pg_attribute attribute
+                JOIN pg_class table_name ON table_name.oid = attribute.attrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                WHERE namespace.nspname = 'petcare' AND table_name.relname = 'chat_message'
+                  AND attribute.attname = 'embedding' AND attribute.atttypid = 'petcare.vector'::regtype
+                  AND attribute.atttypmod = 1024
+                """)).isEqualTo(1);
+        assertThat(queryForStrings(connection, """
+                SELECT table_name.relname || ':' || table_constraint.conname || ':' || pg_get_constraintdef(table_constraint.oid)
+                FROM pg_constraint table_constraint
+                JOIN pg_class table_name ON table_name.oid = table_constraint.conrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                WHERE namespace.nspname = 'petcare'
+                  AND table_constraint.conname IN ('pk_chat_session', 'chat_message_pkey', 'fk_chat_message_session',
+                      'ck_chat_session_name', 'ck_chat_session_expires_at', 'ck_chat_message_role',
+                      'ck_chat_message_metadata_object', 'ck_chat_message_expires_at')
+                """)).hasSize(8);
+        assertThat(queryForString(connection, """
+                SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'fk_chat_message_session'
+                """)).contains("FOREIGN KEY (user_id, session_id)", "ON DELETE CASCADE");
+        assertThat(queryForStrings(connection, """
+                SELECT index_name.relname || ':' || access_method.amname
+                FROM pg_index index
+                JOIN pg_class index_name ON index_name.oid = index.indexrelid
+                JOIN pg_class table_name ON table_name.oid = index.indrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                JOIN pg_am access_method ON access_method.oid = index_name.relam
+                WHERE namespace.nspname = 'petcare' AND index_name.relname IN
+                  ('idx_chat_session_user_updated_at_session_id', 'idx_chat_session_expires_at',
+                   'idx_chat_message_owner_session_created_at_id', 'idx_chat_message_user_created_at',
+                   'idx_chat_message_expires_at', 'idx_chat_message_embedding_hnsw')
+                """)).containsExactlyInAnyOrder(
+                "idx_chat_session_user_updated_at_session_id:btree", "idx_chat_session_expires_at:btree",
+                "idx_chat_message_owner_session_created_at_id:btree", "idx_chat_message_user_created_at:btree",
+                "idx_chat_message_expires_at:btree", "idx_chat_message_embedding_hnsw:hnsw");
+        assertThat(queryForString(connection, """
+                SELECT pg_get_indexdef(index.indexrelid) || ':' || pg_get_expr(index.indpred, index.indrelid)
+                FROM pg_index index JOIN pg_class index_name ON index_name.oid = index.indexrelid
+                WHERE index_name.relname = 'idx_chat_message_embedding_hnsw'
+                """)).contains("vector_cosine_ops", "role", "'USER'::text", "embedding IS NOT NULL");
+        assertThat(queryForString(connection, """
+                SELECT pg_get_indexdef(index.indexrelid) FROM pg_index index
+                JOIN pg_class index_name ON index_name.oid = index.indexrelid
+                WHERE index_name.relname = 'idx_chat_session_user_updated_at_session_id'
+                """)).contains("user_id", "updated_at DESC", "session_id");
+        assertThat(queryForInt(connection, """
+                SELECT count(*) FROM pg_class table_name JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                JOIN pg_roles owner ON owner.oid = table_name.relowner
+                WHERE namespace.nspname = 'petcare' AND table_name.relname IN ('chat_session', 'chat_message')
+                  AND owner.rolname = '%s'
+                """.formatted(MIGRATION_OWNER))).isEqualTo(2);
+
+        execute(connection, """
+                INSERT INTO petcare.chat_session (user_id, session_id, created_at, updated_at, expires_at)
+                VALUES (10001, 'empty-session', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        assertThat(queryForString(connection, "SELECT name FROM petcare.chat_session WHERE user_id = 10001"))
+                .isEqualTo("新对话");
+        assertThat(queryForInt(connection, "SELECT count(*) FROM petcare.chat_message WHERE user_id = 10001"))
+                .isZero();
+        execute(connection, """
+                INSERT INTO petcare.chat_session (user_id, session_id, name, created_at, updated_at, expires_at)
+                VALUES (10002, 'owner-session', 'Owner', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        execute(connection, """
+                INSERT INTO petcare.chat_message (id, user_id, session_id, conversation_id, role, content, created_at, expires_at)
+                VALUES (10001, 10002, 'owner-session', 'conversation', 'USER', 'message', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        assertThat(queryForString(connection, "SELECT metadata::text FROM petcare.chat_message WHERE id = 10001"))
+                .isEqualTo("{}");
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.chat_message (id, user_id, session_id, conversation_id, role, content, created_at, expires_at)
+                VALUES (10002, 10003, 'owner-session', 'conversation', 'USER', 'cross owner', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.chat_session (user_id, session_id, name, created_at, updated_at, expires_at)
+                VALUES (10003, 'invalid-name', '   ', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.chat_session (user_id, session_id, name, created_at, updated_at, expires_at)
+                VALUES (10003, 'invalid-expiry', 'valid', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - INTERVAL '1 day')
+                """);
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.chat_message (id, user_id, session_id, conversation_id, role, content, metadata, created_at, expires_at)
+                VALUES (10003, 10002, 'owner-session', 'conversation', 'INVALID', 'message', '{}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.chat_message (id, user_id, session_id, conversation_id, role, content, metadata, created_at, expires_at)
+                VALUES (10004, 10002, 'owner-session', 'conversation', 'USER', 'message', '[]', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        assertSqlRejected(connection, """
+                INSERT INTO petcare.chat_message (id, user_id, session_id, conversation_id, role, content, created_at, expires_at)
+                VALUES (10005, 10002, 'owner-session', 'conversation', 'USER', 'message', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - INTERVAL '1 day')
+                """);
+        assertThat(executeUpdate(connection, "DELETE FROM petcare.chat_session WHERE user_id = 10002 AND session_id = 'owner-session'"))
+                .isEqualTo(1);
+        assertThat(queryForInt(connection, "SELECT count(*) FROM petcare.chat_message WHERE id = 10001")).isZero();
+    }
+
+    private void assertChatHistoryCrud(Connection connection) throws SQLException {
+        execute(connection, """
+                INSERT INTO chat_session (user_id, session_id, created_at, updated_at, expires_at)
+                VALUES (20001, 'app-session', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        execute(connection, """
+                INSERT INTO chat_message (id, user_id, session_id, conversation_id, role, content, created_at, expires_at)
+                VALUES (20001, 20001, 'app-session', 'app-conversation', 'USER', 'message', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 day')
+                """);
+        assertThat(executeUpdate(connection, "UPDATE chat_session SET name = 'updated' WHERE user_id = 20001 AND session_id = 'app-session'"))
+                .isEqualTo(1);
+        assertThat(executeUpdate(connection, "UPDATE chat_message SET content = 'updated' WHERE id = 20001")).isEqualTo(1);
+        assertThat(executeUpdate(connection, "DELETE FROM chat_session WHERE user_id = 20001 AND session_id = 'app-session'"))
+                .isEqualTo(1);
+        assertThat(queryForInt(connection, "SELECT count(*) FROM chat_message WHERE id = 20001")).isZero();
+    }
+
     private void assertConstraintsAndIndexes(Connection connection) throws SQLException {
         assertThat(queryForStrings(connection, """
                 SELECT conname
@@ -732,9 +886,9 @@ class FlywaySchemaIntegrationTest {
         assertThat(queryForStrings(connection, """
                 SELECT version || ':' || success
                 FROM petcare.flyway_schema_history
-                WHERE version IN ('1', '2', '3', '4', '5', '6', '7', '8', '9')
+                WHERE version IN ('1', '2', '3', '4', '5', '6', '7', '8', '9', '10')
                 """)).containsExactlyInAnyOrder(
-                "1:true", "2:true", "3:true", "4:true", "5:true", "6:true", "7:true", "8:true", "9:true");
+                "1:true", "2:true", "3:true", "4:true", "5:true", "6:true", "7:true", "8:true", "9:true", "10:true");
     }
 
     private Set<String> queryForStrings(Connection connection, String sql) throws SQLException {
