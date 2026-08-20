@@ -26,7 +26,7 @@
         <mysql-connector.version>9.1.0</mysql-connector.version>
         <mybatis-flex.version>1.11.4</mybatis-flex.version>
         <!-- 缓存 -->
-        <redisson.version>3.27.0</redisson.version>
+        <redisson.version>3.42.0</redisson.version>
         <caffeine.version>3.1.8</caffeine.version>
         <!--JWT-->
         <jsonwebtoken.version>0.12.5</jsonwebtoken.version>
@@ -248,12 +248,6 @@
                 </exclusions>
             </dependency>
 
-            <!-- 冲突、漏洞 依赖约束-->
-            <dependency>
-                <groupId>org.redisson</groupId>
-                <artifactId>redisson</artifactId>
-                <version>3.42.0</version>
-            </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
