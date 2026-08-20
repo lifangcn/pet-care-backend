@@ -16,7 +16,6 @@ import pvt.mktech.petcare.agent.repository.AgentExecutionRepository;
 import reactor.core.publisher.Flux;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -58,25 +57,29 @@ public class ReactAgentAdapter implements Agent {
     @Override
     public Flux<String> executeStreaming(String query, AgentContext context) {
         return Flux.create(sink -> {
+            long startTime = System.currentTimeMillis();
+            String executionId = UUID.randomUUID().toString();
+            context.setExecutionId(executionId);
             try {
                 initCompiledGraph();
 
-                long startTime = System.currentTimeMillis();
-                String executionId = UUID.randomUUID().toString();
-                context.setExecutionId(executionId);
-
-                List<AgentStep> steps = new ArrayList<>();
+                // Graph does not currently expose tool/intermediate state; persist no synthetic steps.
+                List<AgentStep> steps = List.of();
 
                 var result = compiledGraph.call(Map.of("messages", List.of(new UserMessage(query))));
 
                 if (result.isEmpty()) {
-                    sink.error(new RuntimeException("Agent 执行返回空结果"));
-                    return;
+                    throw new IllegalStateException("Agent 执行返回空结果");
                 }
 
                 OverAllState state = result.get();
-                @SuppressWarnings("unchecked")
-                List<Message> messages = (List<Message>) state.value("messages").get();
+                List<Message> messages = state.value("messages")
+                        .filter(List.class::isInstance)
+                        .map(value -> ((List<?>) value).stream()
+                                .filter(Message.class::isInstance)
+                                .map(Message.class::cast)
+                                .toList())
+                        .orElseGet(List::of);
 
                 for (var message : messages) {
                     if (message instanceof org.springframework.ai.chat.messages.AssistantMessage assistantMsg) {
@@ -100,9 +103,9 @@ public class ReactAgentAdapter implements Agent {
 
                 sink.complete();
 
-            } catch (GraphStateException e) {
+            } catch (GraphStateException | RuntimeException e) {
                 log.error("ReAct Agent 执行失败: query={}", query, e);
-                saveExecutionRecord(context, query, new ArrayList<>(), null, false, e.getMessage(), System.currentTimeMillis());
+                saveExecutionRecord(context, query, List.of(), null, false, e.getMessage(), startTime);
                 sink.error(e);
             }
         });
@@ -116,7 +119,7 @@ public class ReactAgentAdapter implements Agent {
     }
 
     /**
-     * 保存执行记录到 ES
+     * 保存执行记录到配置的遥测存储
      */
     private void saveExecutionRecord(AgentContext context, String query,
                                       List<AgentStep> steps, String finalAnswer,
@@ -140,7 +143,7 @@ public class ReactAgentAdapter implements Agent {
 
             executionRepository.save(record);
         } catch (Exception e) {
-            log.warn("保存 Agent 执行记录失败: {}", e.getMessage());
+            log.warn("保存 Agent 执行记录失败: executionId={}", context.getExecutionId(), e);
         }
     }
 }

@@ -2,6 +2,9 @@ server:
   port: 8081
 
 petcare:
+  telemetry:
+    store: elasticsearch
+    retention-days: 30
   search:
     content-backend: elasticsearch
     business-zone: Asia/Shanghai

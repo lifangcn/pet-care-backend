@@ -1,7 +1,6 @@
 package pvt.mktech.petcare.observability.config;
 
 import com.knuddels.jtokkit.api.EncodingType;
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 import org.springframework.ai.tokenizer.TokenCountEstimator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -10,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pvt.mktech.petcare.observability.advisor.ObservabilityAdvisor;
 import pvt.mktech.petcare.observability.appender.StructuredLogAppender;
+import pvt.mktech.petcare.observability.store.ChatTraceStore;
 
 /**
  * 可观测性自动配置
@@ -39,10 +39,9 @@ public class ObservabilityAutoConfiguration {
      * 负责将链路追踪日志异步写入 ES
      */
     @Bean
-    public StructuredLogAppender structuredLogAppender(ElasticsearchClient elasticsearchClient,
-                                                        TokenCountEstimator tokenCountEstimator,
-                                                        ObservabilityProperties properties) {
-        return new StructuredLogAppender(elasticsearchClient, tokenCountEstimator, properties.getEs().getIndexName());
+    public StructuredLogAppender structuredLogAppender(ChatTraceStore chatTraceStore,
+                                                         TokenCountEstimator tokenCountEstimator) {
+        return new StructuredLogAppender(chatTraceStore, tokenCountEstimator);
     }
 
     /**

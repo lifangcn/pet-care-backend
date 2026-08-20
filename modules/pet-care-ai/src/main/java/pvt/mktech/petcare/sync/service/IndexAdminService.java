@@ -25,11 +25,14 @@ public class IndexAdminService {
 
     private final ElasticsearchClient elasticsearchClient;
     private final String vectorStoreType;
+    private final String telemetryStore;
 
     public IndexAdminService(ElasticsearchClient elasticsearchClient,
-                             @Value("${spring.ai.vectorstore.type:elasticsearch}") String vectorStoreType) {
+                              @Value("${spring.ai.vectorstore.type:elasticsearch}") String vectorStoreType,
+                              @Value("${petcare.telemetry.store:elasticsearch}") String telemetryStore) {
         this.elasticsearchClient = elasticsearchClient;
         this.vectorStoreType = vectorStoreType;
+        this.telemetryStore = telemetryStore;
     }
 
     /**
@@ -45,8 +48,12 @@ public class IndexAdminService {
         createPostIndex();
         createActivityIndex();
         createChatHistoryIndex();
-        createChatTraceIndex();
-        createAgentExecutionIndex();
+        if ("postgresql".equalsIgnoreCase(telemetryStore)) {
+            log.info("当前使用 PostgreSQL 遥测存储，跳过聊天链路追踪和 Agent 执行记录 Elasticsearch 索引初始化");
+        } else {
+            createChatTraceIndex();
+            createAgentExecutionIndex();
+        }
 
         log.info("Elasticsearch 索引初始化完成");
     }

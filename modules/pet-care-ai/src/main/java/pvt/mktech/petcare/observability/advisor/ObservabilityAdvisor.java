@@ -132,7 +132,7 @@ public class ObservabilityAdvisor implements CallAdvisor, StreamAdvisor {
     }
 
     private String generateTraceId() {
-        return UUID.randomUUID().toString().replace("-", "");
+        return UUID.randomUUID().toString();
     }
 
     private void submitLog(ObservationContext context) {
