@@ -74,6 +74,8 @@ knife4j:
 
 # SpringDoc OpenAPI 配置（生产环境关闭）
 springdoc:
+  api-docs:
+    enabled: false
   swagger-ui:
     enabled: false
 
