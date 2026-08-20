@@ -1,12 +1,11 @@
 package pvt.mktech.petcare.chat.tool;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.test.util.ReflectionTestUtils;
+import pvt.mktech.petcare.chat.contentsearch.ContentSearchService;
 import pvt.mktech.petcare.chat.dto.SearchResult;
 
 import java.util.List;
@@ -21,13 +20,8 @@ import static org.mockito.Mockito.when;
 class MultiIndexSearchToolTest {
 
     private final VectorStore vectorStore = mock(VectorStore.class);
-    private final ElasticsearchClient elasticsearchClient = mock(ElasticsearchClient.class);
-    private final MultiIndexSearchTool tool = new MultiIndexSearchTool();
-
-    MultiIndexSearchToolTest() {
-        ReflectionTestUtils.setField(tool, "vectorStore", vectorStore);
-        ReflectionTestUtils.setField(tool, "elasticsearchClient", elasticsearchClient);
-    }
+    private final ContentSearchService contentSearchService = mock(ContentSearchService.class);
+    private final MultiIndexSearchTool tool = new MultiIndexSearchTool(vectorStore, contentSearchService);
 
     @Test
     void searchKnowledgeUsesDefaultTopKAndMapsVectorDocumentsWithoutElasticsearch() {
@@ -49,7 +43,7 @@ class MultiIndexSearchToolTest {
             assertThat(result.getMetadata()).containsEntry("chunk_index", 0);
             assertThat(result.getScore()).isEqualTo(0.92);
         });
-        verifyNoInteractions(elasticsearchClient);
+        verifyNoInteractions(contentSearchService);
     }
 
     @Test
@@ -61,6 +55,23 @@ class MultiIndexSearchToolTest {
         ArgumentCaptor<SearchRequest> request = ArgumentCaptor.forClass(SearchRequest.class);
         verify(vectorStore).similaritySearch(request.capture());
         assertThat(request.getValue().getTopK()).isEqualTo(10);
-        verifyNoInteractions(elasticsearchClient);
+        verifyNoInteractions(contentSearchService);
+    }
+
+    @Test
+    void delegatesPostAndActivitySearchToContentSearchService() {
+        List<SearchResult> posts = List.of(SearchResult.builder().source("post").build());
+        List<SearchResult> activities = List.of(SearchResult.builder().source("activity").build());
+        when(contentSearchService.searchPosts("dog food", 3)).thenReturn(posts);
+        when(contentSearchService.searchActivities("meetup", 4, "2026-02-22T00:00:00Z", "2026-02-23T00:00:00Z"))
+                .thenReturn(activities);
+
+        assertThat(tool.searchPosts(new MultiIndexSearchTool.PostSearchRequest("dog food", 3))).isSameAs(posts);
+        assertThat(tool.searchActivities(new MultiIndexSearchTool.ActivitySearchRequest("meetup", 4,
+                "2026-02-22T00:00:00Z", "2026-02-23T00:00:00Z"))).isSameAs(activities);
+
+        verify(contentSearchService).searchPosts("dog food", 3);
+        verify(contentSearchService).searchActivities("meetup", 4, "2026-02-22T00:00:00Z", "2026-02-23T00:00:00Z");
+        verifyNoInteractions(vectorStore);
     }
 }
