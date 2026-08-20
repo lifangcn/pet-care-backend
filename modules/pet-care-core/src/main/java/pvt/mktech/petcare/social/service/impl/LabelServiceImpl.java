@@ -5,6 +5,7 @@ import com.mybatisflex.core.query.QueryMethods;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.social.entity.Label;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfLabel;
 import pvt.mktech.petcare.social.mapper.LabelMapper;
 import pvt.mktech.petcare.social.service.LabelService;
 
@@ -20,7 +21,7 @@ import static pvt.mktech.petcare.social.entity.table.LabelTableDef.LABEL;
 public class LabelServiceImpl extends ServiceImpl<LabelMapper, Label> implements LabelService {
 
     @Override
-    public List<Label> listLabelByType(Integer type) {
+    public List<Label> listLabelByType(TypeOfLabel type) {
         QueryWrapper queryWrapper = QueryWrapper.create().orderBy(LABEL.USE_COUNT.desc());
         if (type != null) {
             queryWrapper.where(LABEL.TYPE.eq(type));

@@ -8,6 +8,7 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pvt.mktech.petcare.points.entity.codelist.ActionTypeOfPointsRecord;
 import pvt.mktech.petcare.points.event.PointsEarnEvent;
 import pvt.mktech.petcare.social.dto.request.PostQueryRequest;
@@ -50,16 +51,18 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     private final RedisUtil redisUtil;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Post savePost(PostSaveRequest request) {
         Post post = BeanUtil.copyProperties(request, Post.class);
         post.setUserId(UserContext.getUserId());
-        post.setAuditStatus(AuditStatusOfContent.PENDING);
+        // 用户明确选择说说发布后立即公开
+        post.setAuditStatus(AuditStatusOfContent.APPROVED);
         save(post);
-        // 处理标签关联
+        // 处理标签关联（与发布动态同一事务）
         if (request.getLabelIds() != null && !request.getLabelIds().isEmpty()) {
             postLabelService.savePostLabels(post.getId(), request.getLabelIds());
         }
-        // 积分变更： 发布
+        // 积分变更：发布（BEFORE_COMMIT 同一事务内处理，失败整体回滚）
         applicationEventPublisher.publishEvent(new PointsEarnEvent(UserContext.getUserId(), ActionTypeOfPointsRecord.PUBLISH, post.getId()));
         return post;
     }

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pvt.mktech.petcare.social.entity.Label;
 import pvt.mktech.petcare.social.entity.Post;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfLabel;
 import pvt.mktech.petcare.social.service.LabelService;
 import pvt.mktech.petcare.common.dto.response.Result;
 
@@ -24,7 +25,7 @@ public class LabelController {
 
     @GetMapping
     @Operation(summary = "标签列表")
-    public Result<List<Label>> getLabelList(@RequestParam(name = "type", required = false) Integer type) {
+    public Result<List<Label>> getLabelList(@RequestParam(name = "type", required = false) TypeOfLabel type) {
         return Result.success(labelService.listLabelByType(type));
     }
 

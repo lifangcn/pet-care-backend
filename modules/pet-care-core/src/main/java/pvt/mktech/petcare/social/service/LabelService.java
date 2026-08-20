@@ -2,6 +2,7 @@ package pvt.mktech.petcare.social.service;
 
 import com.mybatisflex.core.service.IService;
 import pvt.mktech.petcare.social.entity.Label;
+import pvt.mktech.petcare.social.entity.codelist.TypeOfLabel;
 
 import java.util.List;
 
@@ -12,10 +13,10 @@ public interface LabelService extends IService<Label> {
 
     /**
      * 根据标签类型获取标签列表
-     * @param type 标签类型
+     * @param type 标签类型（可选）
      * @return 标签列表
      */
-    List<Label> listLabelByType(Integer type);
+    List<Label> listLabelByType(TypeOfLabel type);
 
     /**
      * 获取热门标签

@@ -121,12 +121,13 @@ public class PointsCouponServiceImpl extends ServiceImpl<PointsCouponMapper, Poi
                         .and(POINTS_COUPON_TEMPLATE.STATUS.eq(1))
                         .limit(1)
         );
-        if (!newcomerTemplates.isEmpty()) {
-            PointsCouponTemplate template = newcomerTemplates.getFirst();
-            Long couponId = issueCoupon(userId, template.getId());
-            redeemCoupon(userId, couponId);
+        if (newcomerTemplates.isEmpty()) {
+            return false;
         }
-        return false;
+        PointsCouponTemplate template = newcomerTemplates.getFirst();
+        Long couponId = issueCoupon(userId, template.getId());
+        redeemCoupon(userId, couponId);
+        return true;
     }
 
     @Override
