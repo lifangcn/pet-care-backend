@@ -24,8 +24,7 @@
 
 ```text
 /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/
-├── index/                         # Vue dist 内容
-└── .htpasswd                      # 不进 Git
+└── index/                         # Vue dist 内容
 ```
 
 1Panel v1 OpenResty 容器内的 `/www/sites/michaelli.site` 对应宿主机 `/opt/1panel/apps/openresty/openresty/www/sites/michaelli.site`。OpenResty 使用 `network_mode: host`，通过宿主回环地址 `127.0.0.1:8080/8081` 反代 Core/AI，不依赖 Docker 服务名，也无需加入 `1panel-network`。
@@ -107,17 +106,9 @@ curl -fsS http://127.0.0.1:8081/error >/dev/null || true
 1. DNS：`michaelli.site` 的 A 记录指向 `8.162.13.22`，删除错误 AAAA 后等待生效。
 2. 在 1Panel 应用商店安装 OpenResty，并创建域名网站。
 3. 确认 OpenResty 保持 1Panel v1 默认的 host 网络模式；Core/AI 的 `127.0.0.1:8080/8081` 发布端口应可从宿主访问。
-4. 优先由 1Panel 申请并启用 HTTPS，使 80 端口只跳转到 HTTPS；再把 `openresty/michaelli.site.conf.template` 片段粘贴到面板维护的 HTTPS `server` 块内部。若使用独立 ACME 客户端，宿主机 webroot 对应 `/opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/acme`。两种方式都必须保留模板中的 `/.well-known/acme-challenge/` Basic Auth 例外，并在续期后先执行 `openresty -t` 再 reload。不要把证书私钥写入仓库。
-5. 生成 Basic Auth 文件，用户名和密码不要进入 Git：
+4. 优先由 1Panel 申请并启用 HTTPS，使 80 端口只跳转到 HTTPS；再把 `openresty/michaelli.site.conf.template` 片段粘贴到面板维护的 HTTPS `server` 块内部。若使用独立 ACME 客户端，宿主机 webroot 对应 `/opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/acme`。续期后先执行 `openresty -t` 再 reload。不要把证书私钥写入仓库。
 
-   ```bash
-   printf 'petcare:' > /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/.htpasswd
-   openssl passwd -apr1 >> /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/.htpasswd
-   chgrp <openresty-worker-group> /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/.htpasswd
-   chmod 640 /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/.htpasswd
-   ```
-
-先在 OpenResty 容器内执行 `nginx -t` 确认 worker 能读取 `.htpasswd`。Basic Auth 仅保护静态入口和登录 bootstrap；业务 API 关闭 Basic Auth，继续使用应用 Bearer Token。否则两者会争用 `Authorization` 请求头。`/api/admin/ai/**`、`/api/internal/**` 和 `/api/actuator/**` 均直接拒绝公网访问。
+落地页和演示登录公开访问，业务 API 继续使用应用 Bearer Token。`/api/admin/ai/**`、`/api/internal/**` 和 `/api/actuator/**` 均直接拒绝公网访问。公开演示验证码会增加滥用风险，必须保留应用限流并监控异常请求。
 
 安全组/防火墙只开放 22、80、443。5432、6379、9092、8080、8081 不对公网开放。
 
