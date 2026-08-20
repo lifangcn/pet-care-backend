@@ -83,6 +83,15 @@ internal:
   api:
     token: ${INTERNAL_SERVICE_TOKEN}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 # 日志配置
 logging:
   level:
