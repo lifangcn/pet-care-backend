@@ -120,8 +120,8 @@ class PostgresqlAiPersistenceIntegrationTest {
             assertThat(session.getMapper(KnowledgeDocumentMapper.class).selectCountByQuery(
                     QueryWrapper.create().where(DOCUMENT.NAME.eq("document")))).isZero();
         }
-        try (Connection owner = connect(OWNER, OWNER_PASSWORD); var statement = owner.createStatement(); var result = statement.executeQuery("SELECT count(*) FROM pg_tables WHERE schemaname = 'petcare' AND tablename LIKE '%vector_store%'")) {
-            result.next(); assertThat(result.getInt(1)).isZero();
+        try (Connection owner = connect(OWNER, OWNER_PASSWORD); var statement = owner.createStatement(); var result = statement.executeQuery("SELECT count(*) FROM pg_tables WHERE schemaname = 'petcare' AND tablename = 'vector_store'")) {
+            result.next(); assertThat(result.getInt(1)).isEqualTo(1);
         }
     }
 
