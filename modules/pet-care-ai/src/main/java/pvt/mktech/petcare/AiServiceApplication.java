@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Import;
 import pvt.mktech.petcare.observability.config.ObservabilityAutoConfiguration;
 
 import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration;
+import org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration;
 
 /**
  * {@code @description}: 智能助手服务启动类
@@ -17,6 +18,8 @@ import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfigura
 @SpringBootApplication(exclude = {
     // 排除 OpenAI 自动配置（手动创建 DeepSeek ChatModel）
     OpenAiChatAutoConfiguration.class,
+    // Embedding 统一使用智谱，避免与 PGVector 自动配置产生两个候选 Bean
+    OpenAiEmbeddingAutoConfiguration.class,
 })
 @MapperScan({
     "pvt.mktech.petcare.knowledge.mapper",
