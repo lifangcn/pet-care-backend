@@ -67,9 +67,12 @@ jwt:
 # Sa-Token 配置
 sa-token:
   jwt-secret-key: ${SA_TOKEN_JWT_SECRET_KEY}
+  is-print: false
+  is-log: false
 
 # Knife4j 配置（生产环境关闭）
 knife4j:
+  enable: false
   production: true
 
 # SpringDoc OpenAPI 配置（生产环境关闭）

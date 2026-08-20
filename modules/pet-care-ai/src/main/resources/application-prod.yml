@@ -132,10 +132,13 @@ sa-token:
   is-read-header: true
   is-read-cookie: false
   is-write-header: true
+  is-print: false
+  is-log: false
   jwt-secret-key: ${SA_TOKEN_JWT_SECRET_KEY}
 
 # Knife4j 配置（生产环境关闭）
 knife4j:
+  enable: false
   production: true
 
 # SpringDoc OpenAPI 配置（生产环境关闭）
