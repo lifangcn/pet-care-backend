@@ -118,6 +118,7 @@ public final class EsIndexMappings {
           },
           "mappings": {
             "properties": {
+              "document_type": {"type": "keyword"},
               "id": {"type": "long"},
               "conversation_id": {"type": "keyword"},
               "user_id": {"type": "long"},
@@ -140,7 +141,10 @@ public final class EsIndexMappings {
                 }
               },
               "created_at": {"type": "date"},
-              "expires_at": {"type": "date"}
+              "updated_at": {"type": "date"},
+              "expires_at": {"type": "date"},
+              "name": {"type": "keyword"},
+              "message_count": {"type": "long"}
             }
           }
         }

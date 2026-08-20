@@ -26,13 +26,16 @@ public class IndexAdminService {
     private final ElasticsearchClient elasticsearchClient;
     private final String vectorStoreType;
     private final String telemetryStore;
+    private final String chatHistoryStore;
 
     public IndexAdminService(ElasticsearchClient elasticsearchClient,
-                              @Value("${spring.ai.vectorstore.type:elasticsearch}") String vectorStoreType,
-                              @Value("${petcare.telemetry.store:elasticsearch}") String telemetryStore) {
+                               @Value("${spring.ai.vectorstore.type:elasticsearch}") String vectorStoreType,
+                               @Value("${petcare.telemetry.store:elasticsearch}") String telemetryStore,
+                               @Value("${spring.ai.chat.memory.history.store:elasticsearch}") String chatHistoryStore) {
         this.elasticsearchClient = elasticsearchClient;
         this.vectorStoreType = vectorStoreType;
         this.telemetryStore = telemetryStore;
+        this.chatHistoryStore = chatHistoryStore;
     }
 
     /**
@@ -47,7 +50,11 @@ public class IndexAdminService {
         }
         createPostIndex();
         createActivityIndex();
-        createChatHistoryIndex();
+        if ("postgresql".equalsIgnoreCase(chatHistoryStore)) {
+            log.info("当前使用 PostgreSQL 聊天历史存储，跳过聊天历史 Elasticsearch 索引初始化");
+        } else {
+            createChatHistoryIndex();
+        }
         if ("postgresql".equalsIgnoreCase(telemetryStore)) {
             log.info("当前使用 PostgreSQL 遥测存储，跳过聊天链路追踪和 Agent 执行记录 Elasticsearch 索引初始化");
         } else {
@@ -83,6 +90,10 @@ public class IndexAdminService {
      * 创建聊天历史索引
      */
     public boolean createChatHistoryIndex() {
+        if ("postgresql".equalsIgnoreCase(chatHistoryStore)) {
+            log.info("当前使用 PostgreSQL 聊天历史存储，跳过聊天历史 Elasticsearch 索引创建");
+            return true;
+        }
         return createIndexFromMapping(CHAT_HISTORY_INDEX, EsIndexMappings.CHAT_HISTORY_MAPPING);
     }
 

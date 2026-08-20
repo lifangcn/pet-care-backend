@@ -12,7 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import pvt.mktech.petcare.agent.context.AgentContext;
 import pvt.mktech.petcare.agent.core.Agent;
 import pvt.mktech.petcare.agent.orchestrator.AgentOrchestrator;
-import pvt.mktech.petcare.chat.service.SessionTitleGenerator;
+import pvt.mktech.petcare.chat.repository.ChatHistoryRepository;
 import pvt.mktech.petcare.chat.sink.ChatMessageSink;
 import pvt.mktech.petcare.common.constant.CommonConstant;
 import pvt.mktech.petcare.common.web.UserContext;
@@ -41,8 +41,8 @@ public class ChatController {
     private final VectorStore elasticsearchVectorStore;
     private final WebClient.Builder webClientBuilder;
     private final ChatMessageSink chatMessageSink;
-    private final SessionTitleGenerator sessionTitleGenerator;
     private final AgentOrchestrator agentOrchestrator;
+    private final ChatHistoryRepository chatHistoryRepository;
 
     @Value("${core.service.url:http://localhost:8080}")
     private String coreServiceUrl;
@@ -58,14 +58,15 @@ public class ChatController {
     public Flux<String> ragChat(@RequestParam("message") String message,
                                 @RequestParam(value = "sessionId", required = false) String sessionId) {
         Long userId = UserContext.getUserId();
-        String conversationId = conversationIdGenerator.generate(userId, sessionId);
+        String effectiveSessionId = chatHistoryRepository.normalizeSessionId(userId, sessionId);
+        String conversationId = conversationIdGenerator.generate(userId, effectiveSessionId);
 
         // 用于收集完整响应
         StringBuilder fullResponse = new StringBuilder();
 
         var promptBuilder = chatClient.prompt()
                 .advisors(advisorSpec -> advisorSpec.param(CONVERSATION_ID, conversationId))
-                .advisors(advisorSpec -> advisorSpec.param("sessionId", sessionId))
+                .advisors(advisorSpec -> advisorSpec.param("sessionId", effectiveSessionId))
                 .advisors(new QuestionAnswerAdvisor(elasticsearchVectorStore));
 
         return promptBuilder
@@ -76,12 +77,8 @@ public class ChatController {
                 .doOnComplete(() -> {
                     consumeAiPoints(userId, conversationId);
                     // 异步保存消息
-                    chatMessageSink.onChatCompleted(userId, sessionId,
+                    chatMessageSink.onChatCompleted(userId, effectiveSessionId,
                             conversationId, message, fullResponse.toString());
-                    // 首条消息后生成会话标题
-                    if (sessionId != null && !sessionId.isEmpty()) {
-                        sessionTitleGenerator.generateTitle(userId, sessionId, message);
-                    }
                 });
     }
 
@@ -144,7 +141,8 @@ public class ChatController {
     public Flux<String> agentChat(@RequestParam("message") String message,
                                   @RequestParam(value = "sessionId", required = false) String sessionId) {
         Long userId = UserContext.getUserId();
-        String conversationId = conversationIdGenerator.generate(userId, sessionId);
+        String effectiveSessionId = chatHistoryRepository.normalizeSessionId(userId, sessionId);
+        String conversationId = conversationIdGenerator.generate(userId, effectiveSessionId);
 
         // 选择 Agent
         Agent agent = agentOrchestrator.selectAgent(message);
@@ -163,12 +161,8 @@ public class ChatController {
                 .doOnComplete(() -> {
                     consumeAiPoints(userId, conversationId, "AI_CONSULT_AGENT");
                     // 异步保存消息
-                    chatMessageSink.onChatCompleted(userId, sessionId,
+                    chatMessageSink.onChatCompleted(userId, effectiveSessionId,
                             conversationId, message, fullResponse.toString());
-                    // 首条消息后生成会话标题
-                    if (sessionId != null && !sessionId.isEmpty()) {
-                        sessionTitleGenerator.generateTitle(userId, sessionId, message);
-                    }
                 });
     }
 }

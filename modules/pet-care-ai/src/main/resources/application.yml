@@ -101,6 +101,12 @@ mybatis-flex:
           host: ${REDIS_HOST}
           port: ${REDIS_PORT:6379}
           password: ${REDIS_PASSWORD}
+        history:
+          store: elasticsearch
+          retention-days: 90
+          cleanup-batch-size: 500
+          cleanup-max-batches: 5
+          cleanup-cron: "0 0 * * * *"
     # Agent 配置（ReAct 多步推理）
     agent:
       enabled: true

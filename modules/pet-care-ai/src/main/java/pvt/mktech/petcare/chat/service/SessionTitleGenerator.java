@@ -40,11 +40,11 @@ public class SessionTitleGenerator {
 
             String trimmedTitle = title != null ? title.trim() : null;
             if (trimmedTitle != null && !trimmedTitle.isEmpty()) {
-                chatHistoryRepository.updateSessionName(sessionId, trimmedTitle);
-                log.info("会话标题生成成功: sessionId={}, title={}", sessionId, trimmedTitle);
+                chatHistoryRepository.updateSessionName(userId, sessionId, trimmedTitle);
+                log.info("会话标题生成成功: userId={}, sessionId={}, title={}", userId, sessionId, trimmedTitle);
             }
         } catch (Exception e) {
-            log.error("会话标题生成失败: sessionId={}", sessionId, e);
+            log.error("会话标题生成失败: userId={}, sessionId={}", userId, sessionId, e);
         }
     }
 }

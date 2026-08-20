@@ -60,7 +60,12 @@ public class ChatMemoryProperties {
     @Data
     public static class History {
         private boolean enabled = true;
+        /** elasticsearch by default; postgresql is selected by the postgresql profile. */
+        private String store = "elasticsearch";
         private String indexName = "chat_history";
         private int retentionDays = 90;
+        private int cleanupBatchSize = 500;
+        private int cleanupMaxBatches = 5;
+        private String cleanupCron = "0 0 * * * *";
     }
 }

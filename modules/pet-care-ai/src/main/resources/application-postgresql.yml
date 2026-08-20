@@ -1,5 +1,9 @@
 spring:
   ai:
+    chat:
+      memory:
+        history:
+          store: postgresql
     vectorstore:
       type: pgvector
       pgvector:

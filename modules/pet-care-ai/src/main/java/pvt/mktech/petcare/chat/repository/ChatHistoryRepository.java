@@ -1,346 +1,166 @@
 package pvt.mktech.petcare.chat.repository;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.CountResponse;
-import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
-import jakarta.annotation.Resource;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.Embedding;
 import org.springframework.ai.zhipuai.ZhiPuAiEmbeddingModel;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+import pvt.mktech.petcare.chat.dto.response.SessionItem;
+import pvt.mktech.petcare.chat.store.ChatHistoryStore;
 import pvt.mktech.petcare.entity.ChatMessageDocument;
+import pvt.mktech.petcare.infrastructure.config.ChatMemoryProperties;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-/**
- * {@code @description}: 聊天历史记录ES操作封装
- * {@code @date}: 2026-03-02
- * @author Michael
- */
+/** The only history facade. Stores persist/query; this class owns embedding orchestration. */
 @Slf4j
 @Repository
+@RequiredArgsConstructor
 public class ChatHistoryRepository {
+    public static final String DEFAULT_SESSION_ID = "default";
+    public static final String DEFAULT_SESSION_NAME = "新对话";
+    private static final int MAX_SESSION_ID_LENGTH = 32;
+    private static final int MAX_SESSION_NAME_LENGTH = 100;
 
-    @Resource
-    private ElasticsearchClient elasticsearchClient;
-    @Resource
-    private ZhiPuAiEmbeddingModel zhiPuAiEmbeddingModel;
+    private final ChatHistoryStore store;
+    private final ZhiPuAiEmbeddingModel embeddingModel;
+    private final ChatMemoryProperties properties;
 
-    @Value("${spring.ai.chat.memory.history.index-name:chat_history}")
-    private String indexName;
+    public String normalizeSessionId(Long userId, String sessionId) {
+        requireUserId(userId);
+        if (sessionId == null || sessionId.isBlank()) {
+            store.ensureSession(userId, DEFAULT_SESSION_ID, DEFAULT_SESSION_NAME);
+            return DEFAULT_SESSION_ID;
+        }
+        validateSessionId(sessionId);
+        if (store.getSession(userId, sessionId).isEmpty()) {
+            throw new IllegalArgumentException("会话不存在或无权访问");
+        }
+        return sessionId;
+    }
 
-    /**
-     * 批量保存消息
-     *
-     * @param messages 消息列表
-     */
+    public void createSession(Long userId, String sessionId, String name) {
+        requireUserId(userId);
+        validateSessionId(sessionId);
+        if (name == null || name.isBlank() || name.length() > MAX_SESSION_NAME_LENGTH) {
+            throw new IllegalArgumentException("会话名称不能为空且长度不能超过 100");
+        }
+        store.ensureSession(userId, sessionId, name);
+    }
+
+    public Optional<SessionItem> getSession(Long userId, String sessionId) {
+        requireUserId(userId);
+        validateSessionId(sessionId);
+        return store.getSession(userId, sessionId);
+    }
+
+    public List<SessionItem> listSessions(Long userId, int offset, int limit) {
+        requireUserId(userId);
+        if (offset < 0 || limit < 1) {
+            throw new IllegalArgumentException("分页参数无效");
+        }
+        return store.listSessions(userId, offset, limit);
+    }
+
+    public long countSessions(Long userId) { requireUserId(userId); return store.countSessions(userId); }
+
     public void batchSaveMessages(List<ChatMessageDocument> messages) {
-        if (messages == null || messages.isEmpty()) {
-            return;
+        if (messages == null || messages.isEmpty()) return;
+
+        BatchContext context = validateBatch(messages);
+        if (context.defaultSession()) {
+            store.ensureSession(context.userId(), DEFAULT_SESSION_ID, DEFAULT_SESSION_NAME);
+        } else if (store.getSession(context.userId(), context.sessionId()).isEmpty()) {
+            throw new IllegalArgumentException("会话不存在或无权访问");
         }
+
+        Instant expiresAt = Instant.now().plus(properties.getHistory().getRetentionDays(), ChronoUnit.DAYS);
+        for (ChatMessageDocument message : messages) {
+            message.setSessionId(context.sessionId());
+            message.setEmbedding(null);
+            if (message.getExpiresAt() == null) message.setExpiresAt(expiresAt);
+        }
+        store.saveMessages(messages);
+
+        List<ChatMessageDocument> users = messages.stream().filter(message -> "USER".equals(message.getRole())).toList();
+        if (users.isEmpty()) return;
         try {
-            // 分离USER和ASSISTANT消息（仅USER消息需要向量）
-            List<ChatMessageDocument> userMessages = messages.stream()
-                    .filter(m -> "USER".equals(m.getRole()))
-                    .toList();
-
-            // 批量生成向量
-            if (!userMessages.isEmpty()) {
-                List<String> contents = userMessages.stream()
-                        .map(ChatMessageDocument::getContent)
-                        .toList();
-
-                var embedResponse = zhiPuAiEmbeddingModel.embedForResponse(contents);
-                List<float[]> embeddings = embedResponse.getResults().stream()
-                        .map(Embedding::getOutput)
-                        .toList();
-
-                // 填充向量到USER消息
-                for (int i = 0; i < userMessages.size(); i++) {
-                    float[] embedding = embeddings.get(i);
-                    List<Float> vectorList = new ArrayList<>(embedding.length);
-                    for (float v : embedding) {
-                        vectorList.add(v);
-                    }
-                    userMessages.get(i).setEmbedding(vectorList);
-                }
-            }
-
-            // 批量保存
-            BulkRequest.Builder bulkBuilder = new BulkRequest.Builder();
-            for (ChatMessageDocument msg : messages) {
-                final String id = String.valueOf(msg.getId());
-                bulkBuilder.operations(op -> op
-                        .index(idx -> idx
-                                .index(indexName)
-                                .id(id)
-                                .document(msg))
-                );
-            }
-
-            elasticsearchClient.bulk(bulkBuilder.build());
-            log.info("批量保存聊天消息成功: count={}", messages.size());
+            List<float[]> output = embeddingModel.embedForResponse(users.stream().map(ChatMessageDocument::getContent).toList())
+                    .getResults().stream().map(Embedding::getOutput).toList();
+            if (output.size() != users.size()) throw new IllegalStateException("embedding 数量不匹配");
+            for (int i = 0; i < users.size(); i++) users.get(i).setEmbedding(toVector(output.get(i)));
+            store.updateEmbeddings(users);
         } catch (Exception e) {
-            log.error("批量保存聊天消息失败: count={}", messages.size(), e);
+            users.forEach(message -> message.setEmbedding(null));
+            log.error("chat_embedding_degraded userId={} sessionId={} count={} reason=embedding_failed", context.userId(), context.sessionId(), users.size(), e);
         }
     }
 
-    /**
-     * 语义检索历史对话
-     *
-     * @param query   查询文本
-     * @param userId  用户ID
-     * @param topK    返回条数
-     * @param minScore 最低相似度分数
-     * @return 历史消息列表
-     */
-    public List<ChatMessageDocument> semanticSearch(String query, Long userId,
-                                                    int topK, double minScore) {
+    public List<ChatMessageDocument> semanticSearch(String query, Long userId, int topK, double minScore) {
+        requireUserId(userId);
+        if (query == null || query.isBlank()) throw new IllegalArgumentException("查询内容不能为空");
+        if (topK < 1 || topK > 20) throw new IllegalArgumentException("topK 必须在 1 到 20 之间");
+        if (!Double.isFinite(minScore) || minScore < 0 || minScore > 1) throw new IllegalArgumentException("minScore 必须在 0 到 1 之间");
+        int historyDays = properties.getSemantic().getHistoryDays();
+        if (historyDays < 1) throw new IllegalArgumentException("historyDays 必须大于等于 1");
+
+        List<Float> vector;
         try {
-            // 生成查询向量
-            float[] queryVector = zhiPuAiEmbeddingModel.embed(query);
-            List<Float> vectorList = new ArrayList<>(queryVector.length);
-            for (float v : queryVector) {
-                vectorList.add(v);
-            }
-
-            // KNN检索 + 用户过滤
-            SearchResponse<ChatMessageDocument> response = elasticsearchClient.search(
-                    s -> s.index(indexName)
-                            .size(topK)
-                            .minScore(minScore)
-                            .query(q -> q
-                                    .bool(b -> b
-                                            .must(knnQuery -> knnQuery
-                                                    .knn(k -> k
-                                                            .field("embedding")
-                                                            .queryVector(vectorList)
-                                                            .k(topK)
-                                                            .numCandidates(topK * 2))
-                                            )
-                                            .filter(f -> f
-                                                    .term(t -> t
-                                                            .field("user_id")
-                                                            .value(userId))
-                                            )
-                                    )
-                            ),
-                    ChatMessageDocument.class
-            );
-
-            return response.hits().hits().stream()
-                    .map(Hit::source)
-                    .filter(Objects::nonNull)
-                    .toList();
+            vector = toVector(embeddingModel.embed(query));
         } catch (Exception e) {
-            log.error("语义检索失败: query={}, userId={}", query, userId, e);
+            log.error("chat_semantic_degraded userId={} reason=embedding_failed", userId, e);
+            return List.of();
+        }
+        try {
+            return store.semanticSearch(userId, vector, topK, minScore, historyDays);
+        } catch (Exception e) {
+            log.error("chat_semantic_degraded userId={} reason=store_query_failed", userId, e);
             return List.of();
         }
     }
 
-    /**
-     * 获取会话历史消息（按时间排序）
-     *
-     * @param sessionId 会话ID
-     * @param limit     最大返回条数
-     * @return 历史消息列表
-     */
-    public List<ChatMessageDocument> getSessionHistory(String sessionId, int limit) {
-        try {
-            SearchResponse<ChatMessageDocument> response = elasticsearchClient.search(
-                    s -> s.index(indexName)
-                            .size(limit)
-                            .query(q -> q
-                                    .term(t -> t
-                                            .field("session_id")
-                                            .value(sessionId))
-                            )
-                            .sort(sort -> sort
-                                    .field(f -> f
-                                            .field("created_at")
-                                            .order(SortOrder.Asc))
-                            ),
-                    ChatMessageDocument.class
-            );
+    public List<ChatMessageDocument> getSessionHistory(Long userId, String sessionId, int limit) { return store.getSessionHistory(userId, sessionId, limit); }
+    public long deleteByUserId(Long userId) { return store.deleteByUserId(userId); }
+    public long deleteBySessionId(Long userId, String sessionId) { return store.deleteSession(userId, sessionId); }
+    public long countBySessionId(Long userId, String sessionId) { return store.countMessages(userId, sessionId); }
+    public boolean updateSessionName(Long userId, String sessionId, String name) { return store.updateDefaultSessionName(userId, sessionId, name); }
+    public int deleteExpiredBatch(int size) { return store.deleteExpiredBatch(size); }
 
-            return response.hits().hits().stream()
-                    .map(Hit::source)
-                    .filter(Objects::nonNull)
-                    .toList();
-        } catch (Exception e) {
-            log.error("获取会话历史失败: sessionId={}", sessionId, e);
-            return List.of();
+    private BatchContext validateBatch(List<ChatMessageDocument> messages) {
+        ChatMessageDocument first = messages.getFirst();
+        if (first == null) throw new IllegalArgumentException("消息不能为空");
+        Long userId = first.getUserId();
+        requireUserId(userId);
+        String sessionId = effectiveSessionId(first.getSessionId());
+        String conversationId = first.getConversationId();
+        validateMessage(first);
+        for (ChatMessageDocument message : messages) {
+            if (message == null) throw new IllegalArgumentException("消息不能为空");
+            validateMessage(message);
+            if (!userId.equals(message.getUserId())) throw new IllegalArgumentException("消息 owner 必须一致");
+            if (!sessionId.equals(effectiveSessionId(message.getSessionId()))) throw new IllegalArgumentException("消息 session 必须一致");
+            if (!conversationId.equals(message.getConversationId())) throw new IllegalArgumentException("消息 conversation 必须一致");
         }
+        return new BatchContext(userId, sessionId, DEFAULT_SESSION_ID.equals(sessionId));
     }
 
-    /**
-     * 删除用户所有历史记录
-     *
-     * @param userId 用户ID
-     * @return 删除数量
-     */
-    public long deleteByUserId(Long userId) {
-        try {
-            DeleteByQueryResponse response = elasticsearchClient.deleteByQuery(
-                    d -> d.index(indexName)
-                            .query(q -> q
-                                    .term(t -> t
-                                            .field("user_id")
-                                            .value(userId))
-                            )
-                            .refresh(true) // 立即刷新
-            );
-
-            log.info("删除用户历史记录: userId={}, deleted={}",
-                    userId, response.deleted());
-            return response.deleted();
-        } catch (Exception e) {
-            log.error("删除用户历史失败: userId={}", userId, e);
-            throw new RuntimeException("删除历史记录失败", e);
+    private void validateMessage(ChatMessageDocument message) {
+        requireUserId(message.getUserId());
+        validateSessionIdIfPresent(message.getSessionId());
+        if (message.getId() == null || message.getCreatedAt() == null || message.getContent() == null || message.getConversationId() == null || message.getConversationId().isBlank()) {
+            throw new IllegalArgumentException("消息 id、createdAt、content 和 conversationId 不能为空");
         }
+        if (!"USER".equals(message.getRole()) && !"ASSISTANT".equals(message.getRole())) throw new IllegalArgumentException("消息 role 必须为 USER 或 ASSISTANT");
     }
 
-    /**
-     * 删除会话及其所有消息
-     *
-     * @param sessionId 会话ID
-     * @return 删除数量
-     */
-    public long deleteBySessionId(String sessionId) {
-        try {
-            // 先查询会话的所有消息ID
-            SearchResponse<ChatMessageDocument> searchResponse = elasticsearchClient.search(
-                    s -> s.index(indexName)
-                            .size(10000)
-                            .query(q -> q
-                                    .term(t -> t
-                                            .field("session_id")
-                                            .value(sessionId))
-                            ),
-                    ChatMessageDocument.class
-            );
+    private String effectiveSessionId(String sessionId) { return sessionId == null || sessionId.isBlank() ? DEFAULT_SESSION_ID : sessionId; }
+    private void validateSessionIdIfPresent(String sessionId) { if (sessionId != null && !sessionId.isBlank()) validateSessionId(sessionId); }
+    private void validateSessionId(String sessionId) { if (sessionId == null || sessionId.isBlank() || sessionId.length() > MAX_SESSION_ID_LENGTH) throw new IllegalArgumentException("sessionId 不能为空且长度不能超过 32"); }
+    private void requireUserId(Long userId) { if (userId == null) throw new IllegalArgumentException("userId 不能为空"); }
+    private List<Float> toVector(float[] values) { if (values == null || values.length != 1024) throw new IllegalArgumentException("embedding 必须为 1024 维"); List<Float> result = new ArrayList<>(1024); for (float value : values) { if (!Float.isFinite(value)) throw new IllegalArgumentException("embedding 必须为有限数"); result.add(value); } return result; }
 
-            // 批量删除
-            BulkRequest.Builder bulkBuilder = new BulkRequest.Builder();
-            for (Hit<ChatMessageDocument> hit : searchResponse.hits().hits()) {
-                String id = hit.id();
-                bulkBuilder.operations(op -> op
-                        .delete(idx -> idx
-                                .index(indexName)
-                                .id(id))
-                );
-            }
-
-            if (!searchResponse.hits().hits().isEmpty()) {
-                elasticsearchClient.bulk(bulkBuilder.build());
-            }
-
-            long count = searchResponse.hits().hits().size();
-            log.info("删除会话消息: sessionId={}, count={}", sessionId, count);
-            return count;
-        } catch (Exception e) {
-            log.error("删除会话消息失败: sessionId={}", sessionId, e);
-            return 0;
-        }
-    }
-
-    /**
-     * 统计会话消息数
-     *
-     * @param sessionId 会话ID
-     * @return 消息数量
-     */
-    public long countBySessionId(String sessionId) {
-        try {
-            CountResponse response = elasticsearchClient.count(
-                    c -> c.index(indexName)
-                            .query(q -> q
-                                    .term(t -> t
-                                            .field("session_id")
-                                            .value(sessionId))
-                            )
-            );
-            return response.count();
-        } catch (Exception e) {
-            log.error("统计会话消息数失败: sessionId={}", sessionId, e);
-            return 0;
-        }
-    }
-
-    /**
-     * 更新会话名称（批量更新该会话的所有消息）
-     *
-     * {@code @date}: 2026-03-09
-     * @author Michael
-     *
-     * @param sessionId   会话ID
-     * @param sessionName 会话名称
-     */
-    public void updateSessionName(String sessionId, String sessionName) {
-        try {
-            // 先查询该会话的所有消息
-            SearchResponse<ChatMessageDocument> searchResponse = elasticsearchClient.search(
-                    s -> s.index(indexName)
-                            .size(1000)
-                            .query(q -> q
-                                    .term(t -> t
-                                            .field("session_id")
-                                            .value(sessionId))
-                            ),
-                    ChatMessageDocument.class
-            );
-
-            // 批量更新
-            BulkRequest.Builder bulkBuilder = new BulkRequest.Builder();
-            for (Hit<ChatMessageDocument> hit : searchResponse.hits().hits()) {
-                ChatMessageDocument doc = hit.source();
-                if (doc != null) {
-                    doc.setSessionName(sessionName);
-                    bulkBuilder.operations(op -> op
-                            .update(idx -> idx
-                                    .index(indexName)
-                                    .id(hit.id())
-                                    .action(a -> a.doc(doc).docAsUpsert(true)))
-                    );
-                }
-            }
-
-            if (!searchResponse.hits().hits().isEmpty()) {
-                elasticsearchClient.bulk(bulkBuilder.build());
-                log.info("批量更新会话名称成功: sessionId={}, count={}", sessionId,
-                        searchResponse.hits().hits().size());
-            }
-        } catch (Exception e) {
-            log.error("更新会话名称失败: sessionId={}", sessionId, e);
-        }
-    }
-
-    /**
-     * 聚合查询用户的所有会话（返回会话ID和最新消息时间）
-     *
-     * @param userId 用户ID
-     * @param limit  返回条数
-     * @return 会话列表：每项包含 sessionId, firstMessageTime, lastMessageTime, messageCount
-     */
-    public List<Map<String, Object>> aggregateUserSessions(Long userId, int limit) {
-        try {
-            // 使用聚合获取会话统计信息
-            // TODO: 实现复杂的聚合查询，或使用terms agg + top_hits
-            // 这里返回空列表，由Service层实现
-            log.warn("aggregateUserSessions 尚未完全实现，返回空列表");
-            return new ArrayList<>();
-        } catch (Exception e) {
-            log.error("聚合用户会话失败: userId={}", userId, e);
-            return new ArrayList<>();
-        }
-    }
+    private record BatchContext(Long userId, String sessionId, boolean defaultSession) { }
 }
