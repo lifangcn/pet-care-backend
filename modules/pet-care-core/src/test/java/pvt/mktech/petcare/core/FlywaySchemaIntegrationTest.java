@@ -43,6 +43,7 @@ class FlywaySchemaIntegrationTest {
             execute(connection, "CREATE ROLE " + MIGRATION_OWNER + " LOGIN SUPERUSER PASSWORD '" + MIGRATION_OWNER_PASSWORD + "'");
             execute(connection, "CREATE ROLE " + APPLICATION_LOGIN + " LOGIN NOSUPERUSER PASSWORD '" + APPLICATION_LOGIN_PASSWORD + "'");
             execute(connection, "GRANT petcare_app TO " + APPLICATION_LOGIN);
+            execute(connection, "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\" WITH SCHEMA public");
         } catch (SQLException exception) {
             throw new IllegalStateException("Failed to bootstrap integration-test database roles", exception);
         }
@@ -73,6 +74,7 @@ class FlywaySchemaIntegrationTest {
             assertExtensions(connection);
             assertSearchPathExtensionSupport(connection);
             assertBusinessTables(connection);
+            assertVectorStore(connection);
             assertIdentityPrimaryKeys(connection);
             assertConstraintsAndIndexes(connection);
             assertJsonColumns(connection);
@@ -108,8 +110,15 @@ class FlywaySchemaIntegrationTest {
                 SELECT extension.extname || ':' || namespace.nspname
                 FROM pg_extension extension
                 JOIN pg_namespace namespace ON namespace.oid = extension.extnamespace
-                WHERE extension.extname IN ('vector', 'pg_trgm')
+                WHERE namespace.nspname = 'petcare'
+                  AND extension.extname IN ('vector', 'pg_trgm', 'hstore', 'uuid-ossp')
                 """)).containsExactlyInAnyOrder("vector:petcare", "pg_trgm:petcare");
+        assertThat(queryForString(connection, """
+                SELECT namespace.nspname
+                FROM pg_extension extension
+                JOIN pg_namespace namespace ON namespace.oid = extension.extnamespace
+                WHERE extension.extname = 'uuid-ossp'
+                """)).isEqualTo("public");
     }
 
     private void assertApplicationPrivileges() throws SQLException {
@@ -122,6 +131,13 @@ class FlywaySchemaIntegrationTest {
                     .isZero();
             assertThat(queryForInt(connection, "SELECT CASE WHEN has_database_privilege(current_user, current_database(), 'CREATE') THEN 1 ELSE 0 END"))
                     .isZero();
+            assertThat(queryForInt(connection, """
+                    SELECT count(*)
+                    WHERE has_table_privilege(current_user, 'petcare.vector_store', 'SELECT')
+                      AND has_table_privilege(current_user, 'petcare.vector_store', 'INSERT')
+                      AND has_table_privilege(current_user, 'petcare.vector_store', 'UPDATE')
+                      AND has_table_privilege(current_user, 'petcare.vector_store', 'DELETE')
+                    """)).isEqualTo(1);
             assertThat(queryForInt(connection, """
                     SELECT count(*)
                     WHERE has_table_privilege(current_user, 'petcare.tb_user', 'SELECT')
@@ -149,8 +165,16 @@ class FlywaySchemaIntegrationTest {
             assertThat(executeUpdate(connection, "DELETE FROM tb_user WHERE id = " + userId)).isEqualTo(1);
             assertThat(queryForInt(connection, "SELECT nextval('petcare.tb_user_id_seq')"))
                     .isGreaterThan(0);
+            UUID vectorStoreId = insertVectorStoreDocument(connection);
+            assertThat(queryForInt(connection, "SELECT count(*) FROM vector_store WHERE id = '" + vectorStoreId + "'"))
+                    .isEqualTo(1);
+            assertThat(executeUpdate(connection, "UPDATE vector_store SET content = 'updated' WHERE id = '" + vectorStoreId + "'"))
+                    .isEqualTo(1);
+            assertThat(executeUpdate(connection, "DELETE FROM vector_store WHERE id = '" + vectorStoreId + "'"))
+                    .isEqualTo(1);
 
             assertSqlRejected(connection, "CREATE TABLE petcare.application_denied (id bigint)");
+            assertSqlRejected(connection, "CREATE INDEX application_denied_vector_store_idx ON petcare.vector_store (content)");
             assertSqlRejected(connection, "CREATE EXTENSION hstore");
             assertSqlRejected(connection, "CREATE SCHEMA application_denied_schema");
             assertSqlRejected(connection, "CREATE ROLE application_denied_role");
@@ -167,6 +191,21 @@ class FlywaySchemaIntegrationTest {
             try (ResultSet result = statement.executeQuery()) {
                 result.next();
                 return result.getLong("id");
+            }
+        }
+    }
+
+    private UUID insertVectorStoreDocument(Connection connection) throws SQLException {
+        try (var statement = connection.prepareStatement("""
+                INSERT INTO vector_store (content, metadata, embedding)
+                VALUES (?, ?::json, array_fill(0::real, ARRAY[1024])::petcare.vector)
+                RETURNING id
+                """)) {
+            statement.setString(1, "application vector document");
+            statement.setString(2, "{\"source\":\"integration-test\"}");
+            try (ResultSet result = statement.executeQuery()) {
+                result.next();
+                return result.getObject("id", UUID.class);
             }
         }
     }
@@ -188,8 +227,70 @@ class FlywaySchemaIntegrationTest {
                   AND table_name LIKE 'tb_%'
                 """);
         assertThat(tables).isEqualTo(BUSINESS_TABLES);
-        assertThat(queryForInt(connection, "SELECT count(*) FROM pg_tables WHERE schemaname = 'petcare' AND tablename = 'vector_store'"))
-                .isZero();
+    }
+
+    private void assertVectorStore(Connection connection) throws SQLException {
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM information_schema.tables
+                WHERE table_schema = 'petcare' AND table_name = 'vector_store'
+                """)).isEqualTo(1);
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM information_schema.columns
+                WHERE table_schema = 'petcare'
+                  AND table_name = 'vector_store'
+                  AND (
+                      (column_name = 'id' AND data_type = 'uuid' AND column_default LIKE '%uuid_generate_v4%')
+                      OR (column_name = 'content' AND data_type = 'text')
+                      OR (column_name = 'metadata' AND data_type = 'json')
+                  )
+                """)).isEqualTo(2);
+        assertThat(queryForString(connection, """
+                SELECT pg_get_expr(default_expression.adbin, default_expression.adrelid)
+                FROM pg_attribute attribute
+                JOIN pg_class table_name ON table_name.oid = attribute.attrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                JOIN pg_attrdef default_expression
+                    ON default_expression.adrelid = attribute.attrelid
+                   AND default_expression.adnum = attribute.attnum
+                WHERE namespace.nspname = 'petcare'
+                  AND table_name.relname = 'vector_store'
+                  AND attribute.attname = 'id'
+                """)).isEqualTo("gen_random_uuid()");
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM pg_constraint table_constraint
+                JOIN pg_class table_name ON table_name.oid = table_constraint.conrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                WHERE namespace.nspname = 'petcare'
+                  AND table_name.relname = 'vector_store'
+                  AND table_constraint.contype = 'p'
+                """)).isEqualTo(1);
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM pg_attribute attribute
+                JOIN pg_class table_name ON table_name.oid = attribute.attrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                WHERE namespace.nspname = 'petcare'
+                  AND table_name.relname = 'vector_store'
+                  AND attribute.attname = 'embedding'
+                  AND attribute.atttypid = 'petcare.vector'::regtype
+                  AND attribute.atttypmod = 1024
+                """)).isEqualTo(1);
+        assertThat(queryForInt(connection, """
+                SELECT count(*)
+                FROM pg_index index
+                JOIN pg_class index_name ON index_name.oid = index.indexrelid
+                JOIN pg_class table_name ON table_name.oid = index.indrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                JOIN pg_am access_method ON access_method.oid = index_name.relam
+                WHERE namespace.nspname = 'petcare'
+                  AND table_name.relname = 'vector_store'
+                  AND index_name.relname = 'idx_vector_store_embedding_hnsw'
+                  AND access_method.amname = 'hnsw'
+                  AND pg_get_indexdef(index.indexrelid) LIKE '%vector_cosine_ops%'
+                """)).isEqualTo(1);
     }
 
     private void assertIdentityPrimaryKeys(Connection connection) throws SQLException {
@@ -384,8 +485,9 @@ class FlywaySchemaIntegrationTest {
         assertThat(queryForStrings(connection, """
                 SELECT version || ':' || success
                 FROM petcare.flyway_schema_history
-                WHERE version IN ('1', '2', '3', '4', '5', '6')
-                """)).containsExactlyInAnyOrder("1:true", "2:true", "3:true", "4:true", "5:true", "6:true");
+                WHERE version IN ('1', '2', '3', '4', '5', '6', '7')
+                """)).containsExactlyInAnyOrder(
+                "1:true", "2:true", "3:true", "4:true", "5:true", "6:true", "7:true");
     }
 
     private Set<String> queryForStrings(Connection connection, String sql) throws SQLException {
