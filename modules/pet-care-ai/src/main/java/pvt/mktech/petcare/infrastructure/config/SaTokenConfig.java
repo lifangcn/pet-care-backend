@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import pvt.mktech.petcare.common.web.AsyncAwareAuthInterceptor;
 import pvt.mktech.petcare.common.web.UserContext;
 
 /**
@@ -38,7 +39,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
             }
         }).order(-1).addPathPatterns("/ai/**", "/admin/**");
 
-        registry.addInterceptor(new SaInterceptor(handle -> authenticateRequest()))
+        registry.addInterceptor(authInterceptor())
         .order(0)
         .addPathPatterns("/ai/**", "/admin/**")
         .excludePathPatterns(
@@ -52,6 +53,10 @@ public class SaTokenConfig implements WebMvcConfigurer {
         );
 
         log.info("SaTokenConfig 初始化完成（AI 模块强制 JWT 认证）");
+    }
+
+    HandlerInterceptor authInterceptor() {
+        return new AsyncAwareAuthInterceptor(new SaInterceptor(handle -> authenticateRequest()));
     }
 
     void authenticateRequest() {

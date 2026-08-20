@@ -1,6 +1,7 @@
-package pvt.mktech.petcare.infrastructure.config;
+package pvt.mktech.petcare.config;
 
-import cn.dev33.satoken.exception.NotLoginException;
+import cn.dev33.satoken.context.SaHolder;
+import cn.dev33.satoken.context.model.SaRequest;
 import cn.dev33.satoken.stp.StpUtil;
 import jakarta.servlet.DispatcherType;
 import org.junit.jupiter.api.AfterEach;
@@ -10,15 +11,17 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.servlet.HandlerInterceptor;
 import pvt.mktech.petcare.common.web.UserContext;
+import pvt.mktech.petcare.shared.security.InternalApiAuthInterceptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.when;
 
 class SaTokenConfigTest {
 
-    private final SaTokenConfig config = new SaTokenConfig();
+    private final SaTokenConfig config = new SaTokenConfig(mock(InternalApiAuthInterceptor.class));
 
     @AfterEach
     void cleanUp() {
@@ -26,31 +29,13 @@ class SaTokenConfigTest {
     }
 
     @Test
-    void setsUserContextAfterSuccessfulAuthentication() {
-        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
-            stp.when(StpUtil::getLoginIdAsLong).thenReturn(42L);
-
-            config.authenticateRequest();
-
-            stp.verify(StpUtil::checkLogin);
-            assertThat(UserContext.getUserId()).isEqualTo(42L);
-        }
-    }
-
-    @Test
-    void propagatesAuthenticationFailure() {
-        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
-            stp.when(StpUtil::checkLogin).thenThrow(NotLoginException.class);
-
-            assertThatThrownBy(config::authenticateRequest).isInstanceOf(NotLoginException.class);
-            assertThat(UserContext.getUserId()).isNull();
-        }
-    }
-
-    @Test
     void authInterceptorAuthenticatesOnRequestDispatch() throws Exception {
         HandlerInterceptor authInterceptor = config.authInterceptor();
-        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+        SaRequest saRequest = mock(SaRequest.class);
+        when(saRequest.getRequestPath()).thenReturn("/api/users");
+        try (MockedStatic<SaHolder> saHolder = mockStatic(SaHolder.class);
+             MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+            saHolder.when(SaHolder::getRequest).thenReturn(saRequest);
             stp.when(StpUtil::getLoginIdAsLong).thenReturn(42L);
             MockHttpServletRequest request = new MockHttpServletRequest();
             request.setDispatcherType(DispatcherType.REQUEST);
@@ -67,7 +52,8 @@ class SaTokenConfigTest {
     @Test
     void authInterceptorSkipsAuthenticationOnAsyncDispatch() throws Exception {
         HandlerInterceptor authInterceptor = config.authInterceptor();
-        try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+        try (MockedStatic<SaHolder> saHolder = mockStatic(SaHolder.class);
+             MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
             MockHttpServletRequest request = new MockHttpServletRequest();
             request.setDispatcherType(DispatcherType.ASYNC);
             MockHttpServletResponse response = new MockHttpServletResponse();
@@ -75,6 +61,7 @@ class SaTokenConfigTest {
             boolean result = authInterceptor.preHandle(request, response, new Object());
 
             assertThat(result).isTrue();
+            saHolder.verify(SaHolder::getRequest, never());
             stp.verify(StpUtil::checkLogin, never());
             assertThat(UserContext.getUserId()).isNull();
         }

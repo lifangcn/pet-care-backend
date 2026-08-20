@@ -12,8 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import pvt.mktech.petcare.common.web.AsyncAwareAuthInterceptor;
 import pvt.mktech.petcare.common.web.UserContext;
 import pvt.mktech.petcare.shared.security.InternalApiAuthInterceptor;
 
@@ -44,10 +46,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new SaInterceptor(handle -> {
-            Long userId = resolveUserId();
-            UserContext.setUserId(userId);
-        }))
+        registry.addInterceptor(authInterceptor())
         .order(0)
         .addPathPatterns("/**")
         .excludePathPatterns(
@@ -65,6 +64,13 @@ public class SaTokenConfig implements WebMvcConfigurer {
         registry.addInterceptor(internalApiAuthInterceptor)
                 .order(-1)
                 .addPathPatterns("/internal/**");
+    }
+
+    HandlerInterceptor authInterceptor() {
+        return new AsyncAwareAuthInterceptor(new SaInterceptor(handle -> {
+            Long userId = resolveUserId();
+            UserContext.setUserId(userId);
+        }));
     }
 
     /**
