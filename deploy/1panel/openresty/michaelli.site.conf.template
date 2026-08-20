@@ -1,5 +1,9 @@
 # Paste this snippet inside the HTTPS server block managed by 1Panel.
 # Let 1Panel keep listen/certificate/ACME directives and the HTTP->HTTPS redirect.
+# 1Panel v1.10.26 OpenResty uses network_mode: host, so upstreams must be the
+# host loopback addresses where Core/AI publish (127.0.0.1:8080/8081), not
+# Docker service names. OpenResty does not need to join 1panel-network for this
+# reverse proxy, though the external network is kept for 1Panel ecosystem compatibility.
     root /www/sites/michaelli.site/index;
     index index.html;
     client_max_body_size 11m;
@@ -10,6 +14,12 @@
     auth_basic "PetCare restricted demo";
     auth_basic_user_file /www/sites/michaelli.site/.htpasswd;
 
+    location ^~ /.well-known/acme-challenge/ {
+        auth_basic off;
+        root /www/sites/michaelli.site/acme;
+        try_files $uri =404;
+    }
+
     location ^~ /api/admin/ai/ { return 404; }
     location ^~ /api/internal/ { return 404; }
     location ^~ /api/actuator/ { return 404; }
@@ -17,7 +27,7 @@
     location = /api/auth/refresh {
         auth_basic off;
         rewrite ^/api(/.*)$ $1 break;
-        proxy_pass http://petcare-core:8080;
+        proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header Authorization $http_authorization;
         proxy_set_header Host $host;
@@ -29,7 +39,7 @@
     location = /api/auth/logout {
         auth_basic off;
         rewrite ^/api(/.*)$ $1 break;
-        proxy_pass http://petcare-core:8080;
+        proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header Authorization $http_authorization;
         proxy_set_header Host $host;
@@ -41,7 +51,7 @@
     location ^~ /api/auth/ {
         rewrite ^/api(/.*)$ $1 break;
         proxy_set_header Authorization "";
-        proxy_pass http://petcare-core:8080;
+        proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -52,7 +62,7 @@
     location ^~ /api/ai/chat/ {
         auth_basic off;
         rewrite ^/api(/.*)$ $1 break;
-        proxy_pass http://petcare-ai:8081;
+        proxy_pass http://127.0.0.1:8081;
         proxy_http_version 1.1;
         proxy_set_header Authorization $http_authorization;
         proxy_set_header Host $host;
@@ -72,7 +82,7 @@
     location = /api/reminder/sse-connect {
         auth_basic off;
         rewrite ^/api(/.*)$ $1 break;
-        proxy_pass http://petcare-core:8080;
+        proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -90,7 +100,7 @@
     location ^~ /api/ai/ {
         auth_basic off;
         rewrite ^/api(/.*)$ $1 break;
-        proxy_pass http://petcare-ai:8081;
+        proxy_pass http://127.0.0.1:8081;
         proxy_http_version 1.1;
         proxy_set_header Authorization $http_authorization;
         proxy_set_header Host $host;
@@ -105,7 +115,7 @@
     location ^~ /api/ {
         auth_basic off;
         rewrite ^/api(/.*)$ $1 break;
-        proxy_pass http://petcare-core:8080;
+        proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header Authorization $http_authorization;
         proxy_set_header Host $host;

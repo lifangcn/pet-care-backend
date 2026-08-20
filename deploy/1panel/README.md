@@ -23,12 +23,14 @@
 前端站点目录：
 
 ```text
-/opt/1panel/www/sites/michaelli.site/
+/opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/
 ├── index/                         # Vue dist 内容
 └── .htpasswd                      # 不进 Git
 ```
 
-1Panel OpenResty 容器内通常对应 `/www/sites/michaelli.site`。应用容器和 OpenResty 必须同时加入 `1panel-network`。
+1Panel v1 OpenResty 容器内的 `/www/sites/michaelli.site` 对应宿主机 `/opt/1panel/apps/openresty/openresty/www/sites/michaelli.site`。OpenResty 使用 `network_mode: host`，通过宿主回环地址 `127.0.0.1:8080/8081` 反代 Core/AI，不依赖 Docker 服务名，也无需加入 `1panel-network`。
+
+Compose 仍将 Core/AI 加入外部 `1panel-network`，仅用于 1Panel 面板生态兼容。该网络必须使用与宿主机及 VPC 不重叠的 CIDR，例如 `10.250.0.0/24`。
 
 ## 本地构建
 
@@ -104,15 +106,15 @@ curl -fsS http://127.0.0.1:8081/error >/dev/null || true
 
 1. DNS：`michaelli.site` 的 A 记录指向 `8.162.13.22`，删除错误 AAAA 后等待生效。
 2. 在 1Panel 应用商店安装 OpenResty，并创建域名网站。
-3. 将 OpenResty 服务加入 `1panel-network`。
-4. 先由 1Panel 申请并启用 HTTPS，使 80 端口只跳转到 HTTPS；再把 `openresty/michaelli.site.conf.template` 片段粘贴到面板维护的 HTTPS `server` 块内部。不要替换面板生成的证书或 ACME 配置，不要把私钥写入仓库。
+3. 确认 OpenResty 保持 1Panel v1 默认的 host 网络模式；Core/AI 的 `127.0.0.1:8080/8081` 发布端口应可从宿主访问。
+4. 优先由 1Panel 申请并启用 HTTPS，使 80 端口只跳转到 HTTPS；再把 `openresty/michaelli.site.conf.template` 片段粘贴到面板维护的 HTTPS `server` 块内部。若使用独立 ACME 客户端，宿主机 webroot 对应 `/opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/acme`。两种方式都必须保留模板中的 `/.well-known/acme-challenge/` Basic Auth 例外，并在续期后先执行 `openresty -t` 再 reload。不要把证书私钥写入仓库。
 5. 生成 Basic Auth 文件，用户名和密码不要进入 Git：
 
    ```bash
-   printf 'petcare:' > /opt/1panel/www/sites/michaelli.site/.htpasswd
-   openssl passwd -apr1 >> /opt/1panel/www/sites/michaelli.site/.htpasswd
-   chgrp <openresty-worker-group> /opt/1panel/www/sites/michaelli.site/.htpasswd
-   chmod 640 /opt/1panel/www/sites/michaelli.site/.htpasswd
+   printf 'petcare:' > /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/.htpasswd
+   openssl passwd -apr1 >> /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/.htpasswd
+   chgrp <openresty-worker-group> /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/.htpasswd
+   chmod 640 /opt/1panel/apps/openresty/openresty/www/sites/michaelli.site/.htpasswd
    ```
 
 先在 OpenResty 容器内执行 `nginx -t` 确认 worker 能读取 `.htpasswd`。Basic Auth 仅保护静态入口和登录 bootstrap；业务 API 关闭 Basic Auth，继续使用应用 Bearer Token。否则两者会争用 `Authorization` 请求头。`/api/admin/ai/**`、`/api/internal/**` 和 `/api/actuator/**` 均直接拒绝公网访问。
