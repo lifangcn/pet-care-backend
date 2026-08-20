@@ -1,12 +1,15 @@
 package pvt.mktech.petcare.common.exception;
 
+import cn.dev33.satoken.exception.NotLoginException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import pvt.mktech.petcare.common.dto.response.Result;
@@ -80,6 +83,14 @@ public class GlobalExceptionHandler {
     public Result<String> handleAsyncRequestTimeoutException(AsyncRequestTimeoutException ex) {
         log.debug("SSE async request timeout: {}", ex.getMessage());
         return null;
+    }
+
+    // 处理 SA-Token 未登录异常：message 可能包含完整 JWT，禁止记录
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(NotLoginException.class)
+    public Result<String> handleNotLoginException(NotLoginException ex) {
+        log.warn("Not logged in: type={}, loginType={}", ex.getType(), ex.getLoginType());
+        return Result.error(ErrorCode.UNAUTHORIZED.getCode(), ErrorCode.UNAUTHORIZED.getMessage());
     }
 
     // 处理运行时异常
