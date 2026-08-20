@@ -77,6 +77,7 @@ class FlywaySchemaIntegrationTest {
             assertVectorStore(connection);
             assertIdentityPrimaryKeys(connection);
             assertConstraintsAndIndexes(connection);
+            assertContentSearchIndexes(connection);
             assertJsonColumns(connection);
             assertColumnContracts(connection);
             assertNoForeignKeys(connection);
@@ -159,6 +160,8 @@ class FlywaySchemaIntegrationTest {
 
             execute(connection, "SET search_path TO petcare, public");
             assertThat(queryForInt(connection, "SELECT count(*) FROM tb_role")).isGreaterThanOrEqualTo(2);
+            assertThat(queryForInt(connection, "SELECT count(*) FROM tb_post")).isZero();
+            assertThat(queryForInt(connection, "SELECT count(*) FROM tb_activity")).isZero();
             long userId = insertApplicationUser(connection);
             assertThat(queryForInt(connection, "SELECT count(*) FROM tb_user WHERE id = " + userId)).isEqualTo(1);
             assertThat(executeUpdate(connection, "UPDATE tb_user SET nickname = 'app' WHERE id = " + userId)).isEqualTo(1);
@@ -362,6 +365,42 @@ class FlywaySchemaIntegrationTest {
                 "tb_activity.labels");
     }
 
+    private void assertContentSearchIndexes(Connection connection) throws SQLException {
+        assertThat(queryForStrings(connection, """
+                SELECT table_name.relname || ':' || access_method.amname || ':' || operator_class.opcname
+                FROM pg_index index
+                JOIN pg_class index_name ON index_name.oid = index.indexrelid
+                JOIN pg_class table_name ON table_name.oid = index.indrelid
+                JOIN pg_namespace namespace ON namespace.oid = table_name.relnamespace
+                JOIN pg_am access_method ON access_method.oid = index_name.relam
+                JOIN pg_opclass operator_class ON operator_class.oid = index.indclass[0]
+                JOIN pg_namespace operator_class_namespace ON operator_class_namespace.oid = operator_class.opcnamespace
+                WHERE namespace.nspname = 'petcare'
+                  AND operator_class_namespace.nspname = 'petcare'
+                  AND index_name.relname IN ('idx_tb_post_content_search_trgm', 'idx_tb_activity_content_search_trgm')
+                """)).containsExactlyInAnyOrder(
+                "tb_post:gin:gin_trgm_ops", "tb_activity:gin:gin_trgm_ops");
+        assertThat(queryForString(connection, """
+                SELECT pg_get_indexdef(index.indexrelid) || ':' || pg_get_expr(index.indpred, index.indrelid)
+                FROM pg_index index
+                JOIN pg_class index_name ON index_name.oid = index.indexrelid
+                WHERE index_name.relname = 'idx_tb_post_content_search_trgm'
+                """)).contains(
+                "lower(", "COALESCE(title, ''::character varying)", "COALESCE(content, ''::text)",
+                "enabled = 1", "is_deleted = false", "'APPROVED'::text",
+                "'PRODUCT'::character varying", "'SERVICE'::character varying",
+                "'LOCATION'::character varying", "'DAILY'::character varying");
+        assertThat(queryForString(connection, """
+                SELECT pg_get_indexdef(index.indexrelid) || ':' || pg_get_expr(index.indpred, index.indrelid)
+                FROM pg_index index
+                JOIN pg_class index_name ON index_name.oid = index.indexrelid
+                WHERE index_name.relname = 'idx_tb_activity_content_search_trgm'
+                """)).contains(
+                "lower(", "COALESCE(title, ''::character varying)", "COALESCE(description, ''::text)",
+                "COALESCE(address, ''::character varying)", "is_deleted = false", "'APPROVED'::text",
+                "'RECRUITING'::character varying", "'ONGOING'::character varying");
+    }
+
     private void assertColumnContracts(Connection connection) throws SQLException {
         assertThat(queryForInt(connection, """
                 SELECT count(*)
@@ -485,9 +524,9 @@ class FlywaySchemaIntegrationTest {
         assertThat(queryForStrings(connection, """
                 SELECT version || ':' || success
                 FROM petcare.flyway_schema_history
-                WHERE version IN ('1', '2', '3', '4', '5', '6', '7')
+                WHERE version IN ('1', '2', '3', '4', '5', '6', '7', '8')
                 """)).containsExactlyInAnyOrder(
-                "1:true", "2:true", "3:true", "4:true", "5:true", "6:true", "7:true");
+                "1:true", "2:true", "3:true", "4:true", "5:true", "6:true", "7:true", "8:true");
     }
 
     private Set<String> queryForStrings(Connection connection, String sql) throws SQLException {
