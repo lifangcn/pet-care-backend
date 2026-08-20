@@ -94,7 +94,7 @@ public class KnowledgeDocument implements Serializable {
      */
     public void delete() {
         this.status = 0;
-        this.isDeleted = false;
+        this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
     }
 

@@ -15,6 +15,7 @@ import org.springframework.ai.zhipuai.ZhiPuAiEmbeddingModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.EnableAsync;
 import pvt.mktech.petcare.common.thread.ThreadPoolManager;
 
@@ -48,6 +49,7 @@ public class ElasticsearchVectorStoreConfig {
      * 用于知识库文档的向量存储和检索
      */
     @Bean
+    @ConditionalOnProperty(name = "spring.ai.vectorstore.type", havingValue = "elasticsearch", matchIfMissing = true)
     public VectorStore elasticsearchVectorStore(RestClient restClient, ZhiPuAiEmbeddingModel zhiPuAiEmbeddingModel) {
         ElasticsearchVectorStoreOptions options = new ElasticsearchVectorStoreOptions();
         options.setIndexName(KNOWLEDGE_DOCUMENT_INDEX);

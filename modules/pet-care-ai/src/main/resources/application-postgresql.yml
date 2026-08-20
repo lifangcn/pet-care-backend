@@ -1,4 +1,15 @@
 spring:
+  ai:
+    vectorstore:
+      type: pgvector
+      pgvector:
+        schema-name: petcare
+        table-name: vector_store
+        dimensions: 1024
+        distance-type: COSINE_DISTANCE
+        index-type: HNSW
+        initialize-schema: false
+        schema-validation: true
   flyway:
     enabled: false
 

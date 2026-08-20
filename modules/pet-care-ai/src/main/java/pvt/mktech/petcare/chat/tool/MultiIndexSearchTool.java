@@ -1,17 +1,17 @@
 package pvt.mktech.petcare.chat.tool;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch._types.KnnQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.MultiMatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.TextQueryType;
-import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.ai.zhipuai.ZhiPuAiEmbeddingModel;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Component;
 import pvt.mktech.petcare.chat.dto.SearchResult;
@@ -38,7 +38,7 @@ public class MultiIndexSearchTool {
     @Resource
     private ElasticsearchClient elasticsearchClient;
     @Resource
-    private ZhiPuAiEmbeddingModel zhiPuAiEmbeddingModel;
+    private VectorStore vectorStore;
 
     /**
      * 检索知识库文档（KNN 向量检索）
@@ -48,7 +48,16 @@ public class MultiIndexSearchTool {
     public List<SearchResult> searchKnowledge(KnowledgeSearchRequest request) {
         log.info("AI 调用知识库检索: query={}, topK={}", request.query(), request.topK());
         int topK = request.topK() != null && request.topK() > 0 ? Math.min(request.topK(), 10) : 5;
-        return knnSearch(KNOWLEDGE_DOCUMENT_INDEX, request.query(), topK);
+        try {
+            return vectorStore.similaritySearch(SearchRequest.builder().query(request.query()).topK(topK).build()).stream()
+                    .map(document -> SearchResult.builder().source("knowledge").type("document")
+                            .title(String.valueOf(document.getMetadata().getOrDefault("filename", "知识库文档")))
+                            .content(document.getText()).score(document.getScore()).metadata(document.getMetadata()).build())
+                    .toList();
+        } catch (Exception exception) {
+            log.error("知识库向量检索失败: query={}", request.query(), exception);
+            return List.of();
+        }
     }
 
     /**
@@ -102,27 +111,6 @@ public class MultiIndexSearchTool {
             @Description("活动结束时间过滤，ISO格式如2026-02-23T23:59:59Z，用户说'周末'时需计算并传入") String endTime
     ) {}
 
-    /**
-     * KNN 向量检索（用于知识库）
-     */
-    private List<SearchResult> knnSearch(String index, String query, int size) {
-        try {
-            float[] queryVector = generateQueryVector(query);
-            List<Float> vectorList = toFloatList(queryVector);
-
-            Query knnQuery = KnnQuery.of(k -> k
-                    .field("embedding")
-                    .queryVector(vectorList)
-                    .k(size)
-                    .numCandidates(size * 2)
-            )._toQuery();
-
-            return executeSearch(index, knnQuery, size, "knowledge", "document", 0.1);
-        } catch (Exception e) {
-            log.error("知识库 KNN 检索失败: query={}", query, e);
-            return List.of();
-        }
-    }
 
     /**
      * BM25 全文检索（用于 Post/Activity）
@@ -184,7 +172,7 @@ public class MultiIndexSearchTool {
     private List<SearchResult> executeSearch(String index, Query query, int size,
                                              String source, String type, Double minScore) {
         try {
-            SearchRequest.Builder builder = new SearchRequest.Builder()
+            co.elastic.clients.elasticsearch.core.SearchRequest.Builder builder = new co.elastic.clients.elasticsearch.core.SearchRequest.Builder()
                     .index(index)
                     .query(query)
                     .size(size);
@@ -251,27 +239,4 @@ public class MultiIndexSearchTool {
                 .anyMatch(key::equals);
     }
 
-    /**
-     * 生成查询向量
-     */
-    private float[] generateQueryVector(String query) {
-        try {
-            var response = zhiPuAiEmbeddingModel.embedForResponse(List.of(query));
-            return response.getResults().getFirst().getOutput();
-        } catch (Exception e) {
-            log.error("生成查询向量失败", e);
-            return new float[1024];
-        }
-    }
-
-    /**
-     * float[] 转 List<Float>
-     */
-    private List<Float> toFloatList(float[] array) {
-        List<Float> list = new ArrayList<>(array.length);
-        for (float f : array) {
-            list.add(f);
-        }
-        return list;
-    }
 }

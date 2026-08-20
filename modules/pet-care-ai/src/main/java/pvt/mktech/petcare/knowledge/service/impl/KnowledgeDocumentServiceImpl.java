@@ -12,10 +12,14 @@ import org.springframework.ai.reader.markdown.MarkdownDocumentReader;
 import org.springframework.ai.reader.markdown.config.MarkdownDocumentReaderConfig;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import pvt.mktech.petcare.knowledge.dto.response.KnowledgeDocumentResponse;
 import pvt.mktech.petcare.knowledge.entity.KnowledgeDocument;
@@ -27,8 +31,11 @@ import pvt.mktech.petcare.common.exception.ErrorCode;
 import pvt.mktech.petcare.common.storage.OssTemplate;
 
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static pvt.mktech.petcare.knowledge.entity.table.KnowledgeDocumentTableDef.DOCUMENT;
@@ -44,7 +51,7 @@ import static pvt.mktech.petcare.knowledge.entity.table.KnowledgeDocumentTableDe
 public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentMapper, KnowledgeDocument> implements KnowledgeDocumentService {
 
     private final OssTemplate ossTemplate;
-    private final VectorStore elasticsearchVectorStore;
+    private final VectorStore vectorStore;
     private final KeywordMetadataEnricher keywordMetadataEnricher;
 
     @Override
@@ -100,15 +107,11 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
         }
 
         document.delete();
-        save(document);
-
-        try {
-            ossTemplate.deleteFile(document.getFileUrl());
-        } catch (Exception e) {
-            log.warn("删除OSS文件失败: {}", document.getFileUrl(), e);
+        if (!updateById(document)) {
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "更新文档删除状态失败");
         }
-
-        // TODO: 删除 ES 中的向量数据
+        deleteVectorsByDocumentId(id);
+        deleteOssAfterCommit(document.getFileUrl());
         log.info("文档已删除: id={}, name={}", id, document.getName());
     }
 
@@ -118,90 +121,94 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
      */
     @Async("vectorProcessExecutor")
     public void processDocumentToVectorStoreAsync(Long documentId, MultipartFile file) {
-        List<String> processedDocIds = new ArrayList<>();
         try (InputStream inputStream = file.getInputStream()) {
-            log.info("开始异步处理文档向量: documentId={}", documentId);
+            processDocumentToVectorStore(documentId, inputStream, file.getOriginalFilename());
 
-            // 1. 提取文件名和 tag
-            String fileName = StrUtil.isBlank(file.getOriginalFilename()) ?
-                    "unknown_file" : file.getOriginalFilename();
-            String tag = extractTag(fileName);
-            log.info("文档信息: fileName={}, tag={}", fileName, tag);
+        } catch (Exception e) {
+            markProcessingFailed(documentId, e);
+        }
+    }
 
-            // 2. 读取 markdown 文件
+    private void processDocumentToVectorStore(Long documentId, InputStream inputStream, String originalFilename) throws Exception {
+        String fileName = StrUtil.isBlank(originalFilename) ? "unknown_file" : originalFilename;
+        try {
+            deleteVectorsByDocumentId(documentId);
             MarkdownDocumentReaderConfig config = MarkdownDocumentReaderConfig.builder()
-                    .withHorizontalRuleCreateDocument(true)
-                    .withIncludeCodeBlock(false)
-                    .withIncludeBlockquote(false)
-                    .withAdditionalMetadata("filename", fileName)
-                    .withAdditionalMetadata("tag", tag)
-                    .withAdditionalMetadata("document_id", documentId.toString())
-                    .build();
-            MarkdownDocumentReader reader = new MarkdownDocumentReader(
-                    new InputStreamResource(inputStream), config);
-            List<Document> documents = reader.get();
-
-            // 3. 文档拆分
-            TokenTextSplitter textSplitter = new TokenTextSplitter();
-            List<Document> splitDocuments = textSplitter.apply(documents);
-            log.info("文档拆分后数量: {}", splitDocuments.size());
-
-            // 4. 批量处理（降低 batchSize 避免超时）
-            int batchSize = 3;
-            for (int i = 0; i < splitDocuments.size(); i += batchSize) {
-                int endIndex = Math.min(i + batchSize, splitDocuments.size());
-                List<Document> batch = splitDocuments.subList(i, endIndex);
-
-                // 补充关键词元信息
-                List<Document> enrichedBatch = keywordMetadataEnricher.apply(batch);
-
-                // 添加到向量存储
-                elasticsearchVectorStore.add(enrichedBatch);
-
-                // 记录文档 ID 用于回滚
-                enrichedBatch.forEach(doc -> processedDocIds.add(doc.getId()));
+                    .withHorizontalRuleCreateDocument(true).withIncludeCodeBlock(false).withIncludeBlockquote(false)
+                    .withAdditionalMetadata("filename", fileName).withAdditionalMetadata("tag", extractTag(fileName))
+                    .withAdditionalMetadata("document_id", documentId.toString()).build();
+            List<Document> splitDocuments = new TokenTextSplitter().apply(
+                    new MarkdownDocumentReader(new InputStreamResource(inputStream), config).get());
+            for (int i = 0; i < splitDocuments.size(); i += 3) {
+                List<Document> enrichedBatch = keywordMetadataEnricher.apply(splitDocuments.subList(i, Math.min(i + 3, splitDocuments.size())));
+                for (int chunkIndex = 0; chunkIndex < enrichedBatch.size(); chunkIndex++) {
+                    Document enriched = enrichedBatch.get(chunkIndex);
+                    Map<String, Object> metadata = new HashMap<>(enriched.getMetadata());
+                    metadata.put("document_id", documentId.toString());
+                    metadata.put("chunk_index", i + chunkIndex);
+                    String chunkId = UUID.nameUUIDFromBytes((documentId + ":" + (i + chunkIndex)).getBytes(StandardCharsets.UTF_8)).toString();
+                    enrichedBatch.set(chunkIndex, new Document(chunkId, enriched.getText(), metadata));
+                }
+                vectorStore.add(enrichedBatch);
             }
-
-            // 5. 更新处理成功状态
             KnowledgeDocument document = getById(documentId);
             if (document != null) {
                 document.updateProcessSuccess(splitDocuments.size());
                 updateById(document);
             }
             log.info("文档向量处理完成: documentId={}, chunkCount={}", documentId, splitDocuments.size());
-
         } catch (Exception e) {
-            log.error("文档向量处理失败: documentId={}", documentId, e);
-
-            // 回滚已写入的向量数据
-            rollbackVectorStore(processedDocIds);
-
-            // 更新处理失败状态
-            String error = e.getMessage();
-            KnowledgeDocument document = getById(documentId);
-            if (document != null) {
-                // 截取错误信息，避免超过数据库字段长度限制
-                String shortError = error != null && error.length() > 450
-                        ? error.substring(0, 450) + "..."
-                        : error;
-                document.updateProcessFailure(shortError);
-                updateById(document);
+            try {
+                deleteVectorsByDocumentId(documentId);
+            } catch (Exception cleanupException) {
+                e.addSuppressed(cleanupException == e
+                        ? new IllegalStateException("向量清理失败", cleanupException)
+                        : cleanupException);
+                log.error("向量整体清理失败: documentId={}", documentId, cleanupException);
             }
+            throw e;
         }
     }
 
-    /**
-     * 回滚向量存储中的数据
-     */
-    private void rollbackVectorStore(List<String> docIds) {
-        if (docIds == null || docIds.isEmpty()) {
-            return;
+    private void markProcessingFailed(Long documentId, Exception exception) {
+        log.error("文档向量处理失败: documentId={}", documentId, exception);
+        KnowledgeDocument document = getById(documentId);
+        if (document != null) {
+            String error = exception.getMessage();
+            if (exception.getSuppressed().length > 0) {
+                error = error + "; 向量清理失败: " + exception.getSuppressed()[0].getMessage();
+            }
+            document.updateProcessFailure(shortError(error));
+            updateById(document);
         }
-        try {
-            elasticsearchVectorStore.delete(docIds);
-            log.info("向量回滚完成: count={}", docIds.size());
-        } catch (Exception e) {
-            log.warn("向量回滚失败: count={}", docIds.size(), e);
+    }
+
+    private Filter.Expression documentIdFilter(Long documentId) {
+        return new FilterExpressionBuilder().eq("document_id", documentId.toString()).build();
+    }
+
+    private void deleteVectorsByDocumentId(Long documentId) {
+        vectorStore.delete(documentIdFilter(documentId));
+    }
+
+    private String shortError(String error) {
+        return error != null && error.length() > 450 ? error.substring(0, 450) + "..." : error;
+    }
+
+    private void deleteOssAfterCommit(String fileUrl) {
+        Runnable deleteOss = () -> {
+            try {
+                ossTemplate.deleteFile(fileUrl);
+            } catch (Exception e) {
+                log.error("删除OSS文件失败: {}", fileUrl, e);
+            }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { deleteOss.run(); }
+            });
+        } else {
+            deleteOss.run();
         }
     }
 
@@ -245,21 +252,11 @@ public class KnowledgeDocumentServiceImpl extends ServiceImpl<KnowledgeDocumentM
             throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "文档不存在");
         }
 
-        // 删除 ES 中已有的向量数据
-        try {
-            // TODO: 需要根据 documentId 删除对应的向量数据，当前 VectorStore 未提供按 metadata 查询删除的能力
-            log.info("开始重新索引文档: id={}, name={}", id, document.getName());
+        try (InputStream inputStream = ossTemplate.getInputStreamByUrl(document.getFileUrl())) {
+            processDocumentToVectorStore(id, inputStream, document.getName());
         } catch (Exception e) {
-            log.warn("删除旧向量数据失败: documentId={}", id, e);
+            markProcessingFailed(id, e);
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "文档重建向量失败: " + e.getMessage());
         }
-
-        // 重新设置处理状态为待处理
-        document.setProcessingStatus(ProcessingStatusOfKnowledgeDocument.PENDING);
-        document.setChunkCount(0);
-        document.setProcessingError(null);
-        updateById(document);
-
-        // 重新触发异步处理（需要重新读取文件，这里简化处理，实际应从 OSS 重新下载）
-        log.info("文档重新索引任务已触发: id={}", id);
     }
 }

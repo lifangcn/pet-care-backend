@@ -4,8 +4,8 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import pvt.mktech.petcare.sync.constants.EsIndexConstants;
 import pvt.mktech.petcare.sync.constants.EsIndexMappings;
@@ -21,17 +21,27 @@ import static pvt.mktech.petcare.sync.constants.SyncConstants.*;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class IndexAdminService {
 
     private final ElasticsearchClient elasticsearchClient;
+    private final String vectorStoreType;
+
+    public IndexAdminService(ElasticsearchClient elasticsearchClient,
+                             @Value("${spring.ai.vectorstore.type:elasticsearch}") String vectorStoreType) {
+        this.elasticsearchClient = elasticsearchClient;
+        this.vectorStoreType = vectorStoreType;
+    }
 
     /**
      * 初始化所有索引
      */
     public void initAllIndices() {
         log.info("开始初始化 Elasticsearch 索引...");
-        createKnowledgeDocumentIndex();
+        if ("pgvector".equalsIgnoreCase(vectorStoreType)) {
+            log.info("当前使用 PGVector，跳过知识库文档 Elasticsearch 索引初始化");
+        } else {
+            createKnowledgeDocumentIndex();
+        }
         createPostIndex();
         createActivityIndex();
         createChatHistoryIndex();
