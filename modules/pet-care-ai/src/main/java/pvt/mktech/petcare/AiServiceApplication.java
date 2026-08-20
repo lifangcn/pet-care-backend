@@ -20,7 +20,10 @@ import org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfigura
 })
 @MapperScan({
     "pvt.mktech.petcare.knowledge.mapper",
-    "pvt.mktech.petcare.sync.mapper"
+    "pvt.mktech.petcare.sync.mapper",
+    "pvt.mktech.petcare.observability.mapper",
+    "pvt.mktech.petcare.chat.mapper",
+    "pvt.mktech.petcare.agent.telemetry.mapper"
 })
 @Import(ObservabilityAutoConfiguration.class)
 public class AiServiceApplication {
